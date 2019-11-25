@@ -21,16 +21,6 @@ type Manager struct {
 	db     *gorm.DB
 }
 
-func NewManager(db *gorm.DB, wallet wallet.Client) (*Manager, error) {
-
-	db.AutoMigrate(&Invoice{})
-
-	return &Manager{
-		wallet: wallet,
-		db:     db,
-	}, nil
-}
-
 func (inv *Manager) GetInvoice(id string) (*Invoice, error) {
 	var invoice Invoice
 	err := inv.db.First(&invoice, "ID = ?", id).Error

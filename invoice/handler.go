@@ -15,13 +15,6 @@ type Handler struct {
 	logger  *zap.SugaredLogger
 }
 
-func NewHandler(manager *Manager) *Handler {
-	return &Handler{
-		logger:  zap.S().With("package", "invoice"),
-		manager: manager,
-	}
-}
-
 func (handler *Handler) Routes() chi.Router {
 	router := chi.NewRouter()
 
