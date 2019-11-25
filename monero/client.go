@@ -8,21 +8,18 @@ import (
 	"go.uber.org/zap"
 )
 
-/*
-* Creates the wallet.Client using the config
- */
 func CreateMoneroClient() (wallet.Client, error) {
-	baseUrl := viper.GetString("monero.wallet_rpc_url")
+	baseURL := viper.GetString("monero.wallet_rpc_url")
 
-	if baseUrl == "" {
+	if baseURL == "" {
 		return nil, errors.New("A Monero Wallet RPC url must be provided")
 	}
 
 	client := wallet.New(wallet.Config{
-		Address: baseUrl + "/json_rpc",
+		Address: baseURL + "/json_rpc",
 	})
 
-	zap.S().Infow("Connecting to Monero Wallet RPC", "url", baseUrl)
+	zap.S().Infow("Connecting to Monero Wallet RPC", "package", "monero", "url", baseURL)
 
 	version, err := client.GetVersion()
 
@@ -30,7 +27,7 @@ func CreateMoneroClient() (wallet.Client, error) {
 		return nil, err
 	}
 
-	zap.S().Infow("Monero Wallet RPC", "version", version)
+	zap.S().Infow("Monero Wallet RPC", "package", "monero", "version", version)
 
 	return client, nil
 }
