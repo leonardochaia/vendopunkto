@@ -37,6 +37,7 @@ func setupMiddlewares(router VendoPunktoRouter) {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
 	router.Use(render.SetContentType(render.ContentTypeJSON))
+	router.Use(middleware.GetHead)
 
 	// Log Requests
 	if viper.GetBool("server.log_requests") {
