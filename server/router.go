@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/leonardochaia/vendopunkto/invoice"
-	config "github.com/spf13/viper"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -39,7 +39,7 @@ func setupMiddlewares(router VendoPunktoRouter) {
 	router.Use(render.SetContentType(render.ContentTypeJSON))
 
 	// Log Requests
-	if config.GetBool("server.log_requests") {
+	if viper.GetBool("server.log_requests") {
 		router.Use(requestLogger)
 	}
 
@@ -57,9 +57,9 @@ func setupMiddlewares(router VendoPunktoRouter) {
 	}).Handler)
 
 	// Enable profiler
-	if config.GetBool("server.profiler_enabled") && config.GetString("server.profiler_path") != "" {
-		zap.S().Debugw("Profiler enabled on API", "path", config.GetString("server.profiler_path"))
-		router.Mount(config.GetString("server.profiler_path"), middleware.Profiler())
+	if viper.GetBool("server.profiler_enabled") && viper.GetString("server.profiler_path") != "" {
+		zap.S().Debugw("Profiler enabled on API", "path", viper.GetString("server.profiler_path"))
+		router.Mount(viper.GetString("server.profiler_path"), middleware.Profiler())
 	}
 }
 

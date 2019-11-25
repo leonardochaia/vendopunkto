@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	cli "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
 	"github.com/leonardochaia/vendopunkto/conf"
@@ -12,11 +12,11 @@ func init() {
 }
 
 var (
-	apiCmd = &cli.Command{
+	apiCmd = &cobra.Command{
 		Use:   "api",
 		Short: "Start API",
 		Long:  `Start API`,
-		Run: func(cmd *cli.Command, args []string) { // Initialize the databse
+		Run: func(cmd *cobra.Command, args []string) { // Initialize the databse
 
 			// Create the server (uses wire DI)
 			s, err := NewServer()

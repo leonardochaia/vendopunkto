@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/jinzhu/gorm"
-	config "github.com/spf13/viper"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +33,7 @@ func NewServer(router *VendoPunktoRouter, db *gorm.DB) (*Server, error) {
 func (s *Server) ListenAndServe() error {
 
 	s.server = &http.Server{
-		Addr:    net.JoinHostPort(config.GetString("server.host"), config.GetString("server.port")),
+		Addr:    net.JoinHostPort(viper.GetString("server.host"), viper.GetString("server.port")),
 		Handler: *s.router,
 	}
 

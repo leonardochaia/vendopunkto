@@ -9,8 +9,8 @@ import (
 	"net/http"
 	_ "net/http/pprof" // Import for pprof
 
-	cli "github.com/spf13/cobra"
-	config "github.com/spf13/viper"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -25,12 +25,12 @@ var (
 	logger     *zap.SugaredLogger
 
 	// The Root Cli Handler
-	rootCmd = &cli.Command{
+	rootCmd = &cobra.Command{
 		Version: conf.GitVersion,
 		Use:     conf.Executable,
-		PersistentPreRunE: func(cmd *cli.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Create Pid File
-			pidFile = config.GetString("pidfile")
+			pidFile = viper.GetString("pidfile")
 			if pidFile != "" {
 				file, err := os.OpenFile(pidFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
 				if err != nil {
@@ -44,7 +44,7 @@ var (
 			}
 			return nil
 		},
-		PersistentPostRun: func(cmd *cli.Command, args []string) {
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
 			// Remove Pid file
 			if pidFile != "" {
 				os.Remove(pidFile)
@@ -64,7 +64,7 @@ func Execute() {
 // This is the main initializer handling cli, config and log
 func init() {
 	// Initialize configuration
-	cli.OnInitialize(initConfig, initLog, initProfiler)
+	cobra.OnInitialize(initConfig, initLog, initProfiler)
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Config file")
 }
 
@@ -72,14 +72,14 @@ func init() {
 func initConfig() {
 
 	// Sets up the config file, environment etc
-	config.SetTypeByDefaultValue(true)                      // If a default value is []string{"a"} an environment variable of "a b" will end up []string{"a","b"}
-	config.AutomaticEnv()                                   // Automatically use environment variables where available
-	config.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // Environement variables use underscores instead of periods
+	viper.SetTypeByDefaultValue(true)                      // If a default value is []string{"a"} an environment variable of "a b" will end up []string{"a","b"}
+	viper.AutomaticEnv()                                   // Automatically use environment variables where available
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // Environement variables use underscores instead of periods
 
 	// If a config file is found, read it in.
 	if configFile != "" {
-		config.SetConfigFile(configFile)
-		err := config.ReadInConfig()
+		viper.SetConfigFile(configFile)
+		err := viper.ReadInConfig()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not read config file: %s ERROR: %s\n", configFile, err.Error())
 			os.Exit(1)
@@ -94,19 +94,19 @@ func initLog() {
 
 	// Log Level
 	var logLevel zapcore.Level
-	if err := logLevel.Set(config.GetString("logger.level")); err != nil {
+	if err := logLevel.Set(viper.GetString("logger.level")); err != nil {
 		zap.S().Fatalw("Could not determine logger.level", "error", err)
 	}
 	logConfig.Level.SetLevel(logLevel)
 
 	// Settings
-	logConfig.Encoding = config.GetString("logger.encoding")
-	logConfig.Development = config.GetBool("logger.dev_mode")
-	logConfig.DisableCaller = config.GetBool("logger.disable_caller")
-	logConfig.DisableStacktrace = config.GetBool("logger.disable_stacktrace")
+	logConfig.Encoding = viper.GetString("logger.encoding")
+	logConfig.Development = viper.GetBool("logger.dev_mode")
+	logConfig.DisableCaller = viper.GetBool("logger.disable_caller")
+	logConfig.DisableStacktrace = viper.GetBool("logger.disable_stacktrace")
 
 	// Enable Color
-	if config.GetBool("logger.color") {
+	if viper.GetBool("logger.color") {
 		logConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	}
 
@@ -129,8 +129,8 @@ func initLog() {
 
 // Profliter can explicitly listen on address/port
 func initProfiler() {
-	if config.GetBool("profiler.enabled") {
-		hostPort := net.JoinHostPort(config.GetString("profiler.host"), config.GetString("profiler.port"))
+	if viper.GetBool("profiler.enabled") {
+		hostPort := net.JoinHostPort(viper.GetString("profiler.host"), viper.GetString("profiler.port"))
 		go http.ListenAndServe(hostPort, nil)
 		logger.Infof("Profiler enabled on http://%s", hostPort)
 	}
