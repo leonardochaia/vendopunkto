@@ -1,7 +1,6 @@
 package server
 
 import (
-	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,8 +10,6 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
-	"github.com/snowzach/certtools"
-	"github.com/snowzach/certtools/autocert"
 	config "github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -75,39 +72,12 @@ func (s *Server) ListenAndServe() error {
 		return fmt.Errorf("Could not listen on %s: %v", s.server.Addr, err)
 	}
 
-	// Enable TLS?
-	if config.GetBool("server.tls") {
-		var cert tls.Certificate
-		if config.GetBool("server.devcert") {
-			s.logger.Warn("WARNING: This server is using an insecure development tls certificate. This is for development only!!!")
-			cert, err = autocert.New(autocert.InsecureStringReader("localhost"))
-			if err != nil {
-				return fmt.Errorf("Could not autocert generate server certificate: %v", err)
-			}
-		} else {
-			// Load keys from file
-			cert, err = tls.LoadX509KeyPair(config.GetString("server.certfile"), config.GetString("server.keyfile"))
-			if err != nil {
-				return fmt.Errorf("Could not load server certificate: %v", err)
-			}
-		}
-
-		// Enabed Certs - TODO Add/Get a cert
-		s.server.TLSConfig = &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MinVersion:   certtools.SecureTLSMinVersion(),
-			CipherSuites: certtools.SecureTLSCipherSuites(),
-		}
-		// Wrap the listener in a TLS Listener
-		listener = tls.NewListener(listener, s.server.TLSConfig)
-	}
-
 	go func() {
 		if err = s.server.Serve(listener); err != nil {
 			s.logger.Fatalw("API Listen error", "error", err, "address", s.server.Addr)
 		}
 	}()
-	s.logger.Infow("API Listening", "address", s.server.Addr, "tls", config.GetBool("server.tls"))
+	s.logger.Infow("API Listening", "address", s.server.Addr)
 
 	// Enable profiler
 	if config.GetBool("server.profiler_enabled") && config.GetString("server.profiler_path") != "" {
