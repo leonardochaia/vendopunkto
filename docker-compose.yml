@@ -1,0 +1,56 @@
+version: '3'
+
+volumes:
+  db:
+  monero_wallet:
+
+services:
+  vendopunktopostgres:
+    image: postgres:9.6.5
+    # restart: unless-stopped
+    container_name: vendopunktopostgres
+    ports:
+      - 5432:5432
+    volumes:
+    - db:/var/lib/postgresql/data
+
+  xmr-wallet:
+    image: kukks/monero:v0.15.0.0
+    # restart: unless-stopped
+    container_name: xmr-wallet
+    entrypoint: monero-wallet-rpc
+    command:
+      - "--stagenet"
+      - "--rpc-bind-ip=0.0.0.0"
+      - "--rpc-bind-port=18082"
+      - "--disable-rpc-login"
+      - "--confirm-external-bind"
+      - "--non-interactive"
+      # - "--tx-notify='/scripts/notifier.sh https://btcpayserver:14142/monerolikedaemoncallback/tx?cryptoCode=xmr&hash=%s'"
+      - "--daemon-address=pool.cloudissh.com:38081"
+      # - "--trusted-daemon"
+      # - "--offline"
+      - "--wallet-file=/wallet/wallet-01"
+      - "--password=password"
+      # - "--log-level=2"
+    ports:
+        - "18082:18082"
+    volumes:
+        - "monero_wallet:/wallet"
+
+  create_wallet:
+    image: kukks/monero:v0.15.0.0
+    container_name: xmr_wallet_rpc
+    entrypoint: monero-wallet-cli
+    tty: true
+    command:
+      - "--stagenet"
+      # - "--daemon-address=pool.cloudissh.com:38081"
+      # - "--trusted-daemon"
+      - "--offline"
+      - "--password=password"
+      - "--mnemonic-language=English"
+      - "--generate-new-wallet=/wallet/wallet-01"
+      - "--command=help"
+    volumes:
+        - "monero_wallet:/wallet"
