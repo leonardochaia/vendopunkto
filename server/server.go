@@ -17,57 +17,31 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/invoice"
 )
 
 // Server is the API web server
 type Server struct {
-	logger  *zap.SugaredLogger
-	router  chi.Router
-	server  *http.Server
-	invoice invoice.Manager
+	logger *zap.SugaredLogger
+	router chi.Router
+	server *http.Server
 }
 
-// New will setup the API listener
-func New(invoice invoice.Manager) (*Server, error) {
+func NewServer(invoices *invoice.Handler) *Server {
 
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Recoverer)
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Recoverer)
+	router.Use(render.SetContentType(render.ContentTypeJSON))
 
 	// Log Requests
 	if config.GetBool("server.log_requests") {
-		r.Use(func(next http.Handler) http.Handler {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				start := time.Now()
-				var requestID string
-				if reqID := r.Context().Value(middleware.RequestIDKey); reqID != nil {
-					requestID = reqID.(string)
-				}
-				ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-				next.ServeHTTP(ww, r)
-
-				latency := time.Since(start)
-
-				fields := []zapcore.Field{
-					zap.Int("status", ww.Status()),
-					zap.Duration("took", latency),
-					zap.String("remote", r.RemoteAddr),
-					zap.String("request", r.RequestURI),
-					zap.String("method", r.Method),
-					zap.String("package", "server.request"),
-				}
-				if requestID != "" {
-					fields = append(fields, zap.String("request-id", requestID))
-				}
-				zap.L().Info("API Request", fields...)
-			})
-		})
+		router.Use(RequestLogger)
 	}
 
 	// CORS Config
-	r.Use(cors.New(cors.Options{
+	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{http.MethodHead, http.MethodOptions, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch},
 		AllowedHeaders:   []string{"*"},
@@ -75,17 +49,16 @@ func New(invoice invoice.Manager) (*Server, error) {
 		MaxAge:           300,
 	}).Handler)
 
-	// Create the server
-	s := &Server{
-		logger:  zap.S().With("package", "server"),
-		router:  r,
-		invoice: invoice,
+	router.Route("/v1", func(r chi.Router) {
+		r.Mount("/invoices", invoices.Routes())
+	})
+
+	server := &Server{
+		logger: zap.S().With("package", "server"),
+		router: router,
 	}
 
-	s.SetupRoutes()
-
-	return s, nil
-
+	return server
 }
 
 // ListenAndServe will listen for requests
@@ -149,7 +122,34 @@ func (s *Server) ListenAndServe() error {
 // RenderOrErrInternal will render whatever you pass it (assuming it has Renderer) or prints an internal error
 func RenderOrErrInternal(w http.ResponseWriter, r *http.Request, d render.Renderer) {
 	if err := render.Render(w, r, d); err != nil {
-		render.Render(w, r, ErrInternal(err))
+		render.Render(w, r, errors.ErrInternal(err))
 		return
 	}
+}
+
+func RequestLogger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		var requestID string
+		if reqID := r.Context().Value(middleware.RequestIDKey); reqID != nil {
+			requestID = reqID.(string)
+		}
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		next.ServeHTTP(ww, r)
+
+		latency := time.Since(start)
+
+		fields := []zapcore.Field{
+			zap.Int("status", ww.Status()),
+			zap.Duration("took", latency),
+			zap.String("remote", r.RemoteAddr),
+			zap.String("request", r.RequestURI),
+			zap.String("method", r.Method),
+			zap.String("package", "server.request"),
+		}
+		if requestID != "" {
+			fields = append(fields, zap.String("request-id", requestID))
+		}
+		zap.L().Info("API Request", fields...)
+	})
 }

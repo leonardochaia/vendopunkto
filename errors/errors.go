@@ -1,9 +1,10 @@
-package server
+package errors
 
 import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"go.uber.org/zap"
 )
 
 // ErrResponse is a generic struct for returning a standard error document
@@ -40,8 +41,8 @@ func ErrInvalidRequest(err error) render.Renderer {
 }
 
 // ErrInternalLog will log an error and return a generic server error to the user
-func (s *Server) ErrInternalLog(err error) render.Renderer {
-	s.logger.Errorw("Server Error", "error", err)
+func ErrInternalLog(err error, logger *zap.SugaredLogger) render.Renderer {
+	logger.Errorw("Server Error", "error", err)
 	return ErrInternal(err)
 }
 

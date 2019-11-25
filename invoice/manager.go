@@ -11,8 +11,8 @@ type Manager struct {
 	store  Store
 }
 
-func NewManager(store Store, wallet wallet.Client) (Manager, error) {
-	return Manager{
+func NewManager(store Store, wallet wallet.Client) (*Manager, error) {
+	return &Manager{
 		wallet: wallet,
 		store:  store,
 	}, nil

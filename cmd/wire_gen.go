@@ -36,10 +36,8 @@ func NewServer() (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.New(manager)
-	if err != nil {
-		return nil, err
-	}
+	handler := invoice.NewHandler(manager)
+	serverServer := server.NewServer(handler)
 	return serverServer, nil
 }
 
