@@ -4,54 +4,51 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"go.uber.org/zap"
 )
 
-// ErrResponse is a generic struct for returning a standard error document
-type ErrResponse struct {
-	Err            error `json:"-"` // low-level runtime error
-	HTTPStatusCode int   `json:"-"` // http response status code
-
-	StatusText string `json:"status"`          // user-level status message
-	AppCode    int64  `json:"code,omitempty"`  // application-specific error code
-	ErrorText  string `json:"error,omitempty"` // application-level error message, for debugging
+func InvalidRequestParams(err error) *APIError {
+	return &APIError{
+		Title:  "Supplied parameters were invalid",
+		Status: 400,
+		Detail: err.Error(),
+	}
 }
 
-// ErrNotFound is a pre-built not-found error
-var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
+func ResourceNotFound() *APIError {
+	return &APIError{
+		Title:  "Requested resource was not found",
+		Status: 404,
+	}
+}
 
-// Render is the Renderer for ErrResponse struct
-func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	render.Status(r, e.HTTPStatusCode)
+func InternalServerError(err error) *APIError {
+	return &APIError{
+		Title:  "Internal Server Error",
+		Status: 500,
+		Detail: err.Error(),
+	}
+}
+
+// Based on https://tools.ietf.org/html/rfc7807#section-3.1
+type APIError struct {
+	Type   string `json:"type,omitempty"`   // A URI reference that identifies the problem type.
+	Title  string `json:"title"`            // A short, human-readable summary of the problem type.
+	Status int    `json:"status"`           // This is for client's convinience.
+	Detail string `json:"detail,omitempty"` //  A human-readable explanation specific to this occurrence of the problem.
+}
+
+func (e *APIError) Render(w http.ResponseWriter, r *http.Request) error {
+	render.Status(r, e.Status)
 	return nil
 }
 
-// ErrInvalidRequest is used to indicate an error on user input (with wrapped error)
-func ErrInvalidRequest(err error) render.Renderer {
-	var errorText string
-	if err != nil {
-		errorText = err.Error()
-	}
-	return &ErrResponse{
-		Err:            err,
-		HTTPStatusCode: http.StatusBadRequest,
-		StatusText:     "Invalid request.",
-		ErrorText:      errorText,
-	}
-}
+type HandlerErrorAwareFunc func(http.ResponseWriter, *http.Request) *APIError
 
-// ErrInternalLog will log an error and return a generic server error to the user
-func ErrInternalLog(err error, logger *zap.SugaredLogger) render.Renderer {
-	logger.Errorw("Server Error", "error", err)
-	return ErrInternal(err)
-}
-
-// ErrInternal returns a generic server error to the user
-func ErrInternal(err error) render.Renderer {
-	return &ErrResponse{
-		Err:            err,
-		HTTPStatusCode: http.StatusInternalServerError,
-		StatusText:     "Server Error.",
-		ErrorText:      "Server Error.",
+func WrapHandler(handler HandlerErrorAwareFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := handler(w, r)
+		if err != nil {
+			render.Render(w, r, err)
+		}
 	}
 }

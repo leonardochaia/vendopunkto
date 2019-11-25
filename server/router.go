@@ -35,6 +35,7 @@ func NewRouter(invoices *invoice.Handler) (*VendoPunktoRouter, error) {
 
 func setupMiddlewares(router VendoPunktoRouter) {
 	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
 	router.Use(middleware.Recoverer)
 	router.Use(render.SetContentType(render.ContentTypeJSON))
 	router.Use(middleware.GetHead)

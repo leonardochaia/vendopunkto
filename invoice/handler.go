@@ -18,50 +18,48 @@ type Handler struct {
 func (handler *Handler) Routes() chi.Router {
 	router := chi.NewRouter()
 
-	router.Post("/", handler.createInvoice)
-	router.Get("/{id}", handler.getInvoice)
+	router.Post("/", errors.WrapHandler(handler.createInvoice))
+	router.Get("/{id}", errors.WrapHandler(handler.getInvoice))
 
 	return router
 }
 
-func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) *errors.APIError {
 
 	type creationParams struct {
 		Amount       uint   `json:"amount"`
 		Denomination string `json:"denomination"`
 	}
+
 	var params = new(creationParams)
 	if err := render.DecodeJSON(r.Body, &params); err != nil {
-		render.Render(w, r, errors.ErrInvalidRequest(err))
-		return
+		return errors.InvalidRequestParams(err)
 	}
 
 	invoice, err := handler.manager.CreateInvoice(params.Amount, params.Denomination)
 	if err != nil {
-		render.Render(w, r, errors.ErrInternal(err))
-		return
+		return errors.InternalServerError(err)
 	}
+
 	render.JSON(w, r, invoice)
+	return nil
 }
 
-func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) *errors.APIError {
 
 	invoiceID := chi.URLParam(r, "id")
 	if invoiceID == "" {
-		render.Render(w, r, errors.ErrInvalidRequest(fmt.Errorf("Invalid ID")))
-		return
+		return errors.InvalidRequestParams(fmt.Errorf("No ID was provided"))
 	}
 
 	invoice, err := handler.manager.GetInvoice(invoiceID)
 	if err != nil {
-		render.Render(w, r, errors.ErrInternal(err))
-		return
+		return errors.InternalServerError(err)
 	}
-	// if invoice == nil {
-	// 	handler.logger.Infow("Provided unexistant invoice ID", "ID", invoiceID)
-	// 	render.Render(w, r, errors.ErrNotFound)
-	// 	return
-	// }
+	if invoice == nil {
+		return errors.ResourceNotFound()
+	}
 
 	render.JSON(w, r, invoice)
+	return nil
 }

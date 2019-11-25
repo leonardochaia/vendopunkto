@@ -23,8 +23,17 @@ type Manager struct {
 
 func (inv *Manager) GetInvoice(id string) (*Invoice, error) {
 	var invoice Invoice
-	err := inv.db.First(&invoice, "ID = ?", id).Error
-	return &invoice, err
+
+	result := inv.db.First(&invoice, "ID = ?", id)
+
+	if result.RecordNotFound() {
+		return nil, nil
+	}
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &invoice, nil
 }
 
 func (inv *Manager) CreateInvoice(amount uint, denomination string) (*Invoice, error) {
