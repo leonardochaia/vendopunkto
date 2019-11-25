@@ -25,13 +25,13 @@ func NewHandler(manager *Manager) *Handler {
 func (handler *Handler) Routes() chi.Router {
 	router := chi.NewRouter()
 
-	router.Post("/", handler.CreateInvoice)
-	router.Get("/{id}", handler.GetInvoice)
+	router.Post("/", handler.createInvoice)
+	router.Get("/{id}", handler.getInvoice)
 
 	return router
 }
 
-func (handler *Handler) CreateInvoice(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) {
 
 	type creationParams struct {
 		Amount       uint   `json:"amount"`
@@ -51,7 +51,7 @@ func (handler *Handler) CreateInvoice(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, invoice)
 }
 
-func (handler *Handler) GetInvoice(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) {
 
 	invoiceID := chi.URLParam(r, "id")
 	if invoiceID == "" {
