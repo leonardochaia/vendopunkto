@@ -35,12 +35,9 @@ func init() {
 	config.SetDefault("storage.password", "password")
 	config.SetDefault("storage.host", "postgres")
 	config.SetDefault("storage.port", 5432)
-	config.SetDefault("storage.database", "gorestapi")
+	config.SetDefault("storage.database", "vendopunkto")
 	config.SetDefault("storage.sslmode", "disable")
-	config.SetDefault("storage.retries", 5)
-	config.SetDefault("storage.sleep_between_retries", "7s")
-	config.SetDefault("storage.max_connections", 80)
-	config.SetDefault("storage.wipe_confirm", false)
+	// config.SetDefault("storage.max_connections", 80)
 
 	// Monero Settings
 	config.SetDefault("monero.wallet_rpc_url", "")

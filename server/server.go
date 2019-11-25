@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
+	"github.com/jinzhu/gorm"
 	config "github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -23,9 +24,10 @@ type Server struct {
 	logger *zap.SugaredLogger
 	router chi.Router
 	server *http.Server
+	db     *gorm.DB
 }
 
-func NewServer(invoices *invoice.Handler) *Server {
+func NewServer(invoices *invoice.Handler, db *gorm.DB) (*Server, error) {
 
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
@@ -53,9 +55,10 @@ func NewServer(invoices *invoice.Handler) *Server {
 	server := &Server{
 		logger: zap.S().With("package", "server"),
 		router: router,
+		db:     db,
 	}
 
-	return server
+	return server, nil
 }
 
 // ListenAndServe will listen for requests
@@ -87,6 +90,10 @@ func (s *Server) ListenAndServe() error {
 
 	return nil
 
+}
+
+func (s *Server) Close() {
+	s.db.Close()
 }
 
 // RenderOrErrInternal will render whatever you pass it (assuming it has Renderer) or prints an internal error

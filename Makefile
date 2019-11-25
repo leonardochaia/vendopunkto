@@ -35,7 +35,7 @@ mocks: tools
 	mockery -dir ./gorestapi -name ThingStore
 
 .PHONY: ${EXECUTABLE}
-${EXECUTABLE}: tools cmd/wire_gen.go ${MIGRATIONDIR}/bindata.go
+${EXECUTABLE}: tools cmd/wire_gen.go 
 	# Compiling...
 	go build -ldflags "-X ${PACKAGENAME}/conf.Executable=${EXECUTABLE} -X ${PACKAGENAME}/conf.GitVersion=${GITVERSION}" -o ${EXECUTABLE}
 

@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/leonardochaia/vendopunkto/errors"
-	"github.com/leonardochaia/vendopunkto/store"
 	"go.uber.org/zap"
 )
 
@@ -44,7 +43,7 @@ func (handler *Handler) CreateInvoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invoice, err := handler.manager.CreateInvoice(r.Context(), params.Amount, params.Denomination)
+	invoice, err := handler.manager.CreateInvoice(params.Amount, params.Denomination)
 	if err != nil {
 		render.Render(w, r, errors.ErrInternal(err))
 		return
@@ -60,16 +59,16 @@ func (handler *Handler) GetInvoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := handler.manager.GetInvoice(r.Context(), invoiceID)
-
-	if err == store.ErrNotFound {
-		handler.logger.Infow("Provided unexistant invoice ID", "ID", invoiceID)
-		render.Render(w, r, errors.ErrNotFound)
-		return
-	} else if err != nil {
-		render.Render(w, r, errors.ErrInvalidRequest(err))
+	invoice, err := handler.manager.GetInvoice(invoiceID)
+	if err != nil {
+		render.Render(w, r, errors.ErrInternal(err))
 		return
 	}
+	// if invoice == nil {
+	// 	handler.logger.Infow("Provided unexistant invoice ID", "ID", invoiceID)
+	// 	render.Render(w, r, errors.ErrNotFound)
+	// 	return
+	// }
 
-	render.JSON(w, r, b)
+	render.JSON(w, r, invoice)
 }

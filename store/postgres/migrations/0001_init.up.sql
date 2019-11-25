@@ -1,7 +1,0 @@
-CREATE TABLE IF NOT EXISTS invoices (
-  id TEXT PRIMARY KEY NOT NULL,
-  amount BIGINT NOT NULL,
-  denomination TEXT NOT NULL,
-  address TEXT NOT NULL
-);
-

@@ -1,28 +1,43 @@
 package invoice
 
 import (
-	"context"
+	"time"
 
+	"github.com/jinzhu/gorm"
 	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
+	"github.com/rs/xid"
 )
+
+type Invoice struct {
+	ID             string    `json:"id"`
+	Amount         uint      `json:"amount" gorm:"type:BIGINT"`
+	Denomination   string    `json:"denomination"`
+	PaymentAddress string    `json:"address"`
+	CreatedAt      time.Time `json:"createdAt"`
+}
 
 type Manager struct {
 	wallet wallet.Client
-	store  Store
+	db     *gorm.DB
 }
 
-func NewManager(store Store, wallet wallet.Client) (*Manager, error) {
+func NewManager(db *gorm.DB, wallet wallet.Client) (*Manager, error) {
+
+	db.AutoMigrate(&Invoice{})
+
 	return &Manager{
 		wallet: wallet,
-		store:  store,
+		db:     db,
 	}, nil
 }
 
-func (inv *Manager) GetInvoice(ctx context.Context, id string) (*Invoice, error) {
-	return inv.store.GetByID(ctx, id)
+func (inv *Manager) GetInvoice(id string) (*Invoice, error) {
+	var invoice Invoice
+	err := inv.db.First(&invoice, "ID = ?", id).Error
+	return &invoice, err
 }
 
-func (inv *Manager) CreateInvoice(ctx context.Context, amount uint, denomination string) (*Invoice, error) {
+func (inv *Manager) CreateInvoice(amount uint, denomination string) (*Invoice, error) {
 
 	address, err := inv.wallet.CreateAddress(&wallet.RequestCreateAddress{})
 	if err != nil {
@@ -30,15 +45,13 @@ func (inv *Manager) CreateInvoice(ctx context.Context, amount uint, denomination
 	}
 
 	invoice := &Invoice{
+		ID:             xid.New().String(),
 		PaymentAddress: address.Address,
 		Amount:         amount,
 		Denomination:   denomination,
 	}
 
-	_, err = inv.store.SaveInvoice(ctx, invoice)
-	if err != nil {
-		return nil, err
-	}
+	err = inv.db.Create(invoice).Error
 
-	return invoice, nil
+	return invoice, err
 }

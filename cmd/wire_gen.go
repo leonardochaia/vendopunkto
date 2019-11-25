@@ -9,8 +9,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/invoice"
 	"github.com/leonardochaia/vendopunkto/monero"
 	"github.com/leonardochaia/vendopunkto/server"
-	"github.com/leonardochaia/vendopunkto/store/postgres"
-	"github.com/spf13/viper"
+	"github.com/leonardochaia/vendopunkto/store"
 )
 
 import (
@@ -20,39 +19,22 @@ import (
 // Injectors from wire.go:
 
 func NewServer() (*server.Server, error) {
-	client, err := NewDBClient()
+	db, err := store.NewDB()
 	if err != nil {
 		return nil, err
 	}
-	store, err := invoice.NewStore(client)
+	client, err := monero.CreateMoneroClient()
 	if err != nil {
 		return nil, err
 	}
-	walletClient, err := monero.CreateMoneroClient()
-	if err != nil {
-		return nil, err
-	}
-	manager, err := invoice.NewManager(store, walletClient)
+	manager, err := invoice.NewManager(db, client)
 	if err != nil {
 		return nil, err
 	}
 	handler := invoice.NewHandler(manager)
-	serverServer := server.NewServer(handler)
-	return serverServer, nil
-}
-
-// wire.go:
-
-func NewDBClient() (*postgres.Client, error) {
-	var pgClient *postgres.Client
-	var err error
-	switch viper.GetString("storage.type") {
-	case "postgres":
-		pgClient, err = postgres.New()
-	}
+	serverServer, err := server.NewServer(handler, db)
 	if err != nil {
 		return nil, err
-
 	}
-	return pgClient, nil
+	return serverServer, nil
 }
