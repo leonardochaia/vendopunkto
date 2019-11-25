@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -10,6 +11,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/invoice"
 	config "github.com/spf13/viper"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type VendoPunktoRouter interface {
@@ -59,4 +61,31 @@ func setupMiddlewares(router VendoPunktoRouter) {
 		zap.S().Debugw("Profiler enabled on API", "path", config.GetString("server.profiler_path"))
 		router.Mount(config.GetString("server.profiler_path"), middleware.Profiler())
 	}
+}
+
+func requestLogger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		var requestID string
+		if reqID := r.Context().Value(middleware.RequestIDKey); reqID != nil {
+			requestID = reqID.(string)
+		}
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		next.ServeHTTP(ww, r)
+
+		latency := time.Since(start)
+
+		fields := []zapcore.Field{
+			zap.Int("status", ww.Status()),
+			zap.Duration("took", latency),
+			zap.String("remote", r.RemoteAddr),
+			zap.String("request", r.RequestURI),
+			zap.String("method", r.Method),
+			zap.String("package", "server.request"),
+		}
+		if requestID != "" {
+			fields = append(fields, zap.String("request-id", requestID))
+		}
+		zap.L().Info("API Request", fields...)
+	})
 }
