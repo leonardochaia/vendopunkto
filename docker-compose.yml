@@ -27,7 +27,7 @@ services:
       - "--confirm-external-bind"
       - "--non-interactive"
       # - "--tx-notify='/scripts/notifier.sh https://btcpayserver:14142/monerolikedaemoncallback/tx?cryptoCode=xmr&hash=%s'"
-      - "--daemon-address=pool.cloudissh.com:38081"
+      - "--daemon-address=ubuntu-01.homelab.astonishinglabs.net:38081"
       # - "--trusted-daemon"
       # - "--offline"
       - "--wallet-file=/wallet/wallet-01"

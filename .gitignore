@@ -1,5 +1,4 @@
 vendopunkto-server
 mocks
-bindata.go
 server.crt
 server.key
