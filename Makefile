@@ -59,4 +59,4 @@ dbclean:
 run:
 	STORAGE_HOST=localhost \
 	MONERO_WALLET_RPC_URL=http://localhost:18082 \
-	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server
+	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api

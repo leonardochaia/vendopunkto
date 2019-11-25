@@ -32,7 +32,11 @@ func NewServer() (*server.Server, error) {
 		return nil, err
 	}
 	handler := invoice.NewHandler(manager)
-	serverServer, err := server.NewServer(handler, db)
+	vendoPunktoRouter, err := server.NewRouter(handler)
+	if err != nil {
+		return nil, err
+	}
+	serverServer, err := server.NewServer(vendoPunktoRouter, db)
 	if err != nil {
 		return nil, err
 	}

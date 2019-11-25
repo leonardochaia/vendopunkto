@@ -15,7 +15,10 @@ import (
 
 // Create a new server
 func NewServer() (*server.Server, error) {
-	wire.Build(server.NewServer, invoice.NewManager,
+	wire.Build(
+		server.NewServer,
+		server.NewRouter,
+		invoice.NewManager,
 		invoice.NewHandler,
 		store.NewDB,
 		monero.CreateMoneroClient)
