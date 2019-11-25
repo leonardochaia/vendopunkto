@@ -38,7 +38,7 @@ func setupMiddlewares(router VendoPunktoRouter) {
 
 	// Log Requests
 	if config.GetBool("server.log_requests") {
-		router.Use(RequestLogger)
+		router.Use(requestLogger)
 	}
 
 	// CORS Config
