@@ -8,10 +8,9 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
+	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/invoice"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type VendoPunktoRouter interface {
@@ -19,11 +18,13 @@ type VendoPunktoRouter interface {
 }
 
 // Creates the chi Router and configures global paths
-func NewRouter(invoices *invoice.Handler) (*VendoPunktoRouter, error) {
+func NewRouter(invoices *invoice.Handler, globalLogger hclog.Logger) (*VendoPunktoRouter, error) {
 
 	var router VendoPunktoRouter
 	router = chi.NewRouter()
-	setupMiddlewares(router)
+
+	logger := globalLogger.Named("router")
+	setupMiddlewares(router, logger)
 
 	router.Get("/info", GetVersion())
 
@@ -33,7 +34,7 @@ func NewRouter(invoices *invoice.Handler) (*VendoPunktoRouter, error) {
 	return &router, nil
 }
 
-func setupMiddlewares(router VendoPunktoRouter) {
+func setupMiddlewares(router VendoPunktoRouter, logger hclog.Logger) {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Recoverer)
@@ -42,7 +43,7 @@ func setupMiddlewares(router VendoPunktoRouter) {
 
 	// Log Requests
 	if viper.GetBool("server.log_requests") {
-		router.Use(requestLogger)
+		router.Use(newRequestLogger(logger))
 	}
 
 	// CORS Config
@@ -60,34 +61,32 @@ func setupMiddlewares(router VendoPunktoRouter) {
 
 	// Enable profiler
 	if viper.GetBool("server.profiler_enabled") && viper.GetString("server.profiler_path") != "" {
-		zap.S().Debugw("Profiler enabled on API", "path", viper.GetString("server.profiler_path"))
+		logger.Debug("Profiler enabled on API", "path", viper.GetString("server.profiler_path"))
 		router.Mount(viper.GetString("server.profiler_path"), middleware.Profiler())
 	}
 }
+func newRequestLogger(parentLogger hclog.Logger) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			var requestID string
+			if reqID := r.Context().Value(middleware.RequestIDKey); reqID != nil {
+				requestID = reqID.(string)
+			}
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			next.ServeHTTP(ww, r)
 
-func requestLogger(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		var requestID string
-		if reqID := r.Context().Value(middleware.RequestIDKey); reqID != nil {
-			requestID = reqID.(string)
-		}
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-		next.ServeHTTP(ww, r)
+			latency := time.Since(start)
+			logger := parentLogger.Named("request")
 
-		latency := time.Since(start)
+			logger.Info("API Request",
+				"status", ww.Status(),
+				"duration", latency.String(),
+				"remote", r.RemoteAddr,
+				"url", r.RequestURI,
+				"method", r.Method,
+				"requestID", requestID)
+		})
+	}
 
-		fields := []zapcore.Field{
-			zap.Int("status", ww.Status()),
-			zap.Duration("took", latency),
-			zap.String("remote", r.RemoteAddr),
-			zap.String("request", r.RequestURI),
-			zap.String("method", r.Method),
-			zap.String("package", "server.request"),
-		}
-		if requestID != "" {
-			fields = append(fields, zap.String("request-id", requestID))
-		}
-		zap.L().Info("API Request", fields...)
-	})
 }

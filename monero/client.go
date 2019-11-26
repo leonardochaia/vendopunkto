@@ -3,13 +3,14 @@ package monero
 import (
 	"errors"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
-func CreateMoneroClient() (wallet.Client, error) {
+func CreateMoneroClient(globalLogger hclog.Logger) (wallet.Client, error) {
 	baseURL := viper.GetString("monero.wallet_rpc_url")
+	logger := globalLogger.Named("monero")
 
 	if baseURL == "" {
 		return nil, errors.New("A Monero Wallet RPC url must be provided")
@@ -19,15 +20,14 @@ func CreateMoneroClient() (wallet.Client, error) {
 		Address: baseURL + "/json_rpc",
 	})
 
-	zap.S().Infow("Connecting to Monero Wallet RPC", "package", "monero", "url", baseURL)
-
 	version, err := client.GetVersion()
 
 	if err != nil {
+		logger.Warn("Failed to connect to Monero Wallet RPC", "url", baseURL)
 		return nil, err
 	}
 
-	zap.S().Infow("Monero Wallet RPC", "package", "monero", "version", version)
+	logger.Info("Monero Wallet RPC Test Success", "version", version.Version)
 
 	return client, nil
 }

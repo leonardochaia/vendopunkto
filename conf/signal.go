@@ -1,11 +1,10 @@
 package conf
 
 import (
+	"github.com/hashicorp/go-hclog"
 	"os"
 	"os/signal"
 	"sync"
-
-	"go.uber.org/zap"
 )
 
 type stop struct {
@@ -36,7 +35,7 @@ func init() {
 			for sig := range signalChannel {
 				switch sig {
 				case os.Interrupt:
-					zap.S().Info("Received Interrupt...")
+					hclog.Default().Info("Received Interrupt...")
 					close(Stop.c)
 					return
 				}

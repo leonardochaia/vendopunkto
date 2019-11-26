@@ -2,16 +2,16 @@ package invoice
 
 import (
 	"github.com/google/wire"
+	"github.com/hashicorp/go-hclog"
 	"github.com/jinzhu/gorm"
 	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
-	"go.uber.org/zap"
 )
 
 var InvoiceProviders = wire.NewSet(NewHandler, NewManager)
 
-func NewHandler(manager *Manager) *Handler {
+func NewHandler(manager *Manager, globalLogger hclog.Logger) *Handler {
 	return &Handler{
-		logger:  zap.S().With("package", "invoice"),
+		logger:  globalLogger.Named("invoice"),
 		manager: manager,
 	}
 }

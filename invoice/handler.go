@@ -6,13 +6,13 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/errors"
-	"go.uber.org/zap"
 )
 
 type Handler struct {
 	manager *Manager
-	logger  *zap.SugaredLogger
+	logger  hclog.Logger
 }
 
 func (handler *Handler) Routes() chi.Router {

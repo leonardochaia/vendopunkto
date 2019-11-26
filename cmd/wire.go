@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"github.com/google/wire"
+	"github.com/hashicorp/go-hclog"
 
 	"github.com/leonardochaia/vendopunkto/invoice"
 	"github.com/leonardochaia/vendopunkto/monero"
@@ -14,7 +15,7 @@ import (
 )
 
 // Create a new server
-func NewServer() (*server.Server, error) {
+func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	wire.Build(
 		invoice.InvoiceProviders,
 		server.NewServer,

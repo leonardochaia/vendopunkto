@@ -4,24 +4,28 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 // Server is the API web server
 type Server struct {
-	logger *zap.SugaredLogger
+	logger hclog.Logger
 	router *VendoPunktoRouter
 	server *http.Server
 	db     *gorm.DB
 }
 
-func NewServer(router *VendoPunktoRouter, db *gorm.DB) (*Server, error) {
+func NewServer(
+	router *VendoPunktoRouter,
+	db *gorm.DB,
+	globalLogger hclog.Logger) (*Server, error) {
 
 	server := &Server{
-		logger: zap.S().With("package", "server"),
+		logger: globalLogger.Named("server"),
 		router: router,
 		db:     db,
 	}
@@ -45,10 +49,11 @@ func (s *Server) ListenAndServe() error {
 
 	go func() {
 		if err = s.server.Serve(listener); err != nil {
-			s.logger.Fatalw("API Listen error", "error", err, "address", s.server.Addr)
+			s.logger.Error("API Listen error", "error", err, "address", s.server.Addr)
+			os.Exit(1)
 		}
 	}()
-	s.logger.Infow("API Listening", "address", s.server.Addr)
+	s.logger.Info("API Listening", "address", s.server.Addr)
 
 	return nil
 

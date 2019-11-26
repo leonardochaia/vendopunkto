@@ -6,6 +6,7 @@
 package cmd
 
 import (
+	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/invoice"
 	"github.com/leonardochaia/vendopunkto/monero"
 	"github.com/leonardochaia/vendopunkto/server"
@@ -18,12 +19,12 @@ import (
 
 // Injectors from wire.go:
 
-func NewServer() (*server.Server, error) {
+func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 	db, err := store.NewDB()
 	if err != nil {
 		return nil, err
 	}
-	client, err := monero.CreateMoneroClient()
+	client, err := monero.CreateMoneroClient(globalLogger2)
 	if err != nil {
 		return nil, err
 	}
@@ -31,12 +32,12 @@ func NewServer() (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	handler := invoice.NewHandler(manager)
-	vendoPunktoRouter, err := server.NewRouter(handler)
+	handler := invoice.NewHandler(manager, globalLogger2)
+	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger2)
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.NewServer(vendoPunktoRouter, db)
+	serverServer, err := server.NewServer(vendoPunktoRouter, db, globalLogger2)
 	if err != nil {
 		return nil, err
 	}
