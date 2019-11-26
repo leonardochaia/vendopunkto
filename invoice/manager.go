@@ -10,7 +10,7 @@ import (
 
 type Invoice struct {
 	ID             string    `json:"id"`
-	Amount         uint      `json:"amount" gorm:"type:BIGINT"`
+	Amount         uint64    `json:"amount" gorm:"type:BIGINT"`
 	Denomination   string    `json:"denomination"`
 	PaymentAddress string    `json:"address"`
 	CreatedAt      time.Time `json:"createdAt"`
@@ -36,7 +36,22 @@ func (inv *Manager) GetInvoice(id string) (*Invoice, error) {
 	return &invoice, nil
 }
 
-func (inv *Manager) CreateInvoice(amount uint, denomination string) (*Invoice, error) {
+func (inv *Manager) GetInvoiceByAddress(address string) (*Invoice, error) {
+	var invoice Invoice
+
+	result := inv.db.First(&invoice, "payment_address = ?", address)
+
+	if result.RecordNotFound() {
+		return nil, nil
+	}
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &invoice, nil
+}
+
+func (inv *Manager) CreateInvoice(amount uint64, denomination string) (*Invoice, error) {
 
 	address, err := inv.wallet.CreateAddress(&wallet.RequestCreateAddress{})
 	if err != nil {

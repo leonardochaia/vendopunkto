@@ -27,7 +27,7 @@ func (handler *Handler) Routes() chi.Router {
 func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) *errors.APIError {
 
 	type creationParams struct {
-		Amount       uint   `json:"amount"`
+		Amount       uint64 `json:"amount"`
 		Denomination string `json:"denomination"`
 	}
 
