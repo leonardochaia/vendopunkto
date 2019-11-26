@@ -8,11 +8,6 @@ func init() {
 
 	// Logger Defaults
 	viper.SetDefault("logger.level", "info")
-	viper.SetDefault("logger.encoding", "console")
-	viper.SetDefault("logger.color", true)
-	viper.SetDefault("logger.dev_mode", true)
-	viper.SetDefault("logger.disable_caller", false)
-	viper.SetDefault("logger.disable_stacktrace", true)
 
 	// Pidfile
 	viper.SetDefault("pidfile", "")
