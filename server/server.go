@@ -8,26 +8,30 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/jinzhu/gorm"
+	"github.com/leonardochaia/vendopunkto/pluginmgr"
 	"github.com/spf13/viper"
 )
 
 // Server is the API web server
 type Server struct {
-	logger hclog.Logger
-	router *VendoPunktoRouter
-	server *http.Server
-	db     *gorm.DB
+	logger        hclog.Logger
+	router        *VendoPunktoRouter
+	server        *http.Server
+	db            *gorm.DB
+	pluginManager *pluginmgr.Manager
 }
 
 func NewServer(
 	router *VendoPunktoRouter,
 	db *gorm.DB,
-	globalLogger hclog.Logger) (*Server, error) {
+	globalLogger hclog.Logger,
+	pluginManager *pluginmgr.Manager) (*Server, error) {
 
 	server := &Server{
-		logger: globalLogger.Named("server"),
-		router: router,
-		db:     db,
+		logger:        globalLogger.Named("server"),
+		router:        router,
+		db:            db,
+		pluginManager: pluginManager,
 	}
 
 	return server, nil
@@ -35,6 +39,8 @@ func NewServer(
 
 // ListenAndServe will listen for requests
 func (s *Server) ListenAndServe() error {
+
+	s.pluginManager.LoadPlugins()
 
 	s.server = &http.Server{
 		Addr:    net.JoinHostPort(viper.GetString("server.host"), viper.GetString("server.port")),

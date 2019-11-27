@@ -4,7 +4,7 @@ import (
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
 	"github.com/jinzhu/gorm"
-	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
+	"github.com/leonardochaia/vendopunkto/pluginmgr"
 )
 
 var InvoiceProviders = wire.NewSet(NewHandler, NewManager)
@@ -16,12 +16,12 @@ func NewHandler(manager *Manager, globalLogger hclog.Logger) *Handler {
 	}
 }
 
-func NewManager(db *gorm.DB, wallet wallet.Client) (*Manager, error) {
+func NewManager(db *gorm.DB, pluginManager *pluginmgr.Manager) (*Manager, error) {
 
 	db.AutoMigrate(&Invoice{})
 
 	return &Manager{
-		wallet: wallet,
-		db:     db,
+		pluginManager: pluginManager,
+		db:            db,
 	}, nil
 }

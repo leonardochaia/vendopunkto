@@ -58,5 +58,12 @@ dbclean:
 
 run:
 	STORAGE_HOST=localhost \
-	MONERO_WALLET_RPC_URL=http://localhost:18082 \
+	PLUGINS_ENABLED="wallet|http://localhost:3333" \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
+
+build-monero:
+	go build -o ./vendopunkto-monero ./plugin/monero/monero-main.go
+
+run-monero:
+	MONERO_WALLET_RPC_URL=http://localhost:18082 \
+	${GOPATH}/src/${PACKAGENAME}/vendopunkto-monero

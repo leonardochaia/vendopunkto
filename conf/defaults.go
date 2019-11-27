@@ -34,7 +34,8 @@ func init() {
 	viper.SetDefault("storage.sslmode", "disable")
 	// viper.SetDefault("storage.max_connections", 80)
 
-	// Monero Settings
-	viper.SetDefault("monero.wallet_rpc_url", "")
+	// Plugins
+	// PLUGINS_ENABLED="wallet|http://localhost3333"
+	viper.SetDefault("plugins.enabled", []string{})
 
 }

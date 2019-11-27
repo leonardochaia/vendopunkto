@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
+	"github.com/leonardochaia/vendopunkto/pluginmgr"
 	"github.com/rs/xid"
 )
 
@@ -17,8 +17,8 @@ type Invoice struct {
 }
 
 type Manager struct {
-	wallet wallet.Client
-	db     *gorm.DB
+	db            *gorm.DB
+	pluginManager *pluginmgr.Manager
 }
 
 func (inv *Manager) GetInvoice(id string) (*Invoice, error) {
@@ -53,14 +53,22 @@ func (inv *Manager) GetInvoiceByAddress(address string) (*Invoice, error) {
 
 func (inv *Manager) CreateInvoice(amount uint64, denomination string) (*Invoice, error) {
 
-	address, err := inv.wallet.CreateAddress(&wallet.RequestCreateAddress{})
+	newID := xid.New().String()
+
+	wallet, err := inv.pluginManager.GetWallet("monero-wallet")
+
+	if err != nil {
+		return nil, err
+	}
+
+	address, err := wallet.GenerateNewAddress(newID)
 	if err != nil {
 		return nil, err
 	}
 
 	invoice := &Invoice{
-		ID:             xid.New().String(),
-		PaymentAddress: address.Address,
+		ID:             newID,
+		PaymentAddress: address,
 		Amount:         amount,
 		Denomination:   denomination,
 	}

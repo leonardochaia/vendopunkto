@@ -8,7 +8,7 @@ package cmd
 import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/invoice"
-	"github.com/leonardochaia/vendopunkto/monero"
+	"github.com/leonardochaia/vendopunkto/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/server"
 	"github.com/leonardochaia/vendopunkto/store"
 )
@@ -24,20 +24,17 @@ func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	client, err := monero.CreateMoneroClient(globalLogger2)
+	manager := pluginmgr.NewManager(globalLogger2)
+	invoiceManager, err := invoice.NewManager(db, manager)
 	if err != nil {
 		return nil, err
 	}
-	manager, err := invoice.NewManager(db, client)
-	if err != nil {
-		return nil, err
-	}
-	handler := invoice.NewHandler(manager, globalLogger2)
+	handler := invoice.NewHandler(invoiceManager, globalLogger2)
 	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger2)
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.NewServer(vendoPunktoRouter, db, globalLogger2)
+	serverServer, err := server.NewServer(vendoPunktoRouter, db, globalLogger2, manager)
 	if err != nil {
 		return nil, err
 	}
