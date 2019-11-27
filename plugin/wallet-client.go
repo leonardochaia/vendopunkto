@@ -50,7 +50,7 @@ func (c coinWalletClientImpl) GenerateNewAddress(invoiceID string) (string, erro
 	return result.Address, err
 }
 
-func (c coinWalletClientImpl) GetPluginInfo() (*PluginInfo, error) {
+func (c coinWalletClientImpl) GetPluginInfo() (*WalletPluginInfo, error) {
 	u, err := url.Parse(WalletMainEndpoint + PluginInfoEndpoint)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (c coinWalletClientImpl) GetPluginInfo() (*PluginInfo, error) {
 		return nil, err
 	}
 
-	var result PluginInfo
+	var result WalletPluginInfo
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return &result, err

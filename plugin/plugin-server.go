@@ -13,16 +13,6 @@ type Server struct {
 	started bool
 }
 
-// Plugin is the base interface for all plugins
-type Plugin interface {
-	GetPluginInfo() (*PluginInfo, error)
-}
-
-type PluginInfo struct {
-	Name string
-	ID   string
-}
-
 // ServerPlugin wraps the plugin implementation.
 // It configures the router and orchestrates the underlying calls
 // to the actual implementation

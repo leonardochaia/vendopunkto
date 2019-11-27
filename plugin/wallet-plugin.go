@@ -4,9 +4,15 @@ import (
 	"github.com/go-chi/chi"
 )
 
+type WalletPluginInfo struct {
+	ID         string
+	Name       string
+	Currencies []string
+}
+
 // WalletPlugin must be implemented for a Coin to be supported by vendopunkto
 type WalletPlugin interface {
-	Plugin
+	GetPluginInfo() (*WalletPluginInfo, error)
 	GenerateNewAddress(invoiceID string) (string, error)
 }
 

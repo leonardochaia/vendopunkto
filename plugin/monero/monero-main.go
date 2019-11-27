@@ -25,10 +25,11 @@ func (p MoneroWalletPlugin) GenerateNewAddress(invoiceID string) (string, error)
 	return result.IntegratedAddress, nil
 }
 
-func (p MoneroWalletPlugin) GetPluginInfo() (*plugin.PluginInfo, error) {
-	return &plugin.PluginInfo{
-		Name: "Monero Wallet",
-		ID:   "monero-wallet",
+func (p MoneroWalletPlugin) GetPluginInfo() (*plugin.WalletPluginInfo, error) {
+	return &plugin.WalletPluginInfo{
+		Name:       "Monero Wallet",
+		ID:         "monero-wallet",
+		Currencies: []string{"XMR"},
 	}, nil
 }
 

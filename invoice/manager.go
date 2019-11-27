@@ -11,7 +11,7 @@ import (
 type Invoice struct {
 	ID             string    `json:"id"`
 	Amount         uint64    `json:"amount" gorm:"type:BIGINT"`
-	Denomination   string    `json:"denomination"`
+	Currency       string    `json:"currency"`
 	PaymentAddress string    `json:"address"`
 	CreatedAt      time.Time `json:"createdAt"`
 }
@@ -51,11 +51,11 @@ func (inv *Manager) GetInvoiceByAddress(address string) (*Invoice, error) {
 	return &invoice, nil
 }
 
-func (inv *Manager) CreateInvoice(amount uint64, denomination string) (*Invoice, error) {
+func (inv *Manager) CreateInvoice(amount uint64, currency string) (*Invoice, error) {
 
 	newID := xid.New().String()
 
-	wallet, err := inv.pluginManager.GetWallet("monero-wallet")
+	wallet, err := inv.pluginManager.GetWalletForCurrency(currency)
 
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (inv *Manager) CreateInvoice(amount uint64, denomination string) (*Invoice,
 		ID:             newID,
 		PaymentAddress: address,
 		Amount:         amount,
-		Denomination:   denomination,
+		Currency:       currency,
 	}
 
 	err = inv.db.Create(invoice).Error
