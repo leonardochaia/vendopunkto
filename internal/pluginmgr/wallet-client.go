@@ -1,8 +1,9 @@
-package plugin
+package pluginmgr
 
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/leonardochaia/vendopunkto/plugin"
 	"net/http"
 	"net/url"
 	"time"
@@ -13,7 +14,7 @@ type coinWalletClientImpl struct {
 	client http.Client
 }
 
-func NewWalletClient(url url.URL) WalletPlugin {
+func NewWalletClient(url url.URL) plugin.WalletPlugin {
 	return &coinWalletClientImpl{
 		apiURL: url,
 		client: http.Client{
@@ -23,14 +24,14 @@ func NewWalletClient(url url.URL) WalletPlugin {
 }
 
 func (c coinWalletClientImpl) GenerateNewAddress(invoiceID string) (string, error) {
-	u, err := url.Parse(WalletMainEndpoint + GenerateAddressWalletEndpoint)
+	u, err := url.Parse(plugin.WalletMainEndpoint + plugin.GenerateAddressWalletEndpoint)
 	if err != nil {
 		return "", err
 	}
 
 	final := c.apiURL.ResolveReference(u)
 
-	params, err := json.Marshal(&CoinWalletAddressParams{
+	params, err := json.Marshal(&plugin.CoinWalletAddressParams{
 		InvoiceID: invoiceID,
 	})
 
@@ -44,14 +45,14 @@ func (c coinWalletClientImpl) GenerateNewAddress(invoiceID string) (string, erro
 		return "", err
 	}
 
-	var result CoinWalletAddressResponse
+	var result plugin.CoinWalletAddressResponse
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return result.Address, err
 }
 
-func (c coinWalletClientImpl) GetPluginInfo() (*WalletPluginInfo, error) {
-	u, err := url.Parse(WalletMainEndpoint + PluginInfoEndpoint)
+func (c coinWalletClientImpl) GetPluginInfo() (*plugin.WalletPluginInfo, error) {
+	u, err := url.Parse(plugin.WalletMainEndpoint + plugin.PluginInfoEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func (c coinWalletClientImpl) GetPluginInfo() (*WalletPluginInfo, error) {
 		return nil, err
 	}
 
-	var result WalletPluginInfo
+	var result plugin.WalletPluginInfo
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return &result, err

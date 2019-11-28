@@ -4,7 +4,7 @@ import (
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
 	"github.com/jinzhu/gorm"
-	"github.com/leonardochaia/vendopunkto/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 )
 
 var InvoiceProviders = wire.NewSet(NewHandler, NewManager)

@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/hashicorp/go-hclog"
-	"github.com/leonardochaia/vendopunkto/invoice"
+	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/spf13/viper"
 )
 

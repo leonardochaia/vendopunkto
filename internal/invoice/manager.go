@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/leonardochaia/vendopunkto/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/rs/xid"
 )
 

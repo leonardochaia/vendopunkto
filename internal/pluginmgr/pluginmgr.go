@@ -59,7 +59,7 @@ func (manager *Manager) LoadPlugins() {
 
 func (manager *Manager) initializeWalletPlugin(url url.URL) error {
 
-	client := plugin.NewWalletClient(url)
+	client := NewWalletClient(url)
 	info, err := client.GetPluginInfo()
 
 	if err != nil {

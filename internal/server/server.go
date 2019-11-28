@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/jinzhu/gorm"
-	"github.com/leonardochaia/vendopunkto/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/spf13/viper"
 )
 

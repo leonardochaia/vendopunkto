@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/leonardochaia/vendopunkto/conf"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 )
 
 // GetVersion returns version

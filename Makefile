@@ -11,23 +11,23 @@ TOOLS := ${GOPATH}/bin/mockery \
 default: ${EXECUTABLE}
 
 ${GOPATH}/bin/mockery:
-	go get github.com/vektra/mockery/cmd/mockery
+	go get github.com/vektra/mockery/internal/cmd/mockery
 
 ${GOPATH}/bin/wire:
 	go get github.com/google/wire
-	go get github.com/google/wire/cmd/wire
+	go get github.com/google/wire/internal/cmd/wire
 
 tools: ${TOOLS}
 
-cmd/wire_gen.go: cmd/wire.go
-	wire ./cmd/...
+internal/cmd/wire_gen.go: internal/cmd/wire.go
+	wire ./internal/cmd/...
 
 .PHONY: mocks
 mocks: tools
 	mockery -dir ./gorestapi -name ThingStore
 
 .PHONY: ${EXECUTABLE}
-${EXECUTABLE}: tools cmd/wire_gen.go 
+${EXECUTABLE}: tools internal/cmd/wire_gen.go 
 	# Compiling...
 	go build -ldflags "-X ${PACKAGENAME}/conf.Executable=${EXECUTABLE} -X ${PACKAGENAME}/conf.GitVersion=${GITVERSION}" -o ${EXECUTABLE}
 

@@ -8,10 +8,10 @@ import (
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
 
-	"github.com/leonardochaia/vendopunkto/invoice"
-	"github.com/leonardochaia/vendopunkto/pluginmgr"
-	"github.com/leonardochaia/vendopunkto/server"
-	"github.com/leonardochaia/vendopunkto/store"
+	"github.com/leonardochaia/vendopunkto/internal/invoice"
+	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/internal/server"
+	"github.com/leonardochaia/vendopunkto/internal/store"
 )
 
 // Create a new server
