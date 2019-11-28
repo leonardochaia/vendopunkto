@@ -62,7 +62,7 @@ run:
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
 
 build-monero:
-	go build -o ./vendopunkto-monero ./plugin/monero/monero-main.go
+	go build -o ./vendopunkto-monero ./plugins/monero/main.go
 
 run-monero:
 	MONERO_WALLET_RPC_URL=http://localhost:18082 \
