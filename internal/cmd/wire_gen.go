@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
 	"github.com/leonardochaia/vendopunkto/internal/server"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 )
@@ -24,13 +25,15 @@ func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	manager := pluginmgr.NewManager(globalLogger2)
+	handler := pluginwallet.NewHandler(globalLogger2)
+	router := pluginwallet.NewRouter(handler)
+	manager := pluginmgr.NewManager(globalLogger2, router)
 	invoiceManager, err := invoice.NewManager(db, manager)
 	if err != nil {
 		return nil, err
 	}
-	handler := invoice.NewHandler(invoiceManager, globalLogger2)
-	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger2)
+	invoiceHandler := invoice.NewHandler(invoiceManager, globalLogger2)
+	vendoPunktoRouter, err := server.NewRouter(invoiceHandler, globalLogger2)
 	if err != nil {
 		return nil, err
 	}

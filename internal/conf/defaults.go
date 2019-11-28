@@ -18,8 +18,8 @@ func init() {
 	viper.SetDefault("profiler.port", "6060")
 
 	// Server Configuration
-	viper.SetDefault("server.host", "")
-	viper.SetDefault("server.port", "8900")
+	viper.SetDefault("server.host", "0.0.0.0")
+	viper.SetDefault("server.port", "8080")
 	viper.SetDefault("server.log_requests", true)
 	viper.SetDefault("server.profiler_enabled", false)
 	viper.SetDefault("server.profiler_path", "/debug")
@@ -37,5 +37,7 @@ func init() {
 	// Plugins
 	// PLUGINS_ENABLED="wallet|http://localhost3333"
 	viper.SetDefault("plugins.enabled", []string{})
+	viper.SetDefault("plugins.server.host", "0.0.0.0")
+	viper.SetDefault("plugins.server.port", "9080")
 
 }

@@ -23,7 +23,7 @@ func NewRouter(invoices *invoice.Handler, globalLogger hclog.Logger) (*VendoPunk
 	var router VendoPunktoRouter
 	router = chi.NewRouter()
 
-	logger := globalLogger.Named("router")
+	logger := globalLogger.Named("api-server")
 	setupMiddlewares(router, logger)
 
 	router.Get("/info", GetVersion())
@@ -34,7 +34,7 @@ func NewRouter(invoices *invoice.Handler, globalLogger hclog.Logger) (*VendoPunk
 	return &router, nil
 }
 
-func setupMiddlewares(router VendoPunktoRouter, logger hclog.Logger) {
+func setupMiddlewares(router chi.Router, logger hclog.Logger) {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Recoverer)

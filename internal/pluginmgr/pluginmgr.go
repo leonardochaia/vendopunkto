@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
 	"github.com/leonardochaia/vendopunkto/plugin"
 	"github.com/spf13/viper"
 )
@@ -18,14 +19,9 @@ type walletAndInfo struct {
 type Manager struct {
 	logger hclog.Logger
 
-	wallets map[string]walletAndInfo
-}
+	walletRouter *pluginwallet.Router
 
-func NewManager(logger hclog.Logger) *Manager {
-	return &Manager{
-		logger:  logger.Named("pluginmgr"),
-		wallets: make(map[string]walletAndInfo),
-	}
+	wallets map[string]walletAndInfo
 }
 
 func (manager *Manager) LoadPlugins() {
