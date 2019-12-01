@@ -11,7 +11,7 @@ import (
 // PluginWalletClient for the internal plugin server hosted by vendopunkto
 // Used by plugins to "talk back" to the host.
 type PluginWalletClient interface {
-	ConfirmPayment(address string, txHash string, confirmations uint) error
+	ConfirmPayment(address string, amount uint64, txHash string, confirmations uint) error
 }
 
 type pluginWalletClientImpl struct {
@@ -33,6 +33,7 @@ func NewWalletClient(url url.URL) PluginWalletClient {
 // when the transaction appears on the mempool, and again when it is confirmed.
 func (c pluginWalletClientImpl) ConfirmPayment(
 	address string,
+	amount uint64,
 	txHash string,
 	confirmations uint) error {
 	u, err := url.Parse("/v1/invoices/payments/confirm")
@@ -44,12 +45,14 @@ func (c pluginWalletClientImpl) ConfirmPayment(
 
 	type confirmPaymentsParams struct {
 		TxHash        string `json:"txHash"`
+		Amount        uint64 `json:"amount"`
 		Address       string `json:"address"`
 		Confirmations uint   `json:"confirmations"`
 	}
 
 	params, err := json.Marshal(&confirmPaymentsParams{
 		Address:       address,
+		Amount:        amount,
 		TxHash:        txHash,
 		Confirmations: confirmations,
 	})

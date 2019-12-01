@@ -78,6 +78,7 @@ func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *
 	type confirmPaymentsParams struct {
 		TxHash        string `json:"txHash"`
 		Address       string `json:"address"`
+		Amount        uint64 `json:"amount"`
 		Confirmations uint   `json:"confirmations"`
 	}
 	var params = new(confirmPaymentsParams)
@@ -89,6 +90,7 @@ func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *
 	_, err := handler.manager.ConfirmPayment(
 		params.Address,
 		params.Confirmations,
+		params.Amount,
 		params.TxHash,
 	)
 
@@ -96,6 +98,6 @@ func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *
 		return errors.InternalServerError(err)
 	}
 
-	render.JSON(w, r, "OK")
+	render.NoContent(w, r)
 	return nil
 }

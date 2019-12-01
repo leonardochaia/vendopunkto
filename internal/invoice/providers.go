@@ -19,6 +19,7 @@ func NewHandler(manager *Manager, globalLogger hclog.Logger) *Handler {
 func NewManager(db *gorm.DB, pluginManager *pluginmgr.Manager) (*Manager, error) {
 
 	db.AutoMigrate(&Invoice{})
+	db.AutoMigrate(&Payment{})
 
 	return &Manager{
 		pluginManager: pluginManager,
