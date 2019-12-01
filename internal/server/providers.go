@@ -7,10 +7,11 @@ import (
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 )
 
-var ServerProviders = wire.NewSet(NewServer, NewRouter)
+var ServerProviders = wire.NewSet(NewServer, NewRouter, NewPluginRouter)
 
 func NewServer(
 	router *VendoPunktoRouter,
+	pluginRouter *PluginRouter,
 	db *gorm.DB,
 	globalLogger hclog.Logger,
 	pluginManager *pluginmgr.Manager) (*Server, error) {
@@ -20,6 +21,7 @@ func NewServer(
 		router:        router,
 		db:            db,
 		pluginManager: pluginManager,
+		pluginRouter:  pluginRouter,
 	}
 
 	return server, nil

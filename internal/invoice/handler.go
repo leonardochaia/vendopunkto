@@ -24,6 +24,14 @@ func (handler *Handler) Routes() chi.Router {
 	return router
 }
 
+func (handler *Handler) InternalRoutes() chi.Router {
+	router := chi.NewRouter()
+
+	router.Post("/payments/confirm", errors.WrapHandler(handler.confirmPayment))
+
+	return router
+}
+
 func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) *errors.APIError {
 
 	type creationParams struct {
@@ -61,5 +69,33 @@ func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) *erro
 	}
 
 	render.JSON(w, r, invoice)
+	return nil
+}
+
+// confirmPayment is an internal endpoint that confirms an invoice has been paid
+func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *errors.APIError {
+
+	type confirmPaymentsParams struct {
+		TxHash        string `json:"txHash"`
+		Address       string `json:"address"`
+		Confirmations uint   `json:"confirmations"`
+	}
+	var params = new(confirmPaymentsParams)
+
+	if err := render.DecodeJSON(r.Body, &params); err != nil {
+		return errors.InvalidRequestParams(err)
+	}
+
+	_, err := handler.manager.ConfirmPayment(
+		params.Address,
+		params.Confirmations,
+		params.TxHash,
+	)
+
+	if err != nil {
+		return errors.InternalServerError(err)
+	}
+
+	render.JSON(w, r, "OK")
 	return nil
 }

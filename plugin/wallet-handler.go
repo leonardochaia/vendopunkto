@@ -9,7 +9,10 @@ import (
 )
 
 // Handler is the Wallet Plugin HTTP API implementation
-// which runs on the plugin server
+// which runs on the plugin server and will be called
+// by vendopunkto
+// It exposes the wallet interface provided by the
+// plugin developer into HTTP endpoints
 type Handler struct {
 	wallet WalletPlugin
 }
@@ -29,13 +32,13 @@ func NewWalletHandler(plugin WalletPlugin) *chi.Mux {
 		wallet: plugin,
 	}
 
-	router.Post(GenerateAddressWalletEndpoint, errors.WrapHandler(handler.generateWalletHandler))
+	router.Post(GenerateAddressWalletEndpoint, errors.WrapHandler(handler.generateAddress))
 	router.Get(PluginInfoEndpoint, errors.WrapHandler(handler.getPluginInfo))
 
 	return router
 }
 
-func (handler *Handler) generateWalletHandler(w http.ResponseWriter, r *http.Request) *errors.APIError {
+func (handler *Handler) generateAddress(w http.ResponseWriter, r *http.Request) *errors.APIError {
 	var params = new(CoinWalletAddressParams)
 
 	if err := render.DecodeJSON(r.Body, &params); err != nil {

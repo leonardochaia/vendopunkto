@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
-	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
 	"github.com/leonardochaia/vendopunkto/internal/server"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 )
@@ -25,19 +24,21 @@ func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	handler := pluginwallet.NewHandler(globalLogger2)
-	router := pluginwallet.NewRouter(handler)
-	manager := pluginmgr.NewManager(globalLogger2, router)
+	manager := pluginmgr.NewManager(globalLogger2)
 	invoiceManager, err := invoice.NewManager(db, manager)
 	if err != nil {
 		return nil, err
 	}
-	invoiceHandler := invoice.NewHandler(invoiceManager, globalLogger2)
-	vendoPunktoRouter, err := server.NewRouter(invoiceHandler, globalLogger2)
+	handler := invoice.NewHandler(invoiceManager, globalLogger2)
+	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger2)
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.NewServer(vendoPunktoRouter, db, globalLogger2, manager)
+	pluginRouter, err := server.NewPluginRouter(handler, globalLogger2)
+	if err != nil {
+		return nil, err
+	}
+	serverServer, err := server.NewServer(vendoPunktoRouter, pluginRouter, db, globalLogger2, manager)
 	if err != nil {
 		return nil, err
 	}
