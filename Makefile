@@ -40,16 +40,6 @@ deps:
 	# Fetching dependancies...
 	go get -d -v # Adding -u here will break CI
 
-.PHONY: relocate
-relocate:
-	@test ${TARGET} || ( echo ">> TARGET is not set. Use: make relocate TARGET=<target>"; exit 1 )
-	$(eval ESCAPED_PACKAGENAME := $(shell echo "${PACKAGENAME}" | sed -e 's/[\/&]/\\&/g'))
-	$(eval ESCAPED_TARGET := $(shell echo "${TARGET}" | sed -e 's/[\/&]/\\&/g'))
-	# Renaming package ${PACKAGENAME} to ${TARGET}
-	@grep -rlI '${PACKAGENAME}' * | xargs -i@ sed -i 's/${ESCAPED_PACKAGENAME}/${ESCAPED_TARGET}/g' @
-	# Complete... 
-	# NOTE: This does not update the git config nor will it update any imports of the root directory of this project.
-
 dbclean:
 	docker stop vendopunktopostgres; 
 	docker rm vendopunktopostgres;
@@ -58,10 +48,14 @@ dbclean:
 
 run:
 	STORAGE_HOST=localhost \
-	PLUGINS_ENABLED="wallet|http://localhost:3333" \
+	PLUGINS_ENABLED="wallet|http://localhost:4200" \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
 
-build-monero:
+
+plugins/monero/internal/wire_gen.go: plugins/monero/internal/wire.go
+	wire ./plugins/monero/internal/...
+
+build-monero: tools plugins/monero/internal/wire_gen.go
 	go build -o ./vendopunkto-monero ./plugins/monero/main.go
 
 run-monero:

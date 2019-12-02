@@ -5,11 +5,11 @@ import (
 	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
 )
 
-type MoneroWalletPlugin struct {
+type moneroWalletPlugin struct {
 	client wallet.Client
 }
 
-func (p MoneroWalletPlugin) GenerateNewAddress(invoiceID string) (string, error) {
+func (p moneroWalletPlugin) GenerateNewAddress(invoiceID string) (string, error) {
 	result, err := p.client.MakeIntegratedAddress(&wallet.RequestMakeIntegratedAddress{})
 
 	if err != nil {
@@ -19,7 +19,7 @@ func (p MoneroWalletPlugin) GenerateNewAddress(invoiceID string) (string, error)
 	return result.IntegratedAddress, nil
 }
 
-func (p MoneroWalletPlugin) GetPluginInfo() (*plugin.WalletPluginInfo, error) {
+func (p moneroWalletPlugin) GetPluginInfo() (*plugin.WalletPluginInfo, error) {
 	return &plugin.WalletPluginInfo{
 		Name:       "Monero Wallet",
 		ID:         "monero-wallet",
