@@ -1,6 +1,9 @@
 package invoice
 
 import (
+	"fmt"
+
+	"github.com/hashicorp/go-hclog"
 	"github.com/jinzhu/gorm"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/rs/xid"
@@ -8,13 +11,14 @@ import (
 
 type Manager struct {
 	db            *gorm.DB
+	logger        hclog.Logger
 	pluginManager *pluginmgr.Manager
 }
 
-func (inv *Manager) findInvoice(key string, value string) (*Invoice, error) {
+func (mgr *Manager) findInvoice(key string, value string) (*Invoice, error) {
 	var invoice Invoice
 
-	result := inv.db.First(&invoice, key+" = ?", value)
+	result := mgr.db.First(&invoice, key+" = ?", value)
 	if result.RecordNotFound() {
 		return nil, nil
 	}
@@ -22,24 +26,24 @@ func (inv *Manager) findInvoice(key string, value string) (*Invoice, error) {
 		return nil, result.Error
 	}
 
-	inv.db.Model(&invoice).Related(&invoice.Payments)
+	mgr.db.Model(&invoice).Related(&invoice.Payments)
 
 	return &invoice, nil
 }
 
-func (inv *Manager) GetInvoice(id string) (*Invoice, error) {
-	return inv.findInvoice("ID", id)
+func (mgr *Manager) GetInvoice(id string) (*Invoice, error) {
+	return mgr.findInvoice("ID", id)
 }
 
-func (inv *Manager) GetInvoiceByAddress(address string) (*Invoice, error) {
-	return inv.findInvoice("payment_address", address)
+func (mgr *Manager) GetInvoiceByAddress(address string) (*Invoice, error) {
+	return mgr.findInvoice("payment_address", address)
 }
 
-func (inv *Manager) CreateInvoice(amount uint64, currency string) (*Invoice, error) {
+func (mgr *Manager) CreateInvoice(amount uint64, currency string) (*Invoice, error) {
 
 	newID := xid.New().String()
 
-	wallet, err := inv.pluginManager.GetWalletForCurrency(currency)
+	wallet, err := mgr.pluginManager.GetWalletForCurrency(currency)
 
 	if err != nil {
 		return nil, err
@@ -57,23 +61,31 @@ func (inv *Manager) CreateInvoice(amount uint64, currency string) (*Invoice, err
 		Currency:       currency,
 	}
 
-	err = inv.db.Create(invoice).Error
+	err = mgr.db.Create(invoice).Error
 
 	return invoice, err
 }
 
-func (inv *Manager) ConfirmPayment(
+func (mgr *Manager) ConfirmPayment(
 	address string,
-	confirmations uint,
+	confirmations uint64,
 	amount uint64,
 	txHash string) (*Invoice, error) {
 
-	invoice, err := inv.GetInvoiceByAddress(address)
+	invoice, err := mgr.GetInvoiceByAddress(address)
 
 	if err != nil {
 		return nil, err
 	}
 
+	if invoice == nil {
+		mgr.logger.Error("Coun't find invoice for address", "address", address,
+			"txHash", txHash, "amount", amount)
+		return nil, fmt.Errorf("Couldn't find invoice for address " + address)
+	}
+
+	mgr.logger.Info("Received payment confirmation", "invoice", invoice.ID,
+		"address", address, "txHash", txHash, "amount", amount)
 	payment := invoice.FindPayment(txHash)
 
 	// Update the payment
@@ -84,6 +96,6 @@ func (inv *Manager) ConfirmPayment(
 		payment = invoice.AddPayment(txHash, amount, confirmations)
 	}
 
-	inv.db.Save(payment)
+	mgr.db.Save(payment)
 	return invoice, nil
 }

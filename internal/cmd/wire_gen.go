@@ -25,7 +25,7 @@ func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 		return nil, err
 	}
 	manager := pluginmgr.NewManager(globalLogger2)
-	invoiceManager, err := invoice.NewManager(db, manager)
+	invoiceManager, err := invoice.NewManager(db, manager, globalLogger2)
 	if err != nil {
 		return nil, err
 	}

@@ -64,6 +64,7 @@ func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) *erro
 	if err != nil {
 		return errors.InternalServerError(err)
 	}
+
 	if invoice == nil {
 		return errors.ResourceNotFound()
 	}
@@ -79,7 +80,7 @@ func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *
 		TxHash        string `json:"txHash"`
 		Address       string `json:"address"`
 		Amount        uint64 `json:"amount"`
-		Confirmations uint   `json:"confirmations"`
+		Confirmations uint64 `json:"confirmations"`
 	}
 	var params = new(confirmPaymentsParams)
 

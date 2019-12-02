@@ -40,7 +40,7 @@ type Payment struct {
 	InvoiceID     string    `json:"invoiceId" gorm:"index"`
 	TxHash        string    `json:"txHash" gorm:"primary_key"`
 	Amount        uint64    `json:"amount" gorm:"type:BIGINT"`
-	Confirmations uint      `json:"confirmations"`
+	Confirmations uint64    `json:"confirmations" gorm:"type:BIGINT"`
 	ConfirmedAt   time.Time `json:"confirmedAt"`
 	CreatedAt     time.Time `json:"createdAt"`
 }
@@ -83,7 +83,7 @@ func (invoice *Invoice) FindPayment(txHash string) *Payment {
 func (invoice *Invoice) AddPayment(
 	txHash string,
 	amount uint64,
-	confirmations uint,
+	confirmations uint64,
 ) *Payment {
 
 	payment := &Payment{
@@ -131,7 +131,7 @@ func (payment *Payment) Status() PaymentStatus {
 	return Mempool
 }
 
-func (payment *Payment) Update(confirmations uint) {
+func (payment *Payment) Update(confirmations uint64) {
 
 	if confirmations > 0 && payment.Confirmations == 0 {
 		payment.ConfirmedAt = time.Now()
