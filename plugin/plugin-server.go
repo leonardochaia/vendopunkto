@@ -17,7 +17,9 @@ type Server struct {
 // It configures the router and orchestrates the underlying calls
 // to the actual implementation
 type ServerPlugin interface {
-	initializeRouter(router *chi.Mux)
+	initializeRouter(router *chi.Mux) error
+	initializePlugin(hostAddress string) error
+	GetWalletClient() (PluginWalletClient, error)
 }
 
 // NewServer creates the plugin server which must be run by every plugin
@@ -47,7 +49,10 @@ func (s *Server) Start(addr string) error {
 	router := chi.NewRouter()
 
 	for _, value := range s.plugins {
-		value.initializeRouter(router)
+		err := value.initializeRouter(router)
+		if err != nil {
+			return err
+		}
 	}
 
 	return http.ListenAndServe(addr, router)

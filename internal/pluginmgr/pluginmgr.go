@@ -1,7 +1,10 @@
 package pluginmgr
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -17,12 +20,14 @@ type walletAndInfo struct {
 
 type Manager struct {
 	logger hclog.Logger
+	http   http.Client
 
 	wallets map[string]walletAndInfo
 }
 
 func (manager *Manager) LoadPlugins() {
 	plugins := viper.GetStringSlice("plugins.enabled")
+	hostAddress := viper.GetString("plugins.server.plugin_host_address")
 
 	for _, addr := range plugins {
 		split := strings.Split(addr, "|")
@@ -42,7 +47,7 @@ func (manager *Manager) LoadPlugins() {
 			continue
 		}
 
-		err = manager.initializeWalletPlugin(*url)
+		err = manager.initializeWalletPlugin(*url, hostAddress)
 		if err != nil {
 			manager.logger.Error("Failed to communicate with plugin", "error", err, "URL", url.String())
 			continue
@@ -50,10 +55,9 @@ func (manager *Manager) LoadPlugins() {
 	}
 }
 
-func (manager *Manager) initializeWalletPlugin(url url.URL) error {
+func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, hostAddress string) error {
 
-	client := NewWalletClient(url)
-	info, err := client.GetPluginInfo()
+	info, err := manager.activatePlugin(pluginURL, hostAddress)
 
 	if err != nil {
 		return err
@@ -61,7 +65,7 @@ func (manager *Manager) initializeWalletPlugin(url url.URL) error {
 
 	manager.logger.Info("Registering wallet plugin", "name", info.Name, "ID", info.ID)
 	manager.wallets[info.ID] = walletAndInfo{
-		client: client,
+		client: NewWalletClient(pluginURL, *info),
 		info:   *info,
 	}
 	return nil
@@ -83,4 +87,41 @@ func (manager *Manager) GetWalletForCurrency(currency string) (plugin.WalletPlug
 		}
 	}
 	return nil, fmt.Errorf("Could not find a wallet for currency " + currency)
+}
+
+// activatePlugin does the initial handshake where the plugin returns its basic
+// info while the host address is provided so the plugin can reach back
+func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) (*plugin.WalletPluginInfo, error) {
+	u, err := url.Parse(plugin.WalletMainEndpoint + plugin.ActivatePluginEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	final := apiURL.ResolveReference(u)
+
+	if err != nil {
+		return nil, err
+	}
+
+	params, err := json.Marshal(&plugin.ActivatePluginParams{
+		HostAddress: hostAddress,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := manager.http.Post(final.String(), "application/json", bytes.NewBuffer(params))
+
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("Invalid response. Got status " + resp.Status)
+	}
+
+	var result plugin.WalletPluginInfo
+	err = json.NewDecoder(resp.Body).Decode(&result)
+
+	return &result, err
 }

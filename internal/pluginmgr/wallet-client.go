@@ -12,11 +12,13 @@ import (
 type coinWalletClientImpl struct {
 	apiURL url.URL
 	client http.Client
+	info   plugin.WalletPluginInfo
 }
 
-func NewWalletClient(url url.URL) plugin.WalletPlugin {
+func NewWalletClient(url url.URL, info plugin.WalletPluginInfo) plugin.WalletPlugin {
 	return &coinWalletClientImpl{
 		apiURL: url,
+		info:   info,
 		client: http.Client{
 			Timeout: 15 * time.Second,
 		},
@@ -52,25 +54,5 @@ func (c coinWalletClientImpl) GenerateNewAddress(invoiceID string) (string, erro
 }
 
 func (c coinWalletClientImpl) GetPluginInfo() (*plugin.WalletPluginInfo, error) {
-	u, err := url.Parse(plugin.WalletMainEndpoint + plugin.PluginInfoEndpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	final := c.apiURL.ResolveReference(u)
-
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := c.client.Get(final.String())
-
-	if err != nil {
-		return nil, err
-	}
-
-	var result plugin.WalletPluginInfo
-	err = json.NewDecoder(resp.Body).Decode(&result)
-
-	return &result, err
+	return &c.info, nil
 }
