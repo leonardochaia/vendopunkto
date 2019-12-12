@@ -5,12 +5,18 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
+	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/errors"
 )
 
 // Server is the plugin server running on every plugin
 type Server struct {
-	plugins []ServerPlugin
-	started bool
+	plugins        []ServerPlugin
+	pluginInfos    []PluginInfo
+	started        bool
+	internalClient VendoPunktoInternalClient
+	Logger         hclog.Logger
 }
 
 // ServerPlugin wraps the plugin implementation.
@@ -18,14 +24,16 @@ type Server struct {
 // to the actual implementation
 type ServerPlugin interface {
 	initializeRouter(router *chi.Mux) error
-	initializePlugin(hostAddress string) error
-	GetWalletClient() (PluginWalletClient, error)
+	GetPluginImpl() (VendoPunktoPlugin, error)
 }
 
 // NewServer creates the plugin server which must be run by every plugin
-func NewServer() *Server {
+func NewServer(logger hclog.Logger) *Server {
 	return &Server{
-		plugins: []ServerPlugin{},
+		plugins:     []ServerPlugin{},
+		pluginInfos: []PluginInfo{},
+		started:     false,
+		Logger:      logger,
 	}
 }
 
@@ -48,12 +56,62 @@ func (s *Server) Start(addr string) error {
 	}
 	router := chi.NewRouter()
 
+	s.pluginInfos = []PluginInfo{}
+
 	for _, value := range s.plugins {
 		err := value.initializeRouter(router)
+
 		if err != nil {
 			return err
 		}
+
+		impl, err := value.GetPluginImpl()
+		if err != nil {
+			return err
+		}
+
+		info, err := impl.GetPluginInfo()
+
+		if err != nil {
+			return err
+		}
+
+		s.pluginInfos = append(s.pluginInfos, info)
 	}
 
+	router.Post(ActivatePluginEndpoint, errors.WrapHandler(s.activatePluginHandler))
+
 	return http.ListenAndServe(addr, router)
+}
+
+func (s *Server) GetInternalClient() (VendoPunktoInternalClient, error) {
+
+	if s.internalClient == nil {
+		err := fmt.Errorf("Server has not been activated or activation has failed")
+		s.Logger.Error("Server had no internal client", "error", err)
+		return nil, err
+	}
+
+	return s.internalClient, nil
+}
+
+func (s *Server) activatePluginHandler(w http.ResponseWriter, r *http.Request) *errors.APIError {
+
+	var params = new(ActivatePluginParams)
+
+	if err := render.DecodeJSON(r.Body, &params); err != nil {
+		return errors.InvalidRequestParams(err)
+	}
+
+	client, err := NewInternalClient(params.HostAddress)
+
+	if err != nil {
+		s.Logger.Error("Failed to create internal client", "error", err)
+	}
+
+	s.Logger.Info("Activating plugin", "host", params.HostAddress)
+	s.internalClient = client
+
+	render.JSON(w, r, s.pluginInfos)
+	return nil
 }

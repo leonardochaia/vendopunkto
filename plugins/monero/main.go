@@ -16,11 +16,6 @@ import (
 
 func main() {
 
-	// Sets up the config file, environment etc
-	viper.SetTypeByDefaultValue(true)                      // If a default value is []string{"a"} an environment variable of "a b" will end up []string{"a","b"}
-	viper.AutomaticEnv()                                   // Automatically use environment variables where available
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // Environement variables use underscores instead of periods
-
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "monero-plugin",
 		Output: os.Stdout,
@@ -33,13 +28,12 @@ func main() {
 		panic(err.Error())
 	}
 
-	server := plugin.NewServer()
-
-	err = server.AddPlugin(container.ServerPlugin)
+	err = container.Server.AddPlugin(plugin.BuildWalletPlugin(container.Plugin))
 	if err != nil {
 		panic(err.Error())
 	}
 
+	// This is the server that listen for monero-wallet-rpc tx-notify
 	err = startMoneroHTTPServer(
 		logger,
 		container.WalletClient,
@@ -52,7 +46,10 @@ func main() {
 	addr := net.JoinHostPort(
 		viper.GetString("plugin.server.host"),
 		viper.GetString("plugin.server.port"))
-	err = server.Start(addr)
+
+	logger.Info("Starting plugin", "address", addr)
+
+	err = container.Server.Start(addr)
 
 	if err != nil {
 		panic(err.Error())

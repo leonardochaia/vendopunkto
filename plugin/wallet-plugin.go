@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"fmt"
 	"github.com/go-chi/chi"
 )
 
@@ -24,8 +23,7 @@ type WalletPlugin interface {
 // walletServerPlugin mounts the router and provides the actual plugin
 // implementation to the handler.
 type walletServerPlugin struct {
-	Impl     WalletPlugin
-	VPClient PluginWalletClient
+	Impl WalletPlugin
 }
 
 func BuildWalletPlugin(impl WalletPlugin) ServerPlugin {
@@ -41,22 +39,8 @@ func (serverPlugin *walletServerPlugin) initializeRouter(router *chi.Mux) error 
 	return nil
 }
 
-func (serverPlugin *walletServerPlugin) initializePlugin(hostAddr string) error {
-	client, err := NewWalletClient(hostAddr)
-	if err != nil {
-		return err
-	}
-
-	serverPlugin.VPClient = client
-	return nil
-}
-
-func (serverPlugin *walletServerPlugin) GetWalletClient() (PluginWalletClient, error) {
-	if serverPlugin.VPClient != nil {
-		return serverPlugin.VPClient, nil
-	}
-
-	return nil, fmt.Errorf("Plugin has not been initialized yet")
+func (serverPlugin *walletServerPlugin) GetPluginImpl() (VendoPunktoPlugin, error) {
+	return serverPlugin.Impl, nil
 }
 
 const (

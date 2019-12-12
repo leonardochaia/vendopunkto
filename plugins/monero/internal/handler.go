@@ -14,9 +14,9 @@ import (
 
 // Handler is Monero specific. This will listen for the wallet cli calls
 type Handler struct {
-	client       wallet.Client
-	logger       hclog.Logger
-	serverPlugin plugin.ServerPlugin
+	client wallet.Client
+	logger hclog.Logger
+	server plugin.Server
 }
 
 func (handler *Handler) Routes() chi.Router {
@@ -60,7 +60,7 @@ func (handler *Handler) txNotify(w http.ResponseWriter, r *http.Request) *errors
 	)
 	handler.logger.Info("Obtained TX", "address", addr, "amount", resp.Transfer.Amount)
 
-	client, err := handler.serverPlugin.GetWalletClient()
+	client, err := handler.server.GetInternalClient()
 
 	if err != nil {
 		handler.logger.Error("Failed to obtain host client", "error", err.Error())

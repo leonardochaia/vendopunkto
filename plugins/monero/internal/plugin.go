@@ -1,12 +1,14 @@
 package monero
 
 import (
+	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
 	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
 )
 
 type moneroWalletPlugin struct {
 	client wallet.Client
+	logger hclog.Logger
 }
 
 func (p moneroWalletPlugin) GenerateNewAddress(invoiceID string) (string, error) {
@@ -16,6 +18,7 @@ func (p moneroWalletPlugin) GenerateNewAddress(invoiceID string) (string, error)
 		return "", err
 	}
 
+	p.logger.Info("Generated new address", "address", result.IntegratedAddress)
 	return result.IntegratedAddress, nil
 }
 

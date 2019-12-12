@@ -8,23 +8,23 @@ import (
 	"time"
 )
 
-// PluginWalletClient for the internal plugin server hosted by vendopunkto
+// VendoPunktoInternalClient for the internal plugin server hosted by vendopunkto
 // Used by plugins to "talk back" to the host.
-type PluginWalletClient interface {
+type VendoPunktoInternalClient interface {
 	ConfirmPayment(address string, amount uint64, txHash string, confirmations uint64) error
 }
 
-type pluginWalletClientImpl struct {
+type internalClientImpl struct {
 	apiURL url.URL
 	client http.Client
 }
 
-func NewWalletClient(hostAddress string) (PluginWalletClient, error) {
+func NewInternalClient(hostAddress string) (VendoPunktoInternalClient, error) {
 	apiURL, err := url.Parse(hostAddress)
 	if err != nil {
 		return nil, err
 	}
-	return &pluginWalletClientImpl{
+	return &internalClientImpl{
 		apiURL: *apiURL,
 		client: http.Client{
 			Timeout: 15 * time.Second,
@@ -35,7 +35,7 @@ func NewWalletClient(hostAddress string) (PluginWalletClient, error) {
 // ConfirmPayment should be called when a payment has been confirmed
 // on the wallet. Ideally this should be called with 0 confirmations
 // when the transaction appears on the mempool, and again when it is confirmed.
-func (c pluginWalletClientImpl) ConfirmPayment(
+func (c internalClientImpl) ConfirmPayment(
 	address string,
 	amount uint64,
 	txHash string,

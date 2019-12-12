@@ -1,4 +1,4 @@
-package monero
+package rates
 
 import (
 	"strings"
@@ -13,9 +13,6 @@ func init() {
 	viper.AutomaticEnv()                                   // Automatically use environment variables where available
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // Environement variables use underscores instead of periods
 
-	viper.SetDefault("monero.server.host", "0.0.0.0")
-	viper.SetDefault("monero.server.port", "4300")
-
 	viper.SetDefault("plugin.server.host", "0.0.0.0")
-	viper.SetDefault("plugin.server.port", "4200")
+	viper.SetDefault("plugin.server.port", "4201")
 }

@@ -3,7 +3,7 @@
 //go:generate wire
 //+build !wireinject
 
-package monero
+package rates
 
 import (
 	"github.com/hashicorp/go-hclog"
@@ -13,19 +13,15 @@ import (
 // Injectors from wire.go:
 
 func NewContainer(globalLogger hclog.Logger) (*Container, error) {
-	client, err := newMoneroWalletClient(globalLogger)
+	client, err := newGeckoClient(globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	walletPlugin, err := newMoneroWalletPlugin(globalLogger, client)
+	exchangeRatesPlugin, err := newGeckoExchangeRatesPlugin(globalLogger, client)
 	if err != nil {
 		return nil, err
 	}
 	server := plugin.NewServer(globalLogger)
-	handler, err := newMoneroHandler(globalLogger, client, server)
-	if err != nil {
-		return nil, err
-	}
-	container := newContainer(walletPlugin, server, client, handler)
+	container := newContainer(exchangeRatesPlugin, server, client)
 	return container, nil
 }

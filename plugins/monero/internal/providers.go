@@ -12,7 +12,7 @@ import (
 
 type Container struct {
 	Plugin       plugin.WalletPlugin
-	ServerPlugin plugin.ServerPlugin
+	Server       *plugin.Server
 	WalletClient wallet.Client
 	Handler      Handler
 }
@@ -21,12 +21,12 @@ var Providers = wire.NewSet(
 	newMoneroWalletPlugin,
 	newMoneroWalletClient,
 	newMoneroHandler,
-	newServerPlugin,
+	plugin.NewServer,
 	newContainer)
 
 func newContainer(
 	plugin plugin.WalletPlugin,
-	serverPlugin plugin.ServerPlugin,
+	server *plugin.Server,
 	walletClient wallet.Client,
 	handler Handler,
 ) *Container {
@@ -34,13 +34,14 @@ func newContainer(
 		Plugin:       plugin,
 		WalletClient: walletClient,
 		Handler:      handler,
-		ServerPlugin: serverPlugin,
+		Server:       server,
 	}
 }
 
 func newMoneroWalletPlugin(logger hclog.Logger, client wallet.Client) (plugin.WalletPlugin, error) {
 	return moneroWalletPlugin{
 		client: client,
+		logger: logger,
 	}, nil
 }
 
@@ -70,14 +71,10 @@ func newMoneroWalletClient(globalLogger hclog.Logger) (wallet.Client, error) {
 
 func newMoneroHandler(logger hclog.Logger,
 	client wallet.Client,
-	serverPlugin plugin.ServerPlugin) (Handler, error) {
+	server *plugin.Server) (Handler, error) {
 	return Handler{
-		logger:       logger,
-		client:       client,
-		serverPlugin: serverPlugin,
+		logger: logger,
+		client: client,
+		server: *server,
 	}, nil
-}
-
-func newServerPlugin(p plugin.WalletPlugin) plugin.ServerPlugin {
-	return plugin.BuildWalletPlugin(p)
 }

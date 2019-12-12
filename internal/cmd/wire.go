@@ -8,6 +8,7 @@ import (
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
 
+	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/server"
@@ -20,6 +21,7 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 		pluginmgr.PluginProviders,
 		invoice.InvoiceProviders,
 		server.ServerProviders,
+		currency.CurrencyProviders,
 		store.NewDB,
 	)
 	return &server.Server{}, nil

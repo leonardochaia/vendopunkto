@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/plugin"
 	"github.com/spf13/viper"
 )
@@ -17,11 +18,18 @@ type walletAndInfo struct {
 	info   plugin.WalletPluginInfo
 }
 
-type Manager struct {
-	logger hclog.Logger
-	http   http.Client
+type exchangeRatesAndInfo struct {
+	client plugin.ExchangeRatesPlugin
+	info   plugin.PluginInfo
+}
 
-	wallets map[string]walletAndInfo
+type Manager struct {
+	logger   hclog.Logger
+	http     http.Client
+	currency currency.Manager
+
+	wallets       map[string]walletAndInfo
+	exchangeRates map[string]exchangeRatesAndInfo
 }
 
 func (manager *Manager) LoadPlugins() {
@@ -48,30 +56,57 @@ func (manager *Manager) LoadPlugins() {
 
 func (manager *Manager) initializePlugin(pluginURL url.URL, hostAddress string) error {
 
-	info, err := manager.activatePlugin(pluginURL, hostAddress)
+	infos, err := manager.activatePlugin(pluginURL, hostAddress)
 
 	if err != nil {
 		return err
 	}
 
-	manager.logger.Info("Registering plugin",
-		"id", info.ID,
-		"name", info.Name,
-		"type", info.Type)
+	for _, info := range infos {
 
-	switch info.Type {
-	case plugin.PluginTypeWallet:
-		err = manager.initializeWalletPlugin(pluginURL, *info)
-
-		if err != nil {
-			return err
+		switch info.Type {
+		case plugin.PluginTypeWallet:
+			err = manager.initializeWalletPlugin(pluginURL, info)
+		case plugin.PluginTypeExchangeRate:
+			err = manager.initializeExchangeRatesPlugin(pluginURL, info)
+		default:
+			err = fmt.Errorf("Plugin type is not supported %s", info.Type)
 		}
 
-	case plugin.PluginTypeExchangeRate:
-		return fmt.Errorf("TODO")
-	default:
-		return fmt.Errorf("Plugin type is not supported %s", info.Type)
+		if err != nil {
+			manager.logger.Error("Failed to initialize plugin",
+				"id", info.ID,
+				"name", info.Name,
+				"type", info.Type,
+				"address", pluginURL.String(),
+				"error", err)
+			continue
+		}
 	}
+
+	return nil
+}
+
+func (manager *Manager) initializeExchangeRatesPlugin(
+	pluginURL url.URL,
+	info plugin.PluginInfo) error {
+
+	ratesClient := NewExchangeRatesClient(pluginURL, info)
+
+	info, err := ratesClient.GetPluginInfo()
+	if err != nil {
+		return err
+	}
+
+	manager.exchangeRates[info.ID] = exchangeRatesAndInfo{
+		client: ratesClient,
+		info:   info,
+	}
+
+	manager.logger.Info("Initialized Exchange rates Plugin",
+		"id", info.ID,
+		"name", info.Name,
+		"address", pluginURL.String())
 
 	return nil
 }
@@ -88,15 +123,17 @@ func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.Pl
 		client: walletClient,
 		info:   walletInfo,
 	}
+	_, err = manager.currency.RegisterCurrency(walletInfo.Currency.Name, walletInfo.Currency.Symbol)
 
-	// TODO: Store currency
-
+	if err != nil {
+		return err
 	}
 
 	manager.logger.Info("Initialized Wallet Plugin",
 		"id", info.ID,
 		"name", info.Name,
-		"currency", walletInfo.Currency.Symbol)
+		"currency", walletInfo.Currency.Symbol,
+		"address", pluginURL.String())
 
 	return nil
 }
@@ -119,8 +156,8 @@ func (manager *Manager) GetWalletForCurrency(currency string) (plugin.WalletPlug
 
 // activatePlugin does the initial handshake where the plugin returns its basic
 // info while the host address is provided so the plugin can reach back
-func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) (*plugin.PluginInfo, error) {
-	u, err := url.Parse(plugin.WalletMainEndpoint + plugin.ActivatePluginEndpoint)
+func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) ([]plugin.PluginInfo, error) {
+	u, err := url.Parse(plugin.ActivatePluginEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +185,8 @@ func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) (*plu
 		return nil, fmt.Errorf("Invalid response. Got status " + resp.Status)
 	}
 
-	var result plugin.PluginInfo
+	var result []plugin.PluginInfo
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
-	return &result, err
+	return result, err
 }
