@@ -3,10 +3,10 @@ package pluginmgr
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/leonardochaia/vendopunkto/plugin"
 	"net/http"
 	"net/url"
-	"time"
+
+	"github.com/leonardochaia/vendopunkto/plugin"
 )
 
 type coinWalletClientImpl struct {
@@ -15,13 +15,14 @@ type coinWalletClientImpl struct {
 	info   plugin.PluginInfo
 }
 
-func NewWalletClient(url url.URL, info plugin.PluginInfo) plugin.WalletPlugin {
+func NewWalletClient(
+	url url.URL,
+	info plugin.PluginInfo,
+	client http.Client) plugin.WalletPlugin {
 	return &coinWalletClientImpl{
 		apiURL: url,
 		info:   info,
-		client: http.Client{
-			Timeout: 15 * time.Second,
-		},
+		client: client,
 	}
 }
 

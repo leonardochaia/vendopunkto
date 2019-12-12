@@ -3,10 +3,10 @@ package pluginmgr
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/leonardochaia/vendopunkto/plugin"
 	"net/http"
 	"net/url"
-	"time"
+
+	"github.com/leonardochaia/vendopunkto/plugin"
 )
 
 type exchangeRatesClientImpl struct {
@@ -15,13 +15,14 @@ type exchangeRatesClientImpl struct {
 	info   plugin.PluginInfo
 }
 
-func NewExchangeRatesClient(url url.URL, info plugin.PluginInfo) plugin.ExchangeRatesPlugin {
+func NewExchangeRatesClient(
+	url url.URL,
+	info plugin.PluginInfo,
+	client http.Client) plugin.ExchangeRatesPlugin {
 	return &exchangeRatesClientImpl{
 		apiURL: url,
 		info:   info,
-		client: http.Client{
-			Timeout: 15 * time.Second,
-		},
+		client: client,
 	}
 }
 

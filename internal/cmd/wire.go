@@ -5,6 +5,9 @@
 package cmd
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
 
@@ -22,7 +25,14 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 		invoice.InvoiceProviders,
 		server.ServerProviders,
 		currency.CurrencyProviders,
+		NewHttpClient,
 		store.NewDB,
 	)
 	return &server.Server{}, nil
+}
+
+func NewHttpClient() http.Client {
+	return http.Client{
+		Timeout: 15 * time.Second,
+	}
 }

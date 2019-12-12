@@ -2,7 +2,6 @@ package pluginmgr
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
@@ -11,14 +10,15 @@ import (
 
 var PluginProviders = wire.NewSet(NewManager)
 
-func NewManager(logger hclog.Logger, currency currency.Manager) *Manager {
+func NewManager(
+	logger hclog.Logger,
+	currency currency.Manager,
+	client http.Client) *Manager {
 	return &Manager{
 		logger:        logger.Named("pluginmgr"),
 		wallets:       make(map[string]walletAndInfo),
 		exchangeRates: make(map[string]exchangeRatesAndInfo),
-		http: http.Client{
-			Timeout: 15 * time.Second,
-		},
-		currency: currency,
+		client:        client,
+		currency:      currency,
 	}
 }

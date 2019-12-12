@@ -12,6 +12,8 @@ import (
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/server"
 	"github.com/leonardochaia/vendopunkto/internal/store"
+	"net/http"
+	"time"
 )
 
 import (
@@ -29,7 +31,8 @@ func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	pluginmgrManager := pluginmgr.NewManager(globalLogger2, manager)
+	client := NewHttpClient()
+	pluginmgrManager := pluginmgr.NewManager(globalLogger2, manager, client)
 	invoiceManager, err := invoice.NewManager(db, pluginmgrManager, globalLogger2)
 	if err != nil {
 		return nil, err
@@ -48,4 +51,12 @@ func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 		return nil, err
 	}
 	return serverServer, nil
+}
+
+// wire.go:
+
+func NewHttpClient() http.Client {
+	return http.Client{
+		Timeout: 15 * time.Second,
+	}
 }

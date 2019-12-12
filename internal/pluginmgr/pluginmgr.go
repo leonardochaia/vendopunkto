@@ -25,7 +25,7 @@ type exchangeRatesAndInfo struct {
 
 type Manager struct {
 	logger   hclog.Logger
-	http     http.Client
+	client   http.Client
 	currency currency.Manager
 
 	wallets       map[string]walletAndInfo
@@ -91,7 +91,7 @@ func (manager *Manager) initializeExchangeRatesPlugin(
 	pluginURL url.URL,
 	info plugin.PluginInfo) error {
 
-	ratesClient := NewExchangeRatesClient(pluginURL, info)
+	ratesClient := NewExchangeRatesClient(pluginURL, info, manager.client)
 
 	info, err := ratesClient.GetPluginInfo()
 	if err != nil {
@@ -112,7 +112,7 @@ func (manager *Manager) initializeExchangeRatesPlugin(
 }
 
 func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.PluginInfo) error {
-	walletClient := NewWalletClient(pluginURL, info)
+	walletClient := NewWalletClient(pluginURL, info, manager.client)
 
 	walletInfo, err := walletClient.GetWalletInfo()
 	if err != nil {
@@ -176,7 +176,7 @@ func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) ([]pl
 		return nil, err
 	}
 
-	resp, err := manager.http.Post(final.String(), "application/json", bytes.NewBuffer(params))
+	resp, err := manager.client.Post(final.String(), "application/json", bytes.NewBuffer(params))
 
 	if err != nil {
 		return nil, err
