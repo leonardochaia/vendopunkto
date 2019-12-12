@@ -5,15 +5,19 @@ import (
 	"github.com/go-chi/chi"
 )
 
+type WalletPluginCurrency struct {
+	Name   string `json:"name"`
+	Symbol string `json:"symbol"`
+}
+
 type WalletPluginInfo struct {
-	ID         string
-	Name       string
-	Currencies []string
+	Currency WalletPluginCurrency `json:"currency"`
 }
 
 // WalletPlugin must be implemented for a Coin to be supported by vendopunkto
 type WalletPlugin interface {
-	GetPluginInfo() (*WalletPluginInfo, error)
+	VendoPunktoPlugin
+	GetWalletInfo() (WalletPluginInfo, error)
 	GenerateNewAddress(invoiceID string) (string, error)
 }
 
@@ -58,5 +62,5 @@ func (serverPlugin *walletServerPlugin) GetWalletClient() (PluginWalletClient, e
 const (
 	WalletMainEndpoint            = "/vp/wallet"
 	GenerateAddressWalletEndpoint = "/address"
-	ActivatePluginEndpoint        = "/activate"
+	WalletInfoEndpoint            = "/info"
 )

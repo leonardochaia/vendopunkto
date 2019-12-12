@@ -48,7 +48,7 @@ dbclean:
 
 run:
 	STORAGE_HOST=localhost \
-	PLUGINS_ENABLED="wallet|http://localhost:4200" \
+	PLUGINS_ENABLED="http://localhost:4200" \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
 
 

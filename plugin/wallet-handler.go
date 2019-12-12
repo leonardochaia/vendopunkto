@@ -40,6 +40,7 @@ func NewWalletHandler(plugin WalletPlugin, serverPlugin ServerPlugin) *chi.Mux {
 
 	router.Post(GenerateAddressWalletEndpoint, errors.WrapHandler(handler.generateAddress))
 	router.Post(ActivatePluginEndpoint, errors.WrapHandler(handler.activatePlugin))
+	router.Get(WalletInfoEndpoint, errors.WrapHandler(handler.getWalletInfo))
 
 	return router
 }
@@ -76,6 +77,17 @@ func (handler *Handler) activatePlugin(w http.ResponseWriter, r *http.Request) *
 	}
 
 	res, err := handler.wallet.GetPluginInfo()
+
+	if err != nil {
+		return errors.InternalServerError(err)
+	}
+
+	render.JSON(w, r, res)
+	return nil
+}
+
+func (handler *Handler) getWalletInfo(w http.ResponseWriter, r *http.Request) *errors.APIError {
+	res, err := handler.wallet.GetWalletInfo()
 
 	if err != nil {
 		return errors.InternalServerError(err)

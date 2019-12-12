@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
@@ -30,24 +29,16 @@ func (manager *Manager) LoadPlugins() {
 	hostAddress := viper.GetString("plugins.server.plugin_host_address")
 
 	for _, addr := range plugins {
-		split := strings.Split(addr, "|")
 
-		if split[0] != "wallet" {
-			manager.logger.Error("Failed to load plugin. Only 'wallet' type is supported",
-				"plugin", addr)
-			manager.logger.Error("An example could be 'wallet|http://localhost:3333'")
-			continue
-		}
-
-		url, err := url.Parse(split[1])
+		url, err := url.Parse(addr)
 
 		if err != nil {
-			manager.logger.Error("Failed to parse plugin URL", "error", err)
-			manager.logger.Error("An example could be 'wallet|http://localhost:3333'")
+			manager.logger.Error("Failed to parse plugin URL", "error", err, "address", addr)
+			manager.logger.Error("An example could be 'http://localhost:3333'")
 			continue
 		}
 
-		err = manager.initializeWalletPlugin(*url, hostAddress)
+		err = manager.initializePlugin(*url, hostAddress)
 		if err != nil {
 			manager.logger.Error("Failed to communicate with plugin", "error", err, "URL", url.String())
 			continue
@@ -55,7 +46,7 @@ func (manager *Manager) LoadPlugins() {
 	}
 }
 
-func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, hostAddress string) error {
+func (manager *Manager) initializePlugin(pluginURL url.URL, hostAddress string) error {
 
 	info, err := manager.activatePlugin(pluginURL, hostAddress)
 
@@ -63,11 +54,50 @@ func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, hostAddress st
 		return err
 	}
 
-	manager.logger.Info("Registering wallet plugin", "name", info.Name, "ID", info.ID)
-	manager.wallets[info.ID] = walletAndInfo{
-		client: NewWalletClient(pluginURL, *info),
-		info:   *info,
+	manager.logger.Info("Registering plugin",
+		"id", info.ID,
+		"name", info.Name,
+		"type", info.Type)
+
+	switch info.Type {
+	case plugin.PluginTypeWallet:
+		err = manager.initializeWalletPlugin(pluginURL, *info)
+
+		if err != nil {
+			return err
+		}
+
+	case plugin.PluginTypeExchangeRate:
+		return fmt.Errorf("TODO")
+	default:
+		return fmt.Errorf("Plugin type is not supported %s", info.Type)
 	}
+
+	return nil
+}
+
+func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.PluginInfo) error {
+	walletClient := NewWalletClient(pluginURL, info)
+
+	walletInfo, err := walletClient.GetWalletInfo()
+	if err != nil {
+		return err
+	}
+
+	manager.wallets[info.ID] = walletAndInfo{
+		client: walletClient,
+		info:   walletInfo,
+	}
+
+	// TODO: Store currency
+
+	}
+
+	manager.logger.Info("Initialized Wallet Plugin",
+		"id", info.ID,
+		"name", info.Name,
+		"currency", walletInfo.Currency.Symbol)
+
 	return nil
 }
 
@@ -80,10 +110,8 @@ func (manager *Manager) GetWallet(ID string) (plugin.WalletPlugin, error) {
 
 func (manager *Manager) GetWalletForCurrency(currency string) (plugin.WalletPlugin, error) {
 	for _, wallet := range manager.wallets {
-		for _, c := range wallet.info.Currencies {
-			if c == currency {
-				return wallet.client, nil
-			}
+		if wallet.info.Currency.Symbol == currency {
+			return wallet.client, nil
 		}
 	}
 	return nil, fmt.Errorf("Could not find a wallet for currency " + currency)
@@ -91,7 +119,7 @@ func (manager *Manager) GetWalletForCurrency(currency string) (plugin.WalletPlug
 
 // activatePlugin does the initial handshake where the plugin returns its basic
 // info while the host address is provided so the plugin can reach back
-func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) (*plugin.WalletPluginInfo, error) {
+func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) (*plugin.PluginInfo, error) {
 	u, err := url.Parse(plugin.WalletMainEndpoint + plugin.ActivatePluginEndpoint)
 	if err != nil {
 		return nil, err
@@ -120,7 +148,7 @@ func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) (*plu
 		return nil, fmt.Errorf("Invalid response. Got status " + resp.Status)
 	}
 
-	var result plugin.WalletPluginInfo
+	var result plugin.PluginInfo
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return &result, err
