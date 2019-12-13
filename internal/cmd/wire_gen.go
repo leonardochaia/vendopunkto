@@ -27,18 +27,18 @@ func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	manager, err := currency.NewManager(db, globalLogger2)
-	if err != nil {
-		return nil, err
-	}
 	client := NewHttpClient()
-	pluginmgrManager := pluginmgr.NewManager(globalLogger2, manager, client)
-	invoiceManager, err := invoice.NewManager(db, pluginmgrManager, globalLogger2)
+	manager := pluginmgr.NewManager(globalLogger2, client)
+	invoiceManager, err := invoice.NewManager(db, manager, globalLogger2)
 	if err != nil {
 		return nil, err
 	}
 	handler := invoice.NewHandler(invoiceManager, globalLogger2)
-	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger2)
+	currencyHandler, err := currency.NewHandler(manager, globalLogger2)
+	if err != nil {
+		return nil, err
+	}
+	vendoPunktoRouter, err := server.NewRouter(handler, currencyHandler, globalLogger2)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.NewServer(vendoPunktoRouter, pluginRouter, db, globalLogger2, pluginmgrManager)
+	serverServer, err := server.NewServer(vendoPunktoRouter, pluginRouter, db, globalLogger2, manager)
 	if err != nil {
 		return nil, err
 	}

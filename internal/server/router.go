@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/spf13/viper"
 )
@@ -18,7 +19,10 @@ type VendoPunktoRouter interface {
 }
 
 // Creates the chi Router and configures global paths
-func NewRouter(invoices *invoice.Handler, globalLogger hclog.Logger) (*VendoPunktoRouter, error) {
+func NewRouter(
+	invoices *invoice.Handler,
+	currencies currency.Handler,
+	globalLogger hclog.Logger) (*VendoPunktoRouter, error) {
 
 	var router VendoPunktoRouter
 	router = chi.NewRouter()
@@ -30,6 +34,7 @@ func NewRouter(invoices *invoice.Handler, globalLogger hclog.Logger) (*VendoPunk
 
 	router.Route("/v1", func(r chi.Router) {
 		r.Mount("/invoices", invoices.Routes())
+		r.Mount("/currencies", currencies.Routes())
 	})
 	return &router, nil
 }

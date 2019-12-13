@@ -8,7 +8,6 @@ import (
 	"net/url"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/plugin"
 	"github.com/spf13/viper"
 )
@@ -24,9 +23,8 @@ type exchangeRatesAndInfo struct {
 }
 
 type Manager struct {
-	logger   hclog.Logger
-	client   http.Client
-	currency currency.Manager
+	logger hclog.Logger
+	client http.Client
 
 	wallets       map[string]walletAndInfo
 	exchangeRates map[string]exchangeRatesAndInfo
@@ -52,6 +50,31 @@ func (manager *Manager) LoadPlugins() {
 			continue
 		}
 	}
+}
+
+func (manager *Manager) GetWallet(ID string) (plugin.WalletPlugin, error) {
+	if w, ok := manager.wallets[ID]; ok {
+		return w.client, nil
+	}
+	return nil, fmt.Errorf("Could not find a wallet with ID " + ID)
+}
+
+func (manager *Manager) GetWalletForCurrency(currency string) (plugin.WalletPlugin, error) {
+	for _, wallet := range manager.wallets {
+		if wallet.info.Currency.Symbol == currency {
+			return wallet.client, nil
+		}
+	}
+	return nil, fmt.Errorf("Could not find a wallet for currency " + currency)
+}
+
+func (manager *Manager) GetAllCurrencies() ([]plugin.WalletPluginCurrency, error) {
+	output := []plugin.WalletPluginCurrency{}
+	for _, v := range manager.wallets {
+		output = append(output, v.info.Currency)
+	}
+
+	return output, nil
 }
 
 func (manager *Manager) initializePlugin(pluginURL url.URL, hostAddress string) error {
@@ -123,11 +146,6 @@ func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.Pl
 		client: walletClient,
 		info:   walletInfo,
 	}
-	_, err = manager.currency.RegisterCurrency(walletInfo.Currency.Name, walletInfo.Currency.Symbol)
-
-	if err != nil {
-		return err
-	}
 
 	manager.logger.Info("Initialized Wallet Plugin",
 		"id", info.ID,
@@ -136,22 +154,6 @@ func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.Pl
 		"address", pluginURL.String())
 
 	return nil
-}
-
-func (manager *Manager) GetWallet(ID string) (plugin.WalletPlugin, error) {
-	if w, ok := manager.wallets[ID]; ok {
-		return w.client, nil
-	}
-	return nil, fmt.Errorf("Could not find a wallet with ID " + ID)
-}
-
-func (manager *Manager) GetWalletForCurrency(currency string) (plugin.WalletPlugin, error) {
-	for _, wallet := range manager.wallets {
-		if wallet.info.Currency.Symbol == currency {
-			return wallet.client, nil
-		}
-	}
-	return nil, fmt.Errorf("Could not find a wallet for currency " + currency)
 }
 
 // activatePlugin does the initial handshake where the plugin returns its basic

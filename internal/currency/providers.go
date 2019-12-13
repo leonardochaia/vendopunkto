@@ -3,17 +3,14 @@ package currency
 import (
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
-	"github.com/jinzhu/gorm"
+	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 )
 
-var CurrencyProviders = wire.NewSet(NewManager)
+var CurrencyProviders = wire.NewSet(NewHandler)
 
-func NewManager(db *gorm.DB, globalLogger hclog.Logger) (Manager, error) {
-
-	db.AutoMigrate(&Currency{})
-
-	return Manager{
-		logger: globalLogger.Named("currency-manager"),
-		db:     db,
+func NewHandler(manager *pluginmgr.Manager, globalLogger hclog.Logger) (Handler, error) {
+	return Handler{
+		logger:  globalLogger.Named("currency-handler"),
+		manager: manager,
 	}, nil
 }
