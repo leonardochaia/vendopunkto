@@ -15,6 +15,10 @@ type PluginInfo struct {
 	Type PluginType `json:"pluginType"`
 }
 
+func (info PluginInfo) GetAddress() string {
+	return "/plugin/" + info.ID
+}
+
 type VendoPunktoPlugin interface {
 	GetPluginInfo() (PluginInfo, error)
 }

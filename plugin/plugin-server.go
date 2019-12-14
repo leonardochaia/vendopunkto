@@ -59,11 +59,6 @@ func (s *Server) Start(addr string) error {
 	s.pluginInfos = []PluginInfo{}
 
 	for _, value := range s.plugins {
-		err := value.initializeRouter(router)
-
-		if err != nil {
-			return err
-		}
 
 		impl, err := value.GetPluginImpl()
 		if err != nil {
@@ -76,7 +71,21 @@ func (s *Server) Start(addr string) error {
 			return err
 		}
 
+		pRouter := chi.NewRouter()
+		router.Mount(info.GetAddress(), pRouter)
+		err = value.initializeRouter(pRouter)
+
+		if err != nil {
+			return err
+		}
+
 		s.pluginInfos = append(s.pluginInfos, info)
+
+		s.Logger.Info("Routed plugin",
+			"id", info.ID,
+			"name", info.Name,
+			"address", info.GetAddress(),
+		)
 	}
 
 	router.Post(ActivatePluginEndpoint, errors.WrapHandler(s.activatePluginHandler))

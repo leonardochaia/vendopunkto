@@ -26,8 +26,16 @@ func NewWalletClient(
 	}
 }
 
+func (c coinWalletClientImpl) getBaseURL(end string) (*url.URL, error) {
+	u, err := url.Parse(c.info.GetAddress() + plugin.WalletMainEndpoint + end)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
 func (c coinWalletClientImpl) GenerateNewAddress(invoiceID string) (string, error) {
-	u, err := url.Parse(plugin.WalletMainEndpoint + plugin.GenerateAddressWalletEndpoint)
+	u, err := c.getBaseURL(plugin.GenerateAddressWalletEndpoint)
 	if err != nil {
 		return "", err
 	}
@@ -59,7 +67,7 @@ func (c coinWalletClientImpl) GetPluginInfo() (plugin.PluginInfo, error) {
 }
 
 func (c coinWalletClientImpl) GetWalletInfo() (plugin.WalletPluginInfo, error) {
-	u, err := url.Parse(plugin.WalletMainEndpoint + plugin.WalletInfoEndpoint)
+	u, err := c.getBaseURL(plugin.WalletInfoEndpoint)
 	if err != nil {
 		return plugin.WalletPluginInfo{}, err
 	}

@@ -26,11 +26,19 @@ func NewExchangeRatesClient(
 	}
 }
 
+func (c exchangeRatesClientImpl) getBaseURL(end string) (*url.URL, error) {
+	u, err := url.Parse(c.info.GetAddress() + plugin.ExchangeRatesMainEndpoint + end)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
 func (c exchangeRatesClientImpl) GetExchangeRates(
 	currency string,
-	currencies []string) ([]plugin.ExchangeRatesResult, error) {
+	currencies []string) (plugin.ExchangeRatesResult, error) {
 
-	u, err := url.Parse(plugin.ExchangeRatesMainEndpoint)
+	u, err := c.getBaseURL("")
 	if err != nil {
 		return nil, err
 	}
