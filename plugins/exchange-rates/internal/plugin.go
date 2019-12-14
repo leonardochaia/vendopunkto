@@ -1,32 +1,67 @@
 package rates
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/leonardochaia/vendopunkto/plugin"
-	"github.com/shopspring/decimal"
 	gecko "github.com/superoo7/go-gecko/v3"
+	"github.com/superoo7/go-gecko/v3/types"
 )
 
 type geckoExchangeRatesPlugin struct {
 	client *gecko.Client
+	coins  types.CoinList
+}
+
+func (p *geckoExchangeRatesPlugin) getGeckoCurrencyIDForSymbol(symbol string) (string, error) {
+	symbol = strings.ToLower(symbol)
+
+	if p.coins == nil {
+		allCoins, err := p.client.CoinsList()
+		if err != nil {
+			return "", err
+		}
+
+		p.coins = *allCoins
+	}
+
+	for _, coin := range p.coins {
+		if coin.Symbol == symbol {
+			return coin.ID, nil
+		}
+	}
+
+	return "", fmt.Errorf("Couldn't find a coin for symbol " + symbol)
 }
 
 func (p geckoExchangeRatesPlugin) GetExchangeRates(
 	currency string,
-	currencies []string) ([]plugin.ExchangeRatesResult, error) {
+	currencies []string) (plugin.ExchangeRatesResult, error) {
 
-	result, err := p.client.SimplePrice(currencies, []string{currency})
+	source, err := p.getGeckoCurrencyIDForSymbol(currency)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := p.client.SimplePrice([]string{source}, currencies)
 
 	if err != nil {
 		return nil, err
 	}
 
-	output := []plugin.ExchangeRatesResult{}
+	output := make(plugin.ExchangeRatesResult)
 
-	for coin, rates := range *result {
-		output = append(output, plugin.ExchangeRatesResult{
-			Currency: coin,
-			Rate:     decimal.NewFromFloat32(rates[currency]),
-		})
+	for _, rates := range *result {
+
+		for _, target := range currencies {
+			rate := float64(rates[target])
+			if target == currency {
+				rate = 1
+			}
+
+			output[target] = rate
+		}
 	}
 
 	return output, nil

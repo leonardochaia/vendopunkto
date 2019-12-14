@@ -60,7 +60,7 @@ func (c exchangeRatesClientImpl) GetExchangeRates(
 		return nil, err
 	}
 
-	var result []plugin.ExchangeRatesResult
+	var result plugin.ExchangeRatesResult
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return result, err

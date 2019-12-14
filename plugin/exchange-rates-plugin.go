@@ -2,19 +2,15 @@ package plugin
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/shopspring/decimal"
 )
 
-type ExchangeRatesResult struct {
-	Currency string          `json:"currency"`
-	Rate     decimal.Decimal `json:"rate"`
-}
+type ExchangeRatesResult map[string]float64
 
 // ExchangeRatesPlugin must be implemented in order to provide coin exchange
 // rates
 type ExchangeRatesPlugin interface {
 	VendoPunktoPlugin
-	GetExchangeRates(base string, currencies []string) ([]ExchangeRatesResult, error)
+	GetExchangeRates(base string, currencies []string) (ExchangeRatesResult, error)
 }
 
 // exchangeRatesServerPlugin mounts the router and provides the actual plugin

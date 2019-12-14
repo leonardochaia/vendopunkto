@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
@@ -77,6 +78,13 @@ func (manager *Manager) GetAllCurrencies() ([]plugin.WalletPluginCurrency, error
 	return output, nil
 }
 
+func (manager *Manager) GetExchangeRatesPlugin(ID string) (plugin.ExchangeRatesPlugin, error) {
+	if w, ok := manager.exchangeRates[ID]; ok {
+		return w.client, nil
+	}
+	return nil, fmt.Errorf("Could not find an exchange rates plugin with ID " + ID)
+}
+
 func (manager *Manager) initializePlugin(pluginURL url.URL, hostAddress string) error {
 
 	infos, err := manager.activatePlugin(pluginURL, hostAddress)
@@ -129,7 +137,7 @@ func (manager *Manager) initializeExchangeRatesPlugin(
 	manager.logger.Info("Initialized Exchange rates Plugin",
 		"id", info.ID,
 		"name", info.Name,
-		"address", pluginURL.String())
+		"address", pluginURL.String()+info.GetAddress())
 
 	return nil
 }
@@ -141,6 +149,8 @@ func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.Pl
 	if err != nil {
 		return err
 	}
+
+	walletInfo.Currency.Symbol = strings.ToLower(walletInfo.Currency.Symbol)
 
 	manager.wallets[info.ID] = walletAndInfo{
 		client: walletClient,
