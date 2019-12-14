@@ -48,7 +48,7 @@ dbclean:
 
 run:
 	STORAGE_HOST=localhost \
-	PLUGINS_ENABLED="http://localhost:4200 http://localhost:4201" \
+	PLUGINS_ENABLED="http://localhost:4000 http://localhost:4201" \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
 
 
@@ -62,6 +62,7 @@ run-monero:
 	MONERO_WALLET_RPC_URL=http://localhost:18082 \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-monero
 
+
 plugins/exchange-rates/internal/wire_gen.go: plugins/exchange-rates/internal/wire.go
 	wire ./plugins/exchange-rates/internal/...
 
@@ -70,3 +71,11 @@ build-rates: tools plugins/exchange-rates/internal/wire_gen.go
 
 run-rates:
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-rates
+
+
+plugins/development/internal/wire_gen.go: plugins/development/internal/wire.go
+	wire ./plugins/development/internal/...
+
+dev-plugin: tools plugins/development/internal/wire_gen.go
+	go build -o ./vendopunkto-dev ./plugins/development/main.go
+	${GOPATH}/src/${PACKAGENAME}/vendopunkto-dev
