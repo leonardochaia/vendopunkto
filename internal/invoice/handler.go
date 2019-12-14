@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/errors"
+	"github.com/leonardochaia/vendopunkto/unit"
 )
 
 type Handler struct {
@@ -19,6 +20,7 @@ func (handler *Handler) Routes() chi.Router {
 	router := chi.NewRouter()
 
 	router.Post("/", errors.WrapHandler(handler.createInvoice))
+	router.Post("/{id}/payment-method/address", errors.WrapHandler(handler.generatePaymentMethodAddress))
 	router.Get("/{id}", errors.WrapHandler(handler.getInvoice))
 
 	return router
@@ -35,8 +37,9 @@ func (handler *Handler) InternalRoutes() chi.Router {
 func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) *errors.APIError {
 
 	type creationParams struct {
-		Amount   uint64 `json:"amount"`
-		Currency string `json:"currency"`
+		Total          unit.AtomicUnit `json:"total"`
+		Currency       string          `json:"currency"`
+		PaymentMethods []string        `json:"paymentMethods"`
 	}
 
 	var params = new(creationParams)
@@ -44,13 +47,14 @@ func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) *e
 		return errors.InvalidRequestParams(err)
 	}
 
-	invoice, err := handler.manager.CreateInvoice(params.Amount, params.Currency)
+	invoice, err := handler.manager.CreateInvoice(params.Total,
+		params.Currency, params.PaymentMethods)
+
 	if err != nil {
 		return errors.InternalServerError(err)
 	}
 
-	render.JSON(w, r, invoice)
-	return nil
+	return renderInvoiceDto(w, r, *invoice)
 }
 
 func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) *errors.APIError {
@@ -69,18 +73,42 @@ func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) *erro
 		return errors.ResourceNotFound()
 	}
 
-	render.JSON(w, r, invoice)
-	return nil
+	return renderInvoiceDto(w, r, *invoice)
+}
+
+func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *http.Request) *errors.APIError {
+
+	invoiceID := chi.URLParam(r, "id")
+	if invoiceID == "" {
+		return errors.InvalidRequestParams(fmt.Errorf("No ID was provided"))
+	}
+
+	type inputParams struct {
+		Currency string `json:"currency"`
+	}
+
+	var params = new(inputParams)
+	if err := render.DecodeJSON(r.Body, &params); err != nil {
+		return errors.InvalidRequestParams(err)
+	}
+
+	invoice, err := handler.manager.CreateAddressForPaymentMethod(invoiceID, params.Currency)
+
+	if err != nil {
+		return errors.InternalServerError(err)
+	}
+
+	return renderInvoiceDto(w, r, *invoice)
 }
 
 // confirmPayment is an internal endpoint that confirms an invoice has been paid
 func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *errors.APIError {
 
 	type confirmPaymentsParams struct {
-		TxHash        string `json:"txHash"`
-		Address       string `json:"address"`
-		Amount        uint64 `json:"amount"`
-		Confirmations uint64 `json:"confirmations"`
+		TxHash        string          `json:"txHash"`
+		Address       string          `json:"address"`
+		Amount        unit.AtomicUnit `json:"amount"`
+		Confirmations uint64          `json:"confirmations"`
 	}
 	var params = new(confirmPaymentsParams)
 
@@ -100,5 +128,15 @@ func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *
 	}
 
 	render.NoContent(w, r)
+	return nil
+}
+
+func renderInvoiceDto(w http.ResponseWriter, r *http.Request, invoice Invoice) *errors.APIError {
+	dto, err := invoice.ToDto()
+	if err != nil {
+		return errors.InternalServerError(err)
+	}
+
+	render.JSON(w, r, dto)
 	return nil
 }

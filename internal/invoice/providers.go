@@ -20,6 +20,7 @@ func NewManager(db *gorm.DB, pluginManager *pluginmgr.Manager, globalLogger hclo
 
 	db.AutoMigrate(&Invoice{})
 	db.AutoMigrate(&Payment{})
+	db.AutoMigrate(&PaymentMethod{})
 
 	return &Manager{
 		logger:        globalLogger.Named("invoice-manager"),
