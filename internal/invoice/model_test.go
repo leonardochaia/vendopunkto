@@ -150,3 +150,25 @@ func TestInvoicePaymentMethodRemainingAmount(t *testing.T) {
 		t.Errorf("Expected invoice to be 0 but it's %d", r)
 	}
 }
+
+func TestInvoicePaymentMethodRemainingAmountOverPayed(t *testing.T) {
+	total := unit.NewFromFloat(1)
+	inv := &Invoice{
+		Currency: "xmr",
+		Total:    total,
+	}
+
+	method := inv.AddPaymentMethod("xmr", "xmr-fake-addr", total)
+
+	r := inv.CalculateRemainingAmount()
+	if r != total {
+		t.Errorf("Expected invoice to be %d but it's %d", total, r)
+	}
+
+	method.AddPayment("fake-hash", total*2, 1)
+
+	r = inv.CalculateRemainingAmount()
+	if r != 0 {
+		t.Errorf("Expected invoice to be 0 but it's %d", r)
+	}
+}

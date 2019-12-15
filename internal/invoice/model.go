@@ -96,7 +96,13 @@ func (invoice *Invoice) CalculateTotalPayedAmount() unit.AtomicUnit {
 // CalculateRemainingAmount returns how much is needed to fully pay this invoice
 // in the invoice's currency
 func (invoice *Invoice) CalculateRemainingAmount() unit.AtomicUnit {
-	return invoice.Total - invoice.CalculateTotalPayedAmount()
+	totalPayed := invoice.CalculateTotalPayedAmount()
+
+	if totalPayed > invoice.Total {
+		return 0
+	}
+
+	return invoice.Total - totalPayed
 }
 
 // CalculatePaymentMethodRemaining returns how much is remaining in the method's
