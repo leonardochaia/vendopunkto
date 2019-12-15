@@ -1,9 +1,9 @@
 package server
 
 import (
+	"github.com/go-pg/pg"
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
-	"github.com/jinzhu/gorm"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 )
 
@@ -12,7 +12,7 @@ var ServerProviders = wire.NewSet(NewServer, NewRouter, NewPluginRouter)
 func NewServer(
 	router *VendoPunktoRouter,
 	pluginRouter *PluginRouter,
-	db *gorm.DB,
+	db *pg.DB,
 	globalLogger hclog.Logger,
 	pluginManager *pluginmgr.Manager) (*Server, error) {
 

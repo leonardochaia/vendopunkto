@@ -23,32 +23,35 @@ import (
 
 // Injectors from wire.go:
 
-func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
-	db, err := store.NewDB()
+func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
+	db, err := store.NewDB(globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	invoiceRepository := repositories.NewPostgresInvoiceRepository(db)
+	invoiceRepository, err := repositories.NewPostgresInvoiceRepository(db)
+	if err != nil {
+		return nil, err
+	}
 	client := NewHttpClient()
-	manager := pluginmgr.NewManager(globalLogger2, client)
-	invoiceManager, err := invoice.NewManager(invoiceRepository, manager, globalLogger2)
+	manager := pluginmgr.NewManager(globalLogger, client)
+	invoiceManager, err := invoice.NewManager(invoiceRepository, manager, globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	handler := invoice.NewHandler(invoiceManager, globalLogger2)
-	currencyHandler, err := currency.NewHandler(manager, globalLogger2)
+	handler := invoice.NewHandler(invoiceManager, globalLogger)
+	currencyHandler, err := currency.NewHandler(manager, globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	vendoPunktoRouter, err := server.NewRouter(handler, currencyHandler, globalLogger2)
+	vendoPunktoRouter, err := server.NewRouter(handler, currencyHandler, globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	pluginRouter, err := server.NewPluginRouter(handler, globalLogger2)
+	pluginRouter, err := server.NewPluginRouter(handler, globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.NewServer(vendoPunktoRouter, pluginRouter, db, globalLogger2, manager)
+	serverServer, err := server.NewServer(vendoPunktoRouter, pluginRouter, db, globalLogger, manager)
 	if err != nil {
 		return nil, err
 	}

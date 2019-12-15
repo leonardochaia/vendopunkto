@@ -29,29 +29,30 @@ const (
 )
 
 type Invoice struct {
-	ID             string           ``
-	Total          unit.AtomicUnit  `gorm:"type:numeric"`
-	Currency       string           ``
-	CreatedAt      time.Time        ``
-	PaymentMethods []*PaymentMethod ``
+	ID             string
+	Total          unit.AtomicUnit
+	Currency       string
+	CreatedAt      time.Time
+	PaymentMethods []*PaymentMethod
 }
 
 type PaymentMethod struct {
-	ID        uint            `gorm:"primary_key"`
-	InvoiceID string          `gorm:"index"`
-	Total     unit.AtomicUnit `gorm:"type:numeric"`
-	Currency  string          ``
-	Address   string          `gorm:"index"`
-	Payments  []*Payment      ``
+	ID        uint
+	InvoiceID string
+	Total     unit.AtomicUnit
+	Currency  string
+	Address   string
+	Payments  []*Payment
 }
 
 type Payment struct {
-	TxHash          string          `gorm:"primary_key"`
-	PaymentMethodID uint            `gorm:"index"`
-	Amount          unit.AtomicUnit `gorm:"type:numeric"`
-	Confirmations   uint64          `gorm:"type:BIGINT"`
-	ConfirmedAt     time.Time       ``
-	CreatedAt       time.Time       ``
+	ID              uint
+	TxHash          string
+	PaymentMethodID uint
+	Amount          unit.AtomicUnit
+	Confirmations   uint64
+	ConfirmedAt     time.Time
+	CreatedAt       time.Time
 }
 
 func (invoice *Invoice) Status() InvoiceStatus {

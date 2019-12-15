@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
-	"github.com/jinzhu/gorm"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/spf13/viper"
 )
@@ -18,7 +18,7 @@ type Server struct {
 	router        *VendoPunktoRouter
 	pluginRouter  *PluginRouter
 	server        *http.Server
-	db            *gorm.DB
+	db            *pg.DB
 	pluginManager *pluginmgr.Manager
 }
 

@@ -3,6 +3,7 @@ package invoice
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
@@ -104,9 +105,10 @@ func (mgr *Manager) CreateInvoice(
 	currency = strings.ToLower(currency)
 
 	invoice := &Invoice{
-		ID:       xid.New().String(),
-		Total:    total,
-		Currency: currency,
+		ID:        xid.New().String(),
+		Total:     total,
+		Currency:  currency,
+		CreatedAt: time.Now(),
 	}
 
 	// populate payment methods using all currencies if none was provided
@@ -155,7 +157,7 @@ func (mgr *Manager) CreateInvoice(
 		"currency", invoice.Currency,
 		"paymentMethods", paymentMethods)
 
-	return mgr.GetInvoice(invoice.ID)
+	return invoice, nil
 }
 
 func (mgr *Manager) CreateAddressForPaymentMethod(invoiceID string, currency string) (*Invoice, error) {

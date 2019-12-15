@@ -13,7 +13,8 @@
             "program": "${workspaceFolder}/main.go",
             "env": {
                 "STORAGE_HOST": "localhost",
-                "PLUGINS_ENABLED": "http://localhost:4000 http://localhost:4201"
+                "PLUGINS_ENABLED": "http://localhost:4000 http://localhost:4201",
+                "LOGGER_LEVEL": "debug"
             },
             "args": [
                 "api"

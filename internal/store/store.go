@@ -3,13 +3,15 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"net"
 	"strings"
 
-	"github.com/jinzhu/gorm"
+	"github.com/go-pg/pg"
+	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/viper"
 )
 
-func NewDB() (*gorm.DB, error) {
+func NewDB(globalLogger hclog.Logger) (*pg.DB, error) {
 	var (
 		username string = viper.GetString("storage.username")
 		password string = viper.GetString("storage.password")
@@ -60,8 +62,21 @@ func NewDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	db, err := gorm.Open("postgres", dbURI+"/"+database+dbURLOptions)
-	// db.DB().SetMaxOpenConns(maxConnections)
+	db := pg.Connect(&pg.Options{
+		User:     username,
+		Password: password,
+		Database: "postgres",
+		Addr:     net.JoinHostPort(hostname, port),
+	})
+
+	_, err = db.Exec("SELECT 1")
+	if err != nil {
+		return nil, err
+	}
+
+	db.AddQueryHook(dbLogger{
+		logger: globalLogger.Named("db"),
+	})
 
 	return db, err
 }
@@ -91,4 +106,16 @@ func createDatabase(url string, dbName string) error {
 	}
 
 	return nil
+}
+
+type dbLogger struct {
+	logger hclog.Logger
+}
+
+func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
+}
+
+func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
+	query, _ := q.FormattedQuery()
+	d.logger.Debug("DB", "query", query)
 }

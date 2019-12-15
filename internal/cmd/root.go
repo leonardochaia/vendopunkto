@@ -9,7 +9,6 @@ import (
 	"net/http"
 	_ "net/http/pprof" // Import for pprof
 
-	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -19,14 +18,8 @@ import (
 var (
 
 	// Config and global logger
-	configFile   string
-	pidFile      string
-	globalLogger = hclog.New(&hclog.LoggerOptions{
-		Name:   "vendopunkto",
-		Output: os.Stdout,
-		Level:  hclog.LevelFromString(strings.ToUpper(viper.GetString("logger.level"))),
-		Color:  hclog.AutoColor,
-	})
+	configFile string
+	pidFile    string
 
 	// The Root Cli Handler
 	rootCmd = &cobra.Command{
@@ -97,6 +90,6 @@ func initProfiler() {
 	if viper.GetBool("profiler.enabled") {
 		hostPort := net.JoinHostPort(viper.GetString("profiler.host"), viper.GetString("profiler.port"))
 		go http.ListenAndServe(hostPort, nil)
-		globalLogger.Info("Profiler enabled on http://%s", hostPort)
+		fmt.Printf("Profiler enabled on http://%s", hostPort)
 	}
 }

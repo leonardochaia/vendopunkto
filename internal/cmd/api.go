@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"os"
+	"strings"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/leonardochaia/vendopunkto/internal/conf"
 )
@@ -19,10 +22,17 @@ var (
 		Long:  `Start API`,
 		Run: func(cmd *cobra.Command, args []string) { // Initialize the databse
 
+			logger := hclog.New(&hclog.LoggerOptions{
+				Name:   "vendopunkto",
+				Output: os.Stdout,
+				Level:  hclog.LevelFromString(strings.ToLower(viper.GetString("logger.level"))),
+				Color:  hclog.AutoColor,
+			})
+
 			// Create the server (uses wire DI)
-			s, err := NewServer(globalLogger)
+			s, err := NewServer(logger)
 			if err != nil {
-				globalLogger.Error("Could not create server",
+				logger.Error("Could not create server",
 					"error", err,
 				)
 				os.Exit(1)
@@ -31,7 +41,7 @@ var (
 			err = s.ListenAndServe()
 
 			if err != nil {
-				globalLogger.Error("Could not start server",
+				logger.Error("Could not start server",
 					"error", err,
 				)
 				os.Exit(1)
