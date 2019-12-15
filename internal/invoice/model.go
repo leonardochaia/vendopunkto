@@ -150,7 +150,7 @@ func (invoice *Invoice) AddPaymentMethod(
 
 	invoice.PaymentMethods = append(invoice.PaymentMethods, method)
 
-	return invoice.PaymentMethods[len(invoice.PaymentMethods)-1]
+	return method
 }
 
 func (payment *Payment) Status() PaymentStatus {
