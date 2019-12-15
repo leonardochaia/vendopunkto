@@ -161,7 +161,7 @@ func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.Pl
 		"id", info.ID,
 		"name", info.Name,
 		"currency", walletInfo.Currency.Symbol,
-		"address", pluginURL.String())
+		"address", pluginURL.String()+info.GetAddress())
 
 	return nil
 }

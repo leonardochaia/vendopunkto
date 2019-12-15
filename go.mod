@@ -17,6 +17,7 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/spf13/viper v1.2.1
+	github.com/superoo7/go-gecko v1.0.0
 	golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284 // indirect
 	golang.org/x/sys v0.0.0-20191126131656-8a8471f7e56d // indirect
 )

@@ -25,6 +25,7 @@ var (
 		Name:   "vendopunkto",
 		Output: os.Stdout,
 		Level:  hclog.LevelFromString(strings.ToUpper(viper.GetString("logger.level"))),
+		Color:  hclog.AutoColor,
 	})
 
 	// The Root Cli Handler
