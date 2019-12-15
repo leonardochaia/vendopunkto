@@ -16,6 +16,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/server"
 	"github.com/leonardochaia/vendopunkto/internal/store"
+	"github.com/leonardochaia/vendopunkto/internal/store/repositories"
 )
 
 // Create a new server
@@ -26,6 +27,7 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 		server.ServerProviders,
 		currency.CurrencyProviders,
 		NewHttpClient,
+		repositories.Providers,
 		store.NewDB,
 	)
 	return &server.Server{}, nil

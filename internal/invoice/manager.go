@@ -5,35 +5,15 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/jinzhu/gorm"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/unit"
 	"github.com/rs/xid"
 )
 
 type Manager struct {
-	db            *gorm.DB
+	repository    InvoiceRepository
 	logger        hclog.Logger
 	pluginManager *pluginmgr.Manager
-}
-
-func (mgr *Manager) findInvoice(key string, value string) (*Invoice, error) {
-	var invoice Invoice
-
-	result := mgr.db.Debug().
-		Preload("PaymentMethods").
-		Preload("PaymentMethods.Payments").
-		First(&invoice, key+" = ?", value)
-
-	if result.RecordNotFound() {
-		return nil, nil
-	}
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return &invoice, nil
 }
 
 func (mgr *Manager) createAddressForInvoice(invoiceID string, currency string) (string, error) {
@@ -109,22 +89,11 @@ func (mgr *Manager) addPaymentMethodsToInvoice(
 }
 
 func (mgr *Manager) GetInvoice(id string) (*Invoice, error) {
-	return mgr.findInvoice("ID", id)
+	return mgr.repository.FindByID(id)
 }
 
 func (mgr *Manager) GetInvoiceByAddress(address string) (*Invoice, error) {
-	var po PaymentMethod
-	result := mgr.db.Where("address = ?", address).First((&po))
-
-	if result.RecordNotFound() {
-		return nil, nil
-	}
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return mgr.findInvoice("ID", po.InvoiceID)
+	return mgr.repository.FindByAddress(address)
 }
 
 func (mgr *Manager) CreateInvoice(
@@ -174,7 +143,7 @@ func (mgr *Manager) CreateInvoice(
 
 	defaultMethod.Address = address
 
-	err = mgr.db.Create(invoice).Error
+	err = mgr.repository.Create(invoice)
 
 	if err != nil {
 		return nil, err
@@ -219,7 +188,7 @@ func (mgr *Manager) CreateAddressForPaymentMethod(invoiceID string, currency str
 
 	method.Address = address
 
-	err = mgr.db.Save(method).Error
+	err = mgr.repository.UpdatePaymentMethod(method)
 
 	if err != nil {
 		return nil, err
@@ -266,11 +235,12 @@ func (mgr *Manager) ConfirmPayment(
 	// Update the payment
 	if payment != nil {
 		payment.Update(confirmations)
+		mgr.repository.UpdatePayment(payment)
 	} else {
 		// New payment
 		payment = method.AddPayment(txHash, amount, confirmations)
+		mgr.repository.CreatePayment(payment)
 	}
 
-	mgr.db.Save(payment)
 	return invoice, nil
 }

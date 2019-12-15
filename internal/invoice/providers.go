@@ -3,7 +3,6 @@ package invoice
 import (
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
-	"github.com/jinzhu/gorm"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 )
 
@@ -16,15 +15,13 @@ func NewHandler(manager *Manager, globalLogger hclog.Logger) *Handler {
 	}
 }
 
-func NewManager(db *gorm.DB, pluginManager *pluginmgr.Manager, globalLogger hclog.Logger) (*Manager, error) {
-
-	db.AutoMigrate(&Invoice{})
-	db.AutoMigrate(&Payment{})
-	db.AutoMigrate(&PaymentMethod{})
-
+func NewManager(
+	repository InvoiceRepository,
+	pluginManager *pluginmgr.Manager,
+	globalLogger hclog.Logger) (*Manager, error) {
 	return &Manager{
 		logger:        globalLogger.Named("invoice-manager"),
 		pluginManager: pluginManager,
-		db:            db,
+		repository:    repository,
 	}, nil
 }

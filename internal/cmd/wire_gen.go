@@ -12,6 +12,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/server"
 	"github.com/leonardochaia/vendopunkto/internal/store"
+	"github.com/leonardochaia/vendopunkto/internal/store/repositories"
 	"net/http"
 	"time"
 )
@@ -27,9 +28,10 @@ func NewServer(globalLogger2 hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	invoiceRepository := repositories.NewPostgresInvoiceRepository(db)
 	client := NewHttpClient()
 	manager := pluginmgr.NewManager(globalLogger2, client)
-	invoiceManager, err := invoice.NewManager(db, manager, globalLogger2)
+	invoiceManager, err := invoice.NewManager(invoiceRepository, manager, globalLogger2)
 	if err != nil {
 		return nil, err
 	}
