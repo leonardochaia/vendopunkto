@@ -48,7 +48,11 @@ func WrapHandler(handler HandlerErrorAwareFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := handler(w, r)
 		if err != nil {
-			render.Render(w, r, err)
+			RenderAPIError(w, r, err)
 		}
 	}
+}
+
+func RenderAPIError(w http.ResponseWriter, r *http.Request, err *APIError) {
+	render.Render(w, r, err)
 }

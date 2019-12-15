@@ -1,6 +1,7 @@
 package invoice
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -89,15 +90,20 @@ func (mgr *Manager) addPaymentMethodsToInvoice(
 	return nil
 }
 
-func (mgr *Manager) GetInvoice(id string) (*Invoice, error) {
-	return mgr.repository.FindByID(id)
+func (mgr *Manager) GetInvoice(
+	ctx context.Context,
+	id string) (*Invoice, error) {
+	return mgr.repository.FindByID(ctx, id)
 }
 
-func (mgr *Manager) GetInvoiceByAddress(address string) (*Invoice, error) {
-	return mgr.repository.FindByAddress(address)
+func (mgr *Manager) GetInvoiceByAddress(
+	ctx context.Context,
+	address string) (*Invoice, error) {
+	return mgr.repository.FindByAddress(ctx, address)
 }
 
 func (mgr *Manager) CreateInvoice(
+	ctx context.Context,
 	total unit.AtomicUnit,
 	currency string,
 	paymentMethods []string) (*Invoice, error) {
@@ -145,7 +151,7 @@ func (mgr *Manager) CreateInvoice(
 
 	defaultMethod.Address = address
 
-	err = mgr.repository.Create(invoice)
+	err = mgr.repository.Create(ctx, invoice)
 
 	if err != nil {
 		return nil, err
@@ -160,8 +166,12 @@ func (mgr *Manager) CreateInvoice(
 	return invoice, nil
 }
 
-func (mgr *Manager) CreateAddressForPaymentMethod(invoiceID string, currency string) (*Invoice, error) {
-	invoice, err := mgr.GetInvoice(invoiceID)
+func (mgr *Manager) CreateAddressForPaymentMethod(
+	ctx context.Context,
+	invoiceID string,
+	currency string) (*Invoice, error) {
+
+	invoice, err := mgr.GetInvoice(ctx, invoiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +200,7 @@ func (mgr *Manager) CreateAddressForPaymentMethod(invoiceID string, currency str
 
 	method.Address = address
 
-	err = mgr.repository.UpdatePaymentMethod(method)
+	err = mgr.repository.UpdatePaymentMethod(ctx, method)
 
 	if err != nil {
 		return nil, err
@@ -207,12 +217,13 @@ func (mgr *Manager) CreateAddressForPaymentMethod(invoiceID string, currency str
 }
 
 func (mgr *Manager) ConfirmPayment(
+	ctx context.Context,
 	address string,
 	confirmations uint64,
 	amount unit.AtomicUnit,
 	txHash string) (*Invoice, error) {
 
-	invoice, err := mgr.GetInvoiceByAddress(address)
+	invoice, err := mgr.GetInvoiceByAddress(ctx, address)
 
 	if err != nil {
 		return nil, err
@@ -237,11 +248,11 @@ func (mgr *Manager) ConfirmPayment(
 	// Update the payment
 	if payment != nil {
 		payment.Update(confirmations)
-		mgr.repository.UpdatePayment(payment)
+		mgr.repository.UpdatePayment(ctx, payment)
 	} else {
 		// New payment
 		payment = method.AddPayment(txHash, amount, confirmations)
-		mgr.repository.CreatePayment(payment)
+		mgr.repository.CreatePayment(ctx, payment)
 	}
 
 	return invoice, nil

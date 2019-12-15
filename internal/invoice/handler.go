@@ -47,8 +47,8 @@ func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) *e
 		return errors.InvalidRequestParams(err)
 	}
 
-	invoice, err := handler.manager.CreateInvoice(params.Total,
-		params.Currency, params.PaymentMethods)
+	invoice, err := handler.manager.CreateInvoice(r.Context(),
+		params.Total, params.Currency, params.PaymentMethods)
 
 	if err != nil {
 		return errors.InternalServerError(err)
@@ -64,7 +64,7 @@ func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) *erro
 		return errors.InvalidRequestParams(fmt.Errorf("No ID was provided"))
 	}
 
-	invoice, err := handler.manager.GetInvoice(invoiceID)
+	invoice, err := handler.manager.GetInvoice(r.Context(), invoiceID)
 	if err != nil {
 		return errors.InternalServerError(err)
 	}
@@ -92,7 +92,8 @@ func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *h
 		return errors.InvalidRequestParams(err)
 	}
 
-	invoice, err := handler.manager.CreateAddressForPaymentMethod(invoiceID, params.Currency)
+	invoice, err := handler.manager.CreateAddressForPaymentMethod(r.Context(),
+		invoiceID, params.Currency)
 
 	if err != nil {
 		return errors.InternalServerError(err)
@@ -116,7 +117,7 @@ func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *
 		return errors.InvalidRequestParams(err)
 	}
 
-	_, err := handler.manager.ConfirmPayment(
+	_, err := handler.manager.ConfirmPayment(r.Context(),
 		params.Address,
 		params.Confirmations,
 		params.Amount,

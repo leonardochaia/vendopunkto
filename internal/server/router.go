@@ -8,9 +8,11 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
+	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
+	"github.com/leonardochaia/vendopunkto/internal/store"
 	"github.com/spf13/viper"
 )
 
@@ -22,20 +24,30 @@ type VendoPunktoRouter interface {
 func NewRouter(
 	invoices *invoice.Handler,
 	currencies currency.Handler,
-	globalLogger hclog.Logger) (*VendoPunktoRouter, error) {
+	globalLogger hclog.Logger,
+	db *pg.DB,
+) (*VendoPunktoRouter, error) {
 
 	var router VendoPunktoRouter
 	router = chi.NewRouter()
 
 	logger := globalLogger.Named("api-server")
+
+	// add basic middlewares
 	setupMiddlewares(router, logger)
 
+	// tx per request
+	router.Use(store.NewTxPerRequestMiddleware(globalLogger, db))
+
+	// global routes
 	router.Get("/info", GetVersion())
 
+	// versions
 	router.Route("/v1", func(r chi.Router) {
 		r.Mount("/invoices", invoices.Routes())
 		r.Mount("/currencies", currencies.Routes())
 	})
+
 	return &router, nil
 }
 

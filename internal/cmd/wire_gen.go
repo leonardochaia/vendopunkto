@@ -43,7 +43,7 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	vendoPunktoRouter, err := server.NewRouter(handler, currencyHandler, globalLogger)
+	vendoPunktoRouter, err := server.NewRouter(handler, currencyHandler, globalLogger, db)
 	if err != nil {
 		return nil, err
 	}
