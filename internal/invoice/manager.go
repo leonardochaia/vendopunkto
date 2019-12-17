@@ -51,8 +51,7 @@ func (mgr *Manager) addPaymentMethodsToInvoice(
 	invoice *Invoice,
 	paymentMethods []string) error {
 
-	// TODO: default rates
-	exchange, err := mgr.pluginManager.GetExchangeRatesPlugin("gecko-exchange-rates")
+	exchange, err := mgr.pluginManager.GetConfiguredExchangeRatesPlugin()
 	if err != nil {
 		return err
 	}

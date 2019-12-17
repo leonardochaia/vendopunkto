@@ -40,5 +40,6 @@ func init() {
 	viper.SetDefault("plugins.server.host", "0.0.0.0")
 	viper.SetDefault("plugins.server.port", "9080")
 	viper.SetDefault("plugins.server.plugin_host_address", "http://localhost:9080")
+	viper.SetDefault("plugins.default_exchange_rates", "")
 
 }

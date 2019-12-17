@@ -85,6 +85,10 @@ func (manager *Manager) GetExchangeRatesPlugin(ID string) (plugin.ExchangeRatesP
 	return nil, fmt.Errorf("Could not find an exchange rates plugin with ID " + ID)
 }
 
+func (manager *Manager) GetConfiguredExchangeRatesPlugin() (plugin.ExchangeRatesPlugin, error) {
+	return manager.GetExchangeRatesPlugin(viper.GetString("plugins.default_exchange_rates"))
+}
+
 func (manager *Manager) initializePlugin(pluginURL url.URL, hostAddress string) error {
 
 	infos, err := manager.activatePlugin(pluginURL, hostAddress)
