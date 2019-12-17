@@ -48,7 +48,8 @@ dbclean:
 
 run:
 	STORAGE_HOST=localhost \
-	PLUGINS_ENABLED="http://localhost:4000 http://localhost:4201" \
+	PLUGINS_ENABLED="http://localhost:4000" \
+	PLUGINS_DEFAULT_EXCHANGE_RATES=fake-exchange-rates \
 	LOGGER_LEVEL=debug \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
 

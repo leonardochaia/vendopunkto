@@ -13,11 +13,11 @@ import (
 // Injectors from wire.go:
 
 func NewContainer(globalLogger hclog.Logger) (*Container, error) {
-	client, err := newGeckoClient(globalLogger)
+	client, err := NewGeckoClient(globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	exchangeRatesPlugin, err := newGeckoExchangeRatesPlugin(globalLogger, client)
+	exchangeRatesPlugin, err := NewGeckoExchangeRatesPlugin(globalLogger, client)
 	if err != nil {
 		return nil, err
 	}

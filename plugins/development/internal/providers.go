@@ -2,28 +2,33 @@ package development
 
 import (
 	"github.com/google/wire"
+	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
 )
 
 type Container struct {
-	FakeBitcoinWallet     plugin.WalletPlugin
-	FakeMoneroWallet      plugin.WalletPlugin
-	FakeBitcoinCashWallet plugin.WalletPlugin
-	Server                *plugin.Server
+	FakeBitcoinWallet       plugin.WalletPlugin
+	FakeMoneroWallet        plugin.WalletPlugin
+	FakeBitcoinCashWallet   plugin.WalletPlugin
+	FakeExchangeRatesPlugin plugin.ExchangeRatesPlugin
+	Server                  *plugin.Server
 }
 
 var Providers = wire.NewSet(
 	plugin.NewServer,
+	newFakeExchangeRatesPlugin,
 	newContainer)
 
 func newContainer(
 	server *plugin.Server,
+	exchangeRates plugin.ExchangeRatesPlugin,
 ) *Container {
 	return &Container{
-		FakeMoneroWallet:      newFakeMoneroWalletPlugin(),
-		FakeBitcoinWallet:     newFakeBitcoinWalletPlugin(),
-		FakeBitcoinCashWallet: newFakeBitcoinCashWalletPlugin(),
-		Server:                server,
+		FakeMoneroWallet:        newFakeMoneroWalletPlugin(),
+		FakeBitcoinWallet:       newFakeBitcoinWalletPlugin(),
+		FakeBitcoinCashWallet:   newFakeBitcoinCashWalletPlugin(),
+		Server:                  server,
+		FakeExchangeRatesPlugin: exchangeRates,
 	}
 }
 
@@ -45,5 +50,11 @@ func newFakeBitcoinCashWalletPlugin() plugin.WalletPlugin {
 	return fakeWalletPlugin{
 		name:   "Bitcoin Cash",
 		symbol: "bch",
+	}
+}
+
+func newFakeExchangeRatesPlugin(logger hclog.Logger) plugin.ExchangeRatesPlugin {
+	return fakeExchangeRatesPlugin{
+		logger: logger,
 	}
 }

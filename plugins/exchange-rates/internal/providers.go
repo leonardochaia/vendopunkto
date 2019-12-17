@@ -34,6 +34,7 @@ func newContainer(
 func newGeckoExchangeRatesPlugin(logger hclog.Logger, client *gecko.Client) (plugin.ExchangeRatesPlugin, error) {
 	return geckoExchangeRatesPlugin{
 		client: client,
+		logger: logger,
 	}, nil
 }
 

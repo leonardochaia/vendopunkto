@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
 	gecko "github.com/superoo7/go-gecko/v3"
 	"github.com/superoo7/go-gecko/v3/types"
@@ -12,6 +13,7 @@ import (
 type geckoExchangeRatesPlugin struct {
 	client *gecko.Client
 	coins  types.CoinList
+	logger hclog.Logger
 }
 
 func (p *geckoExchangeRatesPlugin) getGeckoCurrencyIDForSymbol(symbol string) (string, error) {
@@ -24,6 +26,7 @@ func (p *geckoExchangeRatesPlugin) getGeckoCurrencyIDForSymbol(symbol string) (s
 		}
 
 		p.coins = *allCoins
+		p.logger.Info("Obtained coin list", "amount", len(p.coins))
 	}
 
 	for _, coin := range p.coins {
@@ -44,6 +47,9 @@ func (p geckoExchangeRatesPlugin) GetExchangeRates(
 		return nil, err
 	}
 
+	p.logger.Info("Requesting Gecko Simple Price",
+		"source", source,
+		"currencies", currencies)
 	result, err := p.client.SimplePrice([]string{source}, currencies)
 
 	if err != nil {
@@ -60,6 +66,10 @@ func (p geckoExchangeRatesPlugin) GetExchangeRates(
 				rate = 1
 			}
 
+			p.logger.Info("Obtained exchange rate",
+				"source", source,
+				"currency", target,
+				"rate", rate)
 			output[target] = rate
 		}
 	}
