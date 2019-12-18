@@ -158,7 +158,7 @@ func (mgr *Manager) CreateInvoice(
 
 	mgr.logger.Info("Created new invoice",
 		"id", invoice.ID,
-		"total", invoice.Total.String(),
+		"total", invoice.Total.Formatted(),
 		"currency", invoice.Currency,
 		"paymentMethods", paymentMethods)
 

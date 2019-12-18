@@ -13,7 +13,7 @@ func (u AtomicUnit) MarshalJSON() ([]byte, error) {
 		ValueFormatted string `json:"valueFormatted"`
 	}{
 		Value:          uint64(u),
-		ValueFormatted: u.String(),
+		ValueFormatted: u.Formatted(),
 	})
 }
 
@@ -21,7 +21,7 @@ func (u AtomicUnit) Float64() float64 {
 	return float64(u) / 1e12
 }
 
-func (u AtomicUnit) String() string {
+func (u AtomicUnit) Formatted() string {
 	// Credits to https://github.com/monero-ecosystem/go-monero-rpc-client/blob/master/wallet/util.go
 	str0 := fmt.Sprintf("%013d", u)
 	l := len(str0)
