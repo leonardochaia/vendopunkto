@@ -69,6 +69,15 @@ func (manager *Manager) GetWalletForCurrency(currency string) (plugin.WalletPlug
 	return nil, fmt.Errorf("Could not find a wallet for currency " + currency)
 }
 
+func (manager *Manager) GetWalletInfoForCurrency(currency string) (plugin.WalletPluginInfo, error) {
+	for _, wallet := range manager.wallets {
+		if wallet.info.Currency.Symbol == currency {
+			return wallet.info, nil
+		}
+	}
+	return plugin.WalletPluginInfo{}, fmt.Errorf("Could not find a wallet for currency " + currency)
+}
+
 func (manager *Manager) GetAllCurrencies() ([]plugin.WalletPluginCurrency, error) {
 	output := []plugin.WalletPluginCurrency{}
 	for _, v := range manager.wallets {

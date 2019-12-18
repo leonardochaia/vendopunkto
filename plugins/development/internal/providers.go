@@ -34,8 +34,9 @@ func newContainer(
 
 func newFakeMoneroWalletPlugin() plugin.WalletPlugin {
 	return fakeWalletPlugin{
-		name:   "Monero",
-		symbol: "xmr",
+		name:           "Monero",
+		symbol:         "xmr",
+		qrCodeTemplate: "monero:{{.Address}}?tx_amount={{.Amount}}",
 	}
 }
 

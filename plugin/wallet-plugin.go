@@ -1,12 +1,19 @@
 package plugin
 
 import (
+	"bytes"
+	"fmt"
+	"strings"
+	"text/template"
+
 	"github.com/go-chi/chi"
+	"github.com/leonardochaia/vendopunkto/unit"
 )
 
 type WalletPluginCurrency struct {
-	Name   string `json:"name"`
-	Symbol string `json:"symbol"`
+	Name           string `json:"name"`
+	Symbol         string `json:"symbol"`
+	QRCodeTemplate string `json:"qrCodeTemplate"`
 }
 
 type WalletPluginInfo struct {
@@ -48,3 +55,38 @@ const (
 	GenerateAddressWalletEndpoint = "/address"
 	WalletInfoEndpoint            = "/info"
 )
+
+func (info WalletPluginInfo) BuildQRCode(
+	address string,
+	amount unit.AtomicUnit) (string, error) {
+
+	if info.Currency.QRCodeTemplate == "" {
+		// default to bip21
+		info.Currency.QRCodeTemplate = fmt.Sprintf(
+			"%s:{{.Address}}?amount={{.AmountFormatted}}",
+			strings.ToLower(info.Currency.Name))
+	}
+
+	data := struct {
+		Address         string
+		Amount          unit.AtomicUnit
+		AmountFormatted string
+	}{
+		Address:         address,
+		Amount:          amount,
+		AmountFormatted: amount.Formatted(),
+	}
+
+	t, err := template.New("bip21").Parse(info.Currency.QRCodeTemplate)
+	if err != nil {
+		return "", err
+	}
+
+	var qr bytes.Buffer
+	err = t.Execute(&qr, data)
+	if err != nil {
+		return "", err
+	}
+
+	return qr.String(), nil
+}

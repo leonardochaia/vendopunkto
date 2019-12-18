@@ -3,6 +3,7 @@ package invoice
 import (
 	"time"
 
+	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/unit"
 )
 
@@ -24,6 +25,7 @@ type PaymentMethodDto struct {
 	Currency  string          `json:"currency"`
 	Address   string          `json:"address"`
 	Remaining unit.AtomicUnit `json:"remaining"`
+	QRCode    string          `json:"qrCode"`
 }
 
 type PaymentDto struct {
@@ -36,7 +38,7 @@ type PaymentDto struct {
 	Status        PaymentStatus   `json:"status"`
 }
 
-func (invoice Invoice) ToDto() (InvoiceDto, error) {
+func convertInvoiceToDto(invoice Invoice, pluginMgr *pluginmgr.Manager) (InvoiceDto, error) {
 
 	dto := &InvoiceDto{
 		ID:                invoice.ID,
@@ -51,12 +53,26 @@ func (invoice Invoice) ToDto() (InvoiceDto, error) {
 	}
 
 	for _, method := range invoice.PaymentMethods {
+
+		var qrCode string
+		if method.Address != "" {
+			info, err := pluginMgr.GetWalletInfoForCurrency(method.Currency)
+			if err != nil {
+				return InvoiceDto{}, err
+			}
+			qrCode, err = info.BuildQRCode(method.Address, method.Total)
+			if err != nil {
+				return InvoiceDto{}, err
+			}
+		}
+
 		methodDto := &PaymentMethodDto{
 			ID:        method.ID,
 			Total:     method.Total,
 			Currency:  method.Currency,
 			Address:   method.Address,
 			Remaining: invoice.CalculatePaymentMethodRemaining(*method),
+			QRCode:    qrCode,
 		}
 
 		for _, payment := range method.Payments {

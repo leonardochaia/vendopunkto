@@ -38,7 +38,7 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	handler := invoice.NewHandler(invoiceManager, globalLogger)
+	handler := invoice.NewHandler(invoiceManager, globalLogger, manager)
 	currencyHandler, err := currency.NewHandler(manager, globalLogger)
 	if err != nil {
 		return nil, err

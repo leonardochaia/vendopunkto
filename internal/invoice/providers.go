@@ -8,10 +8,14 @@ import (
 
 var InvoiceProviders = wire.NewSet(NewHandler, NewManager)
 
-func NewHandler(manager *Manager, globalLogger hclog.Logger) *Handler {
+func NewHandler(
+	manager *Manager,
+	globalLogger hclog.Logger,
+	pluginMgr *pluginmgr.Manager) *Handler {
 	return &Handler{
-		logger:  globalLogger.Named("invoice-handler"),
-		manager: manager,
+		logger:    globalLogger.Named("invoice-handler"),
+		manager:   manager,
+		pluginMgr: pluginMgr,
 	}
 }
 

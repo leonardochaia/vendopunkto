@@ -8,12 +8,14 @@ import (
 	"github.com/go-chi/render"
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/errors"
+	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/unit"
 )
 
 type Handler struct {
-	manager *Manager
-	logger  hclog.Logger
+	manager   *Manager
+	pluginMgr *pluginmgr.Manager
+	logger    hclog.Logger
 }
 
 func (handler *Handler) Routes() chi.Router {
@@ -54,7 +56,7 @@ func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) *e
 		return errors.InternalServerError(err)
 	}
 
-	return renderInvoiceDto(w, r, *invoice)
+	return handler.renderInvoiceDto(w, r, *invoice)
 }
 
 func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) *errors.APIError {
@@ -73,7 +75,7 @@ func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) *erro
 		return errors.ResourceNotFound()
 	}
 
-	return renderInvoiceDto(w, r, *invoice)
+	return handler.renderInvoiceDto(w, r, *invoice)
 }
 
 func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *http.Request) *errors.APIError {
@@ -99,7 +101,7 @@ func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *h
 		return errors.InternalServerError(err)
 	}
 
-	return renderInvoiceDto(w, r, *invoice)
+	return handler.renderInvoiceDto(w, r, *invoice)
 }
 
 // confirmPayment is an internal endpoint that confirms an invoice has been paid
@@ -132,8 +134,12 @@ func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *
 	return nil
 }
 
-func renderInvoiceDto(w http.ResponseWriter, r *http.Request, invoice Invoice) *errors.APIError {
-	dto, err := invoice.ToDto()
+func (handler *Handler) renderInvoiceDto(
+	w http.ResponseWriter,
+	r *http.Request,
+	invoice Invoice) *errors.APIError {
+
+	dto, err := convertInvoiceToDto(invoice, handler.pluginMgr)
 	if err != nil {
 		return errors.InternalServerError(err)
 	}

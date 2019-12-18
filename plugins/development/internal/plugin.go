@@ -6,8 +6,9 @@ import (
 )
 
 type fakeWalletPlugin struct {
-	symbol string
-	name   string
+	symbol         string
+	name           string
+	qrCodeTemplate string
 }
 
 func (p fakeWalletPlugin) GenerateNewAddress(invoiceID string) (string, error) {
@@ -17,8 +18,9 @@ func (p fakeWalletPlugin) GenerateNewAddress(invoiceID string) (string, error) {
 func (p fakeWalletPlugin) GetWalletInfo() (plugin.WalletPluginInfo, error) {
 	return plugin.WalletPluginInfo{
 		Currency: plugin.WalletPluginCurrency{
-			Name:   p.name,
-			Symbol: p.symbol,
+			Name:           p.name,
+			Symbol:         p.symbol,
+			QRCodeTemplate: p.qrCodeTemplate,
 		},
 	}, nil
 }
