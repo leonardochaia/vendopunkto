@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"net/http"
 	"time"
 
@@ -90,7 +91,11 @@ func newRequestLogger(parentLogger hclog.Logger) func(next http.Handler) http.Ha
 			if reqID := r.Context().Value(middleware.RequestIDKey); reqID != nil {
 				requestID = reqID.(string)
 			}
+
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+
+			responseBuffer := new(bytes.Buffer)
+			ww.Tee(responseBuffer)
 			next.ServeHTTP(ww, r)
 
 			latency := time.Since(start)
@@ -103,6 +108,17 @@ func newRequestLogger(parentLogger hclog.Logger) func(next http.Handler) http.Ha
 				"url", r.RequestURI,
 				"method", r.Method,
 				"requestID", requestID)
+
+			if ww.Status() >= 500 {
+				logger.Error("Request errored.",
+					"status", ww.Status(),
+					"duration", latency.String(),
+					"remote", r.RemoteAddr,
+					"url", r.RequestURI,
+					"method", r.Method,
+					"requestID", requestID,
+					"response", responseBuffer.String())
+			}
 		})
 	}
 
