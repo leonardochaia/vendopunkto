@@ -37,7 +37,7 @@ some popular exchange rates as well. Since these are also plugins you could
 choose different implementations provided by the community or you could not load
 any official plugin at all. They're not part of VendoPunkto's binary.
 
-## Any Cyrpto could be accepted
+## Any Crypto could be accepted
 
 We don't judge which currency you'd like to accept, it's an open market and you
 should be able to accept any crypto/token you'd like, despite of VendoPunkto
