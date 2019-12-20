@@ -7,9 +7,9 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
-	"github.com/leonardochaia/vendopunkto/unit"
 )
 
 type Handler struct {
@@ -37,14 +37,7 @@ func (handler *Handler) InternalRoutes() chi.Router {
 }
 
 func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) *errors.APIError {
-
-	type creationParams struct {
-		Total          unit.AtomicUnit `json:"total"`
-		Currency       string          `json:"currency"`
-		PaymentMethods []string        `json:"paymentMethods"`
-	}
-
-	var params = new(creationParams)
+	var params = new(dtos.InvoiceCreationParams)
 	if err := render.DecodeJSON(r.Body, &params); err != nil {
 		return errors.InvalidRequestParams(err)
 	}
@@ -85,11 +78,7 @@ func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *h
 		return errors.InvalidRequestParams(fmt.Errorf("No ID was provided"))
 	}
 
-	type inputParams struct {
-		Currency string `json:"currency"`
-	}
-
-	var params = new(inputParams)
+	var params = new(dtos.InvoiceGeneratePaymentMethodAddressParams)
 	if err := render.DecodeJSON(r.Body, &params); err != nil {
 		return errors.InvalidRequestParams(err)
 	}
@@ -107,13 +96,7 @@ func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *h
 // confirmPayment is an internal endpoint that confirms an invoice has been paid
 func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) *errors.APIError {
 
-	type confirmPaymentsParams struct {
-		TxHash        string          `json:"txHash"`
-		Address       string          `json:"address"`
-		Amount        unit.AtomicUnit `json:"amount"`
-		Confirmations uint64          `json:"confirmations"`
-	}
-	var params = new(confirmPaymentsParams)
+	var params = new(dtos.InvoiceConfirmPaymentsParams)
 
 	if err := render.DecodeJSON(r.Body, &params); err != nil {
 		return errors.InvalidRequestParams(err)

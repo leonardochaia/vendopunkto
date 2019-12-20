@@ -3,6 +3,8 @@ package invoice
 import (
 	"time"
 
+	"github.com/leonardochaia/vendopunkto/dtos"
+	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/unit"
 )
 
@@ -221,4 +223,60 @@ func convertCurrencyWithTotals(
 	converted := aAmount.Float64() / exchangeRate
 
 	return unit.NewFromFloat(converted)
+}
+
+func convertInvoiceToDto(invoice Invoice, pluginMgr *pluginmgr.Manager) (dtos.InvoiceDto, error) {
+
+	dto := &dtos.InvoiceDto{
+		ID:                invoice.ID,
+		Total:             dtos.NewAtomicUnitDTO(invoice.Total),
+		Currency:          invoice.Currency,
+		CreatedAt:         invoice.CreatedAt,
+		Status:            uint(invoice.Status()),
+		PaymentPercentage: invoice.CalculatePaymentPercentage(),
+		Remaining:         dtos.NewAtomicUnitDTO(invoice.CalculateRemainingAmount()),
+		PaymentMethods:    []*dtos.PaymentMethodDto{},
+		Payments:          []*dtos.PaymentDto{},
+	}
+
+	for _, method := range invoice.PaymentMethods {
+
+		var qrCode string
+		if method.Address != "" {
+			info, err := pluginMgr.GetWalletInfoForCurrency(method.Currency)
+			if err != nil {
+				return dtos.InvoiceDto{}, err
+			}
+			qrCode, err = info.BuildQRCode(method.Address, method.Total)
+			if err != nil {
+				return dtos.InvoiceDto{}, err
+			}
+		}
+
+		methodDto := &dtos.PaymentMethodDto{
+			ID:        method.ID,
+			Total:     dtos.NewAtomicUnitDTO(method.Total),
+			Currency:  method.Currency,
+			Address:   method.Address,
+			Remaining: dtos.NewAtomicUnitDTO(invoice.CalculatePaymentMethodRemaining(*method)),
+			QRCode:    qrCode,
+		}
+
+		for _, payment := range method.Payments {
+			paymentDto := &dtos.PaymentDto{
+				TxHash:        payment.TxHash,
+				Amount:        dtos.NewAtomicUnitDTO(payment.Amount),
+				Confirmations: payment.Confirmations,
+				ConfirmedAt:   payment.ConfirmedAt,
+				CreatedAt:     payment.CreatedAt,
+				Status:        uint(payment.Status()),
+				Currency:      method.Currency,
+			}
+			dto.Payments = append(dto.Payments, paymentDto)
+		}
+
+		dto.PaymentMethods = append(dto.PaymentMethods, methodDto)
+	}
+
+	return *dto, nil
 }
