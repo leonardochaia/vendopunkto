@@ -2,6 +2,7 @@ vendopunkto-server
 vendopunkto-monero
 vendopunkto-rates
 vendopunkto-dev
+vendopunkto-cli
 mocks
 server.crt
 server.key

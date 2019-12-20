@@ -54,6 +54,10 @@ run:
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
 
 
+build-cli:
+	go build -o ./vendopunkto-cli ./cli/main.go
+
+
 plugins/monero/internal/wire_gen.go: plugins/monero/internal/wire.go
 	wire ./plugins/monero/internal/...
 
