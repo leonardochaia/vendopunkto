@@ -1,4 +1,4 @@
-package plugin
+package clients
 
 import (
 	"bytes"
@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/leonardochaia/vendopunkto/dtos"
+	"github.com/leonardochaia/vendopunkto/unit"
 )
 
-// VendoPunktoInternalClient for the internal plugin server hosted by vendopunkto
+// InternalClient for the internal plugin server hosted by vendopunkto
 // Used by plugins to "talk back" to the host.
-type VendoPunktoInternalClient interface {
-	ConfirmPayment(address string, amount uint64, txHash string, confirmations uint64) error
+type InternalClient interface {
+	ConfirmPayment(address string, amount unit.AtomicUnit, txHash string, confirmations uint64) error
 }
 
 type internalClientImpl struct {
@@ -19,7 +22,7 @@ type internalClientImpl struct {
 	client http.Client
 }
 
-func NewInternalClient(hostAddress string) (VendoPunktoInternalClient, error) {
+func NewInternalClient(hostAddress string) (InternalClient, error) {
 	apiURL, err := url.Parse(hostAddress)
 	if err != nil {
 		return nil, err
@@ -37,7 +40,7 @@ func NewInternalClient(hostAddress string) (VendoPunktoInternalClient, error) {
 // when the transaction appears on the mempool, and again when it is confirmed.
 func (c internalClientImpl) ConfirmPayment(
 	address string,
-	amount uint64,
+	amount unit.AtomicUnit,
 	txHash string,
 	confirmations uint64) error {
 	u, err := url.Parse("/v1/invoices/payments/confirm")
@@ -47,14 +50,7 @@ func (c internalClientImpl) ConfirmPayment(
 
 	final := c.apiURL.ResolveReference(u)
 
-	type confirmPaymentsParams struct {
-		TxHash        string `json:"txHash"`
-		Amount        uint64 `json:"amount"`
-		Address       string `json:"address"`
-		Confirmations uint64 `json:"confirmations"`
-	}
-
-	params, err := json.Marshal(&confirmPaymentsParams{
+	params, err := json.Marshal(&dtos.InvoiceConfirmPaymentsParams{
 		Address:       address,
 		Amount:        amount,
 		TxHash:        txHash,

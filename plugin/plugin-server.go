@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/errors"
 )
 
@@ -15,7 +16,7 @@ type Server struct {
 	plugins        []ServerPlugin
 	pluginInfos    []PluginInfo
 	started        bool
-	internalClient VendoPunktoInternalClient
+	internalClient clients.InternalClient
 	Logger         hclog.Logger
 }
 
@@ -93,7 +94,7 @@ func (s *Server) Start(addr string) error {
 	return http.ListenAndServe(addr, router)
 }
 
-func (s *Server) GetInternalClient() (VendoPunktoInternalClient, error) {
+func (s *Server) GetInternalClient() (clients.InternalClient, error) {
 
 	if s.internalClient == nil {
 		err := fmt.Errorf("Server has not been activated or activation has failed")
@@ -112,7 +113,7 @@ func (s *Server) activatePluginHandler(w http.ResponseWriter, r *http.Request) *
 		return errors.InvalidRequestParams(err)
 	}
 
-	client, err := NewInternalClient(params.HostAddress)
+	client, err := clients.NewInternalClient(params.HostAddress)
 
 	if err != nil {
 		s.Logger.Error("Failed to create internal client", "error", err)

@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -55,4 +56,14 @@ func WrapHandler(handler HandlerErrorAwareFunc) http.HandlerFunc {
 
 func RenderAPIError(w http.ResponseWriter, r *http.Request, err *APIError) {
 	render.Render(w, r, err)
+}
+
+func DecodeAPIError(resp *http.Response) (*APIError, error) {
+	output := &APIError{}
+	err := json.NewDecoder(resp.Body).Decode(&output)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
 }

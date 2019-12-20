@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/plugin"
+	"github.com/leonardochaia/vendopunkto/unit"
 	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
 )
 
@@ -55,7 +56,7 @@ func (handler *Handler) txNotify(w http.ResponseWriter, r *http.Request) *errors
 
 	var (
 		addr          = addrResp.IntegratedAddress
-		amount        = resp.Transfer.Amount
+		amount        = unit.AtomicUnit(resp.Transfer.Amount)
 		confirmations = resp.Transfer.Confirmations
 	)
 	handler.logger.Info("Obtained TX", "address", addr, "amount", resp.Transfer.Amount)
