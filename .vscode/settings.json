@@ -5,9 +5,5 @@
     ],
     "[go]": {
         "editor.formatOnSave": true
-    },
-    "go.lintTool": "revive",
-    "go.lintFlags": [
-        "--config=${workspaceFolder}/.golint-revive.toml"
-    ]
+    }
 }
