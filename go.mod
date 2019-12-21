@@ -15,7 +15,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v1.1.1
 	github.com/mdp/qrterminal v1.0.1
-	github.com/mdp/qrterminal/v3 v3.0.0 // indirect
+	github.com/mdp/qrterminal/v3 v3.0.0
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/monero-ecosystem/go-monero-rpc-client v0.0.0-20191019183403-ddbdae6649c6
 	github.com/onsi/ginkgo v1.10.1 // indirect

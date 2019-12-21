@@ -8,7 +8,7 @@ import (
 
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/unit"
-	"github.com/mdp/qrterminal"
+	"github.com/mdp/qrterminal/v3"
 	"github.com/spf13/cobra"
 )
 
