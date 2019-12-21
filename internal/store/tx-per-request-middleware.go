@@ -40,7 +40,8 @@ func NewTxPerRequestMiddleware(
 	logger := parentLogger.Named("tx-per-request")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(errors.WrapHandler(
-			func(w http.ResponseWriter, r *http.Request) *errors.APIError {
+			func(w http.ResponseWriter, r *http.Request) error {
+				const op errors.Op = "api.txPerRequestMiddleware"
 				// create the transaction
 				tx := NewLazyTransaction(db)
 
@@ -64,8 +65,8 @@ func NewTxPerRequestMiddleware(
 							err = fmt.Errorf("%v", r)
 						}
 
-						apiError := errors.InternalServerError(err)
-						errors.RenderAPIError(w, r, apiError)
+						errors.RenderError(w, r,
+							errors.E(op, errors.Internal, err))
 
 						logger.Warn("Handler errored. Rolling back transaction",
 							"requestId", requestID,

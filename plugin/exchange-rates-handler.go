@@ -36,17 +36,18 @@ func NewHandler(plugin ExchangeRatesPlugin, serverPlugin ServerPlugin) *chi.Mux 
 	return router
 }
 
-func (handler *ExchangeRatesHandler) getExchangeRates(w http.ResponseWriter, r *http.Request) *errors.APIError {
+func (handler *ExchangeRatesHandler) getExchangeRates(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "plugin.api.getExchangeRates"
 	var params = new(GetExchangeRatesParams)
 
 	if err := render.DecodeJSON(r.Body, &params); err != nil {
-		return errors.InvalidRequestParams(err)
+		return errors.E(op, errors.Parameters, err)
 	}
 
 	res, err := handler.plugin.GetExchangeRates(params.Currency, params.Currencies)
 
 	if err != nil {
-		return errors.InternalServerError(err)
+		return errors.E(op, errors.Internal, err)
 	}
 
 	render.JSON(w, r, res)

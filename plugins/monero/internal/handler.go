@@ -1,7 +1,6 @@
 package monero
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -29,10 +28,12 @@ func (handler *Handler) Routes() chi.Router {
 }
 
 // txNotify to be called on monero-wallet-cli "txNotify" flag
-func (handler *Handler) txNotify(w http.ResponseWriter, r *http.Request) *errors.APIError {
+func (handler *Handler) txNotify(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "plugin.monero.txNotify"
+
 	txHash := r.URL.Query().Get("txHash")
 	if txHash == "" {
-		return errors.InternalServerError(fmt.Errorf("Coldn't get txHash from query params"))
+		return errors.E(op, errors.Parameters, errors.Str("Coldn't get txHash from query params"))
 	}
 
 	resp, err := handler.client.GetTransferByTxID(&wallet.RequestGetTransferByTxID{
@@ -41,7 +42,7 @@ func (handler *Handler) txNotify(w http.ResponseWriter, r *http.Request) *errors
 
 	if err != nil {
 		handler.logger.Error("Failed to obtained TX from wallet RPC", "error", err.Error())
-		return errors.InternalServerError(err)
+		return errors.E(op, errors.Internal, err)
 	}
 
 	addrResp, err := handler.client.MakeIntegratedAddress(&wallet.RequestMakeIntegratedAddress{
@@ -51,7 +52,7 @@ func (handler *Handler) txNotify(w http.ResponseWriter, r *http.Request) *errors
 
 	if err != nil {
 		handler.logger.Error("Failed to make integrated address", "error", err.Error())
-		return errors.InternalServerError(err)
+		return errors.E(op, errors.Internal, err)
 	}
 
 	var (
@@ -65,13 +66,13 @@ func (handler *Handler) txNotify(w http.ResponseWriter, r *http.Request) *errors
 
 	if err != nil {
 		handler.logger.Error("Failed to obtain host client", "error", err.Error())
-		return errors.InternalServerError(err)
+		return errors.E(op, errors.Internal, err)
 	}
 
 	err = client.ConfirmPayment(addr, amount, txHash, confirmations)
 	if err != nil {
 		handler.logger.Error("Failed to confirm payment with host", "error", err.Error())
-		return errors.InternalServerError(err)
+		return errors.E(op, errors.Internal, err)
 	}
 
 	handler.logger.Info("Payment confirmed", "txHash", txHash,

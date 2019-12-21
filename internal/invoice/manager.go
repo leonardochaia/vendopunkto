@@ -2,16 +2,17 @@ package invoice
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/unit"
 	"github.com/rs/xid"
 )
 
+// Manager contains the business logic for handling invoices
 type Manager struct {
 	repository    InvoiceRepository
 	logger        hclog.Logger
@@ -50,7 +51,6 @@ func (mgr *Manager) getDefaultPaymentMethods() ([]string, error) {
 func (mgr *Manager) addPaymentMethodsToInvoice(
 	invoice *Invoice,
 	paymentMethods []string) error {
-
 	exchange, err := mgr.pluginManager.GetConfiguredExchangeRatesPlugin()
 	if err != nil {
 		return err
@@ -89,23 +89,42 @@ func (mgr *Manager) addPaymentMethodsToInvoice(
 	return nil
 }
 
+// GetInvoice finds an invoice by it's ID
 func (mgr *Manager) GetInvoice(
 	ctx context.Context,
 	id string) (*Invoice, error) {
-	return mgr.repository.FindByID(ctx, id)
+	const op errors.Op = "invoicemgr.getInvoice"
+	inv, err := mgr.repository.FindByID(ctx, id)
+
+	if err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	return inv, nil
 }
 
+// GetInvoiceByAddress finds an invoice by it's the provided paymentMethod's
+// address.
 func (mgr *Manager) GetInvoiceByAddress(
 	ctx context.Context,
 	address string) (*Invoice, error) {
-	return mgr.repository.FindByAddress(ctx, address)
+	const op errors.Op = "invoicemgr.getInvoiceByAddress"
+	inv, err := mgr.repository.FindByAddress(ctx, address)
+	if err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	return inv, nil
 }
 
+// CreateInvoice creates an invoice with the provided total and currency.
+// If no payment methods are provided, all supported currencies will be used
 func (mgr *Manager) CreateInvoice(
 	ctx context.Context,
 	total unit.AtomicUnit,
 	currency string,
 	paymentMethods []string) (*Invoice, error) {
+	const op errors.Op = "invoicemgr.create"
 
 	currency = strings.ToLower(currency)
 
@@ -116,24 +135,26 @@ func (mgr *Manager) CreateInvoice(
 		CreatedAt: time.Now(),
 	}
 
+	path := errors.PathName("invoice/" + invoice.ID)
+
 	// populate payment methods using all currencies if none was provided
 	if paymentMethods == nil || len(paymentMethods) == 0 {
 		methods, err := mgr.getDefaultPaymentMethods()
 		if err != nil {
-			return nil, err
+			return nil, errors.E(op, path, err)
 		}
 		paymentMethods = methods
 	}
 
 	err := mgr.addPaymentMethodsToInvoice(invoice, paymentMethods)
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, path, err)
 	}
 
 	if len(invoice.PaymentMethods) == 0 {
-		err := fmt.Errorf("Failed to create invoice: no payment methods where created")
+		err := errors.Str("Failed to create invoice: no payment methods where created")
 		mgr.logger.Error(err.Error(), "coin", currency, "methods", paymentMethods)
-		return nil, err
+		return nil, errors.E(op, path, err)
 	}
 
 	// create the address for the default payment method ahead
@@ -145,7 +166,7 @@ func (mgr *Manager) CreateInvoice(
 
 	address, err := mgr.createAddressForInvoice(invoice.ID, defaultMethod.Currency)
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, path, err)
 	}
 
 	defaultMethod.Address = address
@@ -153,7 +174,7 @@ func (mgr *Manager) CreateInvoice(
 	err = mgr.repository.Create(ctx, invoice)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, path, err)
 	}
 
 	mgr.logger.Info("Created new invoice",
@@ -165,22 +186,24 @@ func (mgr *Manager) CreateInvoice(
 	return invoice, nil
 }
 
+// CreateAddressForPaymentMethod will use the currency wallet to create a unique
+// address to receive payments.
 func (mgr *Manager) CreateAddressForPaymentMethod(
 	ctx context.Context,
 	invoiceID string,
 	currency string) (*Invoice, error) {
+	const op errors.Op = "invoicemgr.createAddressForPaymentMethod"
+	path := errors.PathName("invoice/" + invoiceID + "/" + currency)
 
 	invoice, err := mgr.GetInvoice(ctx, invoiceID)
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, path, err)
 	}
 
 	method := invoice.FindPaymentMethodForCurrency(currency)
 	if method == nil {
-		mgr.logger.Error("Invalid currency for invoice",
-			"id", invoice.ID,
-			"currency", currency)
-		return nil, fmt.Errorf("Provided invoice does not have a payment method for that currency")
+		return nil, errors.E(op, path,
+			errors.Str("Provided invoice does not have a payment method for that currency"))
 	}
 
 	if method.Address != "" {
@@ -194,7 +217,7 @@ func (mgr *Manager) CreateAddressForPaymentMethod(
 
 	address, err := mgr.createAddressForInvoice(invoice.ID, currency)
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, path, err)
 	}
 
 	method.Address = address
@@ -202,7 +225,7 @@ func (mgr *Manager) CreateAddressForPaymentMethod(
 	err = mgr.repository.UpdatePaymentMethod(ctx, method)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, path, err)
 	}
 
 	mgr.logger.Info("Generated new address for payment method",
@@ -215,23 +238,20 @@ func (mgr *Manager) CreateAddressForPaymentMethod(
 	return invoice, nil
 }
 
+// ConfirmPayment either creates or updates a payment.
 func (mgr *Manager) ConfirmPayment(
 	ctx context.Context,
 	address string,
 	confirmations uint64,
 	amount unit.AtomicUnit,
 	txHash string) (*Invoice, error) {
+	const op errors.Op = "invoicemgr.confirmPayment"
+	path := errors.PathName("address/" + address)
 
 	invoice, err := mgr.GetInvoiceByAddress(ctx, address)
 
 	if err != nil {
-		return nil, err
-	}
-
-	if invoice == nil {
-		mgr.logger.Error("Couldn't find invoice for address", "address", address,
-			"txHash", txHash, "amount", amount)
-		return nil, fmt.Errorf("Couldn't find invoice for address " + address)
+		return nil, errors.E(op, path, err)
 	}
 
 	method := invoice.FindPaymentMethodForAddress(address)
@@ -247,11 +267,15 @@ func (mgr *Manager) ConfirmPayment(
 	// Update the payment
 	if payment != nil {
 		payment.Update(confirmations)
-		mgr.repository.UpdatePayment(ctx, payment)
+		err = mgr.repository.UpdatePayment(ctx, payment)
 	} else {
 		// New payment
 		payment = method.AddPayment(txHash, amount, confirmations)
-		mgr.repository.CreatePayment(ctx, payment)
+		err = mgr.repository.CreatePayment(ctx, payment)
+	}
+
+	if err != nil {
+		return nil, errors.E(op, path, err)
 	}
 
 	return invoice, nil

@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/leonardochaia/vendopunkto/clients"
+	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
 )
 
@@ -26,6 +27,10 @@ var (
 		Use:     conf.Executable,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
+			if vendoPunktoHost == "" {
+				return errors.Str("Could not determine host. Try with --host=https://your-vp")
+			}
+
 			client, err := clients.NewPublicClient(vendoPunktoHost)
 			if err != nil {
 				return err
@@ -41,13 +46,12 @@ var (
 // Execute starts the program
 func Execute() {
 	// Run the program
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-	}
+	rootCmd.Execute()
 }
 
 // This is the main initializer handling cli, config and log
 func init() {
+
 	// Initialize configuration
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Config file")
 	rootCmd.PersistentFlags().StringVarP(&vendoPunktoHost, "host", "H", "", "The VendoPunkto host URL i.e http://localhost:8080")

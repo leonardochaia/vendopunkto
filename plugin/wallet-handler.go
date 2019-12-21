@@ -44,16 +44,17 @@ func NewWalletHandler(plugin WalletPlugin, serverPlugin ServerPlugin) *chi.Mux {
 	return router
 }
 
-func (handler *WalletPluginHandler) generateAddress(w http.ResponseWriter, r *http.Request) *errors.APIError {
+func (handler *WalletPluginHandler) generateAddress(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "plugin.wallet.generateAddress"
 	var params = new(CoinWalletAddressParams)
 
 	if err := render.DecodeJSON(r.Body, &params); err != nil {
-		return errors.InvalidRequestParams(err)
+		return errors.E(op, errors.Parameters, err)
 	}
 
 	res, err := handler.wallet.GenerateNewAddress(params.InvoiceID)
 	if err != nil {
-		return errors.InternalServerError(err)
+		return errors.E(op, errors.Internal, err)
 	}
 
 	render.JSON(w, r, &CoinWalletAddressResponse{
@@ -63,11 +64,12 @@ func (handler *WalletPluginHandler) generateAddress(w http.ResponseWriter, r *ht
 	return nil
 }
 
-func (handler *WalletPluginHandler) getWalletInfo(w http.ResponseWriter, r *http.Request) *errors.APIError {
+func (handler *WalletPluginHandler) getWalletInfo(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "plugin.wallet.getWalletInfo"
 	res, err := handler.wallet.GetWalletInfo()
 
 	if err != nil {
-		return errors.InternalServerError(err)
+		return errors.E(op, errors.Internal, err)
 	}
 
 	render.JSON(w, r, res)

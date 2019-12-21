@@ -81,6 +81,8 @@ var (
 				return err
 			}
 
+			cmd.SilenceUsage = true
+
 			invoice, err := publicClient.GetInvoice(ID)
 
 			if err != nil {

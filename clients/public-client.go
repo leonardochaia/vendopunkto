@@ -3,7 +3,6 @@ package clients
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -41,11 +40,7 @@ func NewPublicClient(hostAddress string) (PublicClient, error) {
 
 func checkAPIResponse(resp *http.Response) error {
 	if resp.StatusCode >= 400 {
-		apiErr, err := errors.DecodeAPIError(resp)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("API call failed with error %v", apiErr)
+		return errors.DecodeError(resp)
 	}
 
 	return nil

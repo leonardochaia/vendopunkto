@@ -23,11 +23,12 @@ func (handler *Handler) Routes() chi.Router {
 	return router
 }
 
-func (handler *Handler) getAllCurrencies(w http.ResponseWriter, r *http.Request) *errors.APIError {
+func (handler *Handler) getAllCurrencies(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "api.currencies.getAllCurrencies"
 
 	currencies, err := handler.manager.GetAllCurrencies()
 	if err != nil {
-		return errors.InternalServerError(err)
+		return errors.E(op, errors.Internal, err)
 	}
 
 	render.JSON(w, r, currencies)

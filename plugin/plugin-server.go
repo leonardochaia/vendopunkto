@@ -105,12 +105,13 @@ func (s *Server) GetInternalClient() (clients.InternalClient, error) {
 	return s.internalClient, nil
 }
 
-func (s *Server) activatePluginHandler(w http.ResponseWriter, r *http.Request) *errors.APIError {
+func (s *Server) activatePluginHandler(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "plugin.base.activate"
 
 	var params = new(ActivatePluginParams)
 
 	if err := render.DecodeJSON(r.Body, &params); err != nil {
-		return errors.InvalidRequestParams(err)
+		return errors.E(op, errors.Parameters, err)
 	}
 
 	client, err := clients.NewInternalClient(params.HostAddress)

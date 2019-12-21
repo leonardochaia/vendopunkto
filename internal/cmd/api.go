@@ -20,7 +20,7 @@ var (
 		Use:   "api",
 		Short: "Start API",
 		Long:  `Start API`,
-		Run: func(cmd *cobra.Command, args []string) { // Initialize the databse
+		Run: func(cmd *cobra.Command, args []string) {
 
 			logger := hclog.New(&hclog.LoggerOptions{
 				Name:   "vendopunkto",

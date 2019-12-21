@@ -29,7 +29,7 @@ mocks: tools
 .PHONY: ${EXECUTABLE}
 ${EXECUTABLE}: tools internal/cmd/wire_gen.go 
 	# Compiling...
-	go build -ldflags "-X ${PACKAGENAME}/conf.Executable=${EXECUTABLE} -X ${PACKAGENAME}/conf.GitVersion=${GITVERSION}" -o ${EXECUTABLE}
+	go build -ldflags "-X ${PACKAGENAME}/internal/conf.Executable=${EXECUTABLE} -X ${PACKAGENAME}/internal/conf.GitVersion=${GITVERSION}" -o ${EXECUTABLE}
 
 .PHONY: test
 test: 
@@ -55,7 +55,7 @@ run:
 
 
 build-cli:
-	go build -o ./vendopunkto-cli ./cli/main.go
+	go build -ldflags "-X ${PACKAGENAME}/internal/conf.Executable=vendopunkto-cli -X ${PACKAGENAME}/internal/conf.GitVersion=${GITVERSION}" -o ./vendopunkto-cli ./cli/main.go
 
 
 plugins/monero/internal/wire_gen.go: plugins/monero/internal/wire.go

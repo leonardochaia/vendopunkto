@@ -99,9 +99,7 @@ func newRequestLogger(parentLogger hclog.Logger) func(next http.Handler) http.Ha
 			next.ServeHTTP(ww, r)
 
 			latency := time.Since(start)
-			logger := parentLogger.Named("request")
-
-			logger.Info("API Request",
+			logger := parentLogger.Named("request").With(
 				"status", ww.Status(),
 				"duration", latency.String(),
 				"remote", r.RemoteAddr,
@@ -110,14 +108,13 @@ func newRequestLogger(parentLogger hclog.Logger) func(next http.Handler) http.Ha
 				"requestID", requestID)
 
 			if ww.Status() >= 500 {
-				logger.Error("Request errored.",
-					"status", ww.Status(),
-					"duration", latency.String(),
-					"remote", r.RemoteAddr,
-					"url", r.RequestURI,
-					"method", r.Method,
-					"requestID", requestID,
+				logger.Error("Request errored",
 					"response", responseBuffer.String())
+			} else if ww.Status() >= 400 {
+				logger.Warn("Bad request",
+					"response", responseBuffer.String())
+			} else if ww.Status() >= 200 {
+				logger.Info("Request succees")
 			}
 		})
 	}

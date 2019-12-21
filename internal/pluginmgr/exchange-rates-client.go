@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/plugin"
 )
 
@@ -37,10 +38,11 @@ func (c exchangeRatesClientImpl) getBaseURL(end string) (*url.URL, error) {
 func (c exchangeRatesClientImpl) GetExchangeRates(
 	currency string,
 	currencies []string) (plugin.ExchangeRatesResult, error) {
+	const op errors.Op = "exchangeRatesClient.getExchangeRates"
 
 	u, err := c.getBaseURL("")
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, errors.Internal, err)
 	}
 
 	final := c.apiURL.ResolveReference(u)
@@ -51,19 +53,22 @@ func (c exchangeRatesClientImpl) GetExchangeRates(
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, errors.Parameters, err)
 	}
 
 	resp, err := c.client.Post(final.String(), "application/json", bytes.NewBuffer(params))
 
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, errors.Invalid, err)
 	}
 
 	var result plugin.ExchangeRatesResult
 	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return nil, errors.E(op, errors.Invalid, err)
+	}
 
-	return result, err
+	return result, nil
 }
 
 func (c exchangeRatesClientImpl) GetPluginInfo() (plugin.PluginInfo, error) {

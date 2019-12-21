@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/plugin"
 	"github.com/spf13/viper"
 )
@@ -88,10 +89,11 @@ func (manager *Manager) GetAllCurrencies() ([]plugin.WalletPluginCurrency, error
 }
 
 func (manager *Manager) GetExchangeRatesPlugin(ID string) (plugin.ExchangeRatesPlugin, error) {
+	const op errors.Op = "pluginmgr.create"
 	if w, ok := manager.exchangeRates[ID]; ok {
 		return w.client, nil
 	}
-	return nil, fmt.Errorf("Could not find an exchange rates plugin with ID " + ID)
+	return nil, errors.E(op, errors.NotExist, fmt.Errorf("Could not find an exchange rates plugin with ID "+ID))
 }
 
 func (manager *Manager) GetConfiguredExchangeRatesPlugin() (plugin.ExchangeRatesPlugin, error) {
