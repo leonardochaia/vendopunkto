@@ -20,6 +20,7 @@ var (
 	pidFile         string
 	vendoPunktoHost string
 	publicClient    clients.PublicClient
+	httpClient      = clients.NewHTTPClient()
 
 	// The Root Cli Handler
 	rootCmd = &cobra.Command{
@@ -31,7 +32,7 @@ var (
 				return errors.Str("Could not determine host. Try with --host=https://your-vp")
 			}
 
-			client, err := clients.NewPublicClient(vendoPunktoHost)
+			client, err := clients.NewPublicClient(vendoPunktoHost, httpClient)
 			if err != nil {
 				return err
 			}

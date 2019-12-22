@@ -1,14 +1,12 @@
 package pluginmgr
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/plugin"
 	"github.com/spf13/viper"
@@ -26,7 +24,7 @@ type exchangeRatesAndInfo struct {
 
 type Manager struct {
 	logger hclog.Logger
-	client http.Client
+	client clients.HTTP
 
 	wallets       map[string]walletAndInfo
 	exchangeRates map[string]exchangeRatesAndInfo
@@ -189,31 +187,17 @@ func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) ([]pl
 		return nil, err
 	}
 
-	final := apiURL.ResolveReference(u)
+	final := apiURL.ResolveReference(u).String()
 
 	if err != nil {
 		return nil, err
 	}
 
-	params, err := json.Marshal(&plugin.ActivatePluginParams{
+	params := plugin.ActivatePluginParams{
 		HostAddress: hostAddress,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := manager.client.Post(final.String(), "application/json", bytes.NewBuffer(params))
-
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Invalid response. Got status " + resp.Status)
 	}
 
 	var result []plugin.PluginInfo
-	err = json.NewDecoder(resp.Body).Decode(&result)
-
+	_, err = manager.client.PostJSON(final, params, &result)
 	return result, err
 }

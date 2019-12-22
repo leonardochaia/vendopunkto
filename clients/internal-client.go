@@ -1,13 +1,10 @@
 package clients
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/leonardochaia/vendopunkto/dtos"
+	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/unit"
 )
 
@@ -19,19 +16,18 @@ type InternalClient interface {
 
 type internalClientImpl struct {
 	apiURL url.URL
-	client http.Client
+	client HTTP
 }
 
-func NewInternalClient(hostAddress string) (InternalClient, error) {
+// NewInternalClient creates an InternalClient
+func NewInternalClient(hostAddress string, client HTTP) (InternalClient, error) {
 	apiURL, err := url.Parse(hostAddress)
 	if err != nil {
 		return nil, err
 	}
 	return &internalClientImpl{
 		apiURL: *apiURL,
-		client: http.Client{
-			Timeout: 15 * time.Second,
-		},
+		client: client,
 	}, nil
 }
 
@@ -43,30 +39,28 @@ func (c internalClientImpl) ConfirmPayment(
 	amount unit.AtomicUnit,
 	txHash string,
 	confirmations uint64) error {
+
+	const op errors.Op = "internalClient.confirmPayment"
+
 	u, err := url.Parse("/v1/invoices/payments/confirm")
 	if err != nil {
-		return err
+		return errors.E(op, errors.Internal, err)
 	}
 
-	final := c.apiURL.ResolveReference(u)
+	final := c.apiURL.ResolveReference(u).String()
 
-	params, err := json.Marshal(&dtos.InvoiceConfirmPaymentsParams{
+	params := dtos.InvoiceConfirmPaymentsParams{
 		Address:       address,
 		Amount:        amount,
 		TxHash:        txHash,
 		Confirmations: confirmations,
-	})
-
-	if err != nil {
-		return err
 	}
 
-	resp, err := c.client.Post(final.String(), "application/json", bytes.NewBuffer(params))
+	_, err = c.client.PostJSON(final, params, nil)
+
 	if err != nil {
-		return err
+		return errors.E(op, err)
 	}
 
-	defer resp.Body.Close()
-
-	return err
+	return nil
 }

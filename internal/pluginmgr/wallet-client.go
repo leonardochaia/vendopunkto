@@ -1,24 +1,24 @@
 package pluginmgr
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
 	"net/url"
 
+	"github.com/leonardochaia/vendopunkto/clients"
+	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/plugin"
 )
 
 type coinWalletClientImpl struct {
 	apiURL url.URL
-	client http.Client
+	client clients.HTTP
 	info   plugin.PluginInfo
 }
 
+// NewWalletClient constructs a new client implementing WalletPlugin
 func NewWalletClient(
 	url url.URL,
 	info plugin.PluginInfo,
-	client http.Client) plugin.WalletPlugin {
+	client clients.HTTP) plugin.WalletPlugin {
 	return &coinWalletClientImpl{
 		apiURL: url,
 		info:   info,
@@ -35,31 +35,26 @@ func (c coinWalletClientImpl) getBaseURL(end string) (*url.URL, error) {
 }
 
 func (c coinWalletClientImpl) GenerateNewAddress(invoiceID string) (string, error) {
+	const op errors.Op = "wallet.generateNewAddress"
 	u, err := c.getBaseURL(plugin.GenerateAddressWalletEndpoint)
 	if err != nil {
-		return "", err
+		return "", errors.E(op, errors.Internal, err)
 	}
 
-	final := c.apiURL.ResolveReference(u)
+	final := c.apiURL.ResolveReference(u).String()
 
-	params, err := json.Marshal(&plugin.CoinWalletAddressParams{
+	params := &plugin.CoinWalletAddressParams{
 		InvoiceID: invoiceID,
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	resp, err := c.client.Post(final.String(), "application/json", bytes.NewBuffer(params))
-
-	if err != nil {
-		return "", err
 	}
 
 	var result plugin.CoinWalletAddressResponse
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	_, err = c.client.PostJSON(final, params, &result)
 
-	return result.Address, err
+	if err != nil {
+		return "", errors.E(op, err)
+	}
+
+	return result.Address, nil
 }
 
 func (c coinWalletClientImpl) GetPluginInfo() (plugin.PluginInfo, error) {
@@ -67,21 +62,20 @@ func (c coinWalletClientImpl) GetPluginInfo() (plugin.PluginInfo, error) {
 }
 
 func (c coinWalletClientImpl) GetWalletInfo() (plugin.WalletPluginInfo, error) {
+	const op errors.Op = "wallet.getWalletInfo"
 	u, err := c.getBaseURL(plugin.WalletInfoEndpoint)
 	if err != nil {
-		return plugin.WalletPluginInfo{}, err
+		return plugin.WalletPluginInfo{}, errors.E(op, errors.Internal, err)
 	}
 
 	final := c.apiURL.ResolveReference(u)
 
-	resp, err := c.client.Get(final.String())
+	var result plugin.WalletPluginInfo
+	_, err = c.client.GetJSON(final.String(), &result)
 
 	if err != nil {
-		return plugin.WalletPluginInfo{}, err
+		return result, errors.E(op, err)
 	}
 
-	var result plugin.WalletPluginInfo
-	err = json.NewDecoder(resp.Body).Decode(&result)
-
-	return result, err
+	return result, nil
 }

@@ -178,7 +178,7 @@ func convert(f *errorInDTO) *Error {
 
 	return &Error{
 		Op:   f.Op,
-		Kind: Other,
+		Kind: f.Kind,
 		Path: f.Path,
 		Err:  convert(f.Err),
 	}

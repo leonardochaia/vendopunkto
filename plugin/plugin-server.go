@@ -18,6 +18,7 @@ type Server struct {
 	started        bool
 	internalClient clients.InternalClient
 	Logger         hclog.Logger
+	http           clients.HTTP
 }
 
 // ServerPlugin wraps the plugin implementation.
@@ -29,12 +30,15 @@ type ServerPlugin interface {
 }
 
 // NewServer creates the plugin server which must be run by every plugin
-func NewServer(logger hclog.Logger) *Server {
+func NewServer(
+	logger hclog.Logger,
+	http clients.HTTP) *Server {
 	return &Server{
 		plugins:     []ServerPlugin{},
 		pluginInfos: []PluginInfo{},
 		started:     false,
 		Logger:      logger,
+		http:        http,
 	}
 }
 
@@ -114,7 +118,7 @@ func (s *Server) activatePluginHandler(w http.ResponseWriter, r *http.Request) e
 		return errors.E(op, errors.Parameters, err)
 	}
 
-	client, err := clients.NewInternalClient(params.HostAddress)
+	client, err := clients.NewInternalClient(params.HostAddress, s.http)
 
 	if err != nil {
 		s.Logger.Error("Failed to create internal client", "error", err)

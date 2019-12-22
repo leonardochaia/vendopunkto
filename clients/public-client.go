@@ -1,18 +1,14 @@
 package clients
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/unit"
 )
 
-// VendoPunktoInternalClient for the internal plugin server hosted by vendopunkto
+// PublicClient for the internal plugin server hosted by vendopunkto
 // Used by plugins to "talk back" to the host.
 type PublicClient interface {
 	CreateInvoice(total unit.AtomicUnit, currency string) (*dtos.InvoiceDto, error)
@@ -22,37 +18,19 @@ type PublicClient interface {
 
 type publicClientImpl struct {
 	apiURL url.URL
-	client http.Client
+	client HTTP
 }
 
-func NewPublicClient(hostAddress string) (PublicClient, error) {
+// NewPublicClient creates a new PublicClient
+func NewPublicClient(hostAddress string, client HTTP) (PublicClient, error) {
 	apiURL, err := url.Parse(hostAddress)
 	if err != nil {
 		return nil, err
 	}
 	return &publicClientImpl{
 		apiURL: *apiURL,
-		client: http.Client{
-			Timeout: 15 * time.Second,
-		},
+		client: client,
 	}, nil
-}
-
-func checkAPIResponse(resp *http.Response) error {
-	if resp.StatusCode >= 400 {
-		return errors.DecodeError(resp)
-	}
-
-	return nil
-}
-
-func decodeInvoice(resp *http.Response) (*dtos.InvoiceDto, error) {
-	inv := &dtos.InvoiceDto{}
-	err := json.NewDecoder(resp.Body).Decode(&inv)
-	if err != nil {
-		return nil, err
-	}
-	return inv, nil
 }
 
 func (c publicClientImpl) getAPIURL(suffix string) (string, error) {
@@ -68,81 +46,63 @@ func (c publicClientImpl) getAPIURL(suffix string) (string, error) {
 func (c publicClientImpl) CreateInvoice(
 	total unit.AtomicUnit,
 	currency string) (*dtos.InvoiceDto, error) {
+	const op errors.Op = "publicClient.createInvoice"
 
 	url, err := c.getAPIURL("/v1/invoices")
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, errors.Internal, err)
 	}
 
-	params, err := json.Marshal(&dtos.InvoiceCreationParams{
+	params := dtos.InvoiceCreationParams{
 		Total:    total,
 		Currency: currency,
 		// PaymentMethods: ,
-	})
+	}
 
+	var result *dtos.InvoiceDto
+	_, err = c.client.PostJSON(url, params, &result)
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, err)
 	}
 
-	resp, err := c.client.Post(url, "application/json", bytes.NewBuffer(params))
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	if err = checkAPIResponse(resp); err != nil {
-		return nil, err
-	}
-
-	return decodeInvoice(resp)
+	return result, nil
 }
 
 func (c publicClientImpl) GetInvoice(ID string) (*dtos.InvoiceDto, error) {
+	const op errors.Op = "publicClient.getInvoice"
 
 	url, err := c.getAPIURL("/v1/invoices/" + ID)
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, errors.Internal, err)
 	}
 
-	resp, err := c.client.Get(url)
+	var result *dtos.InvoiceDto
+	_, err = c.client.GetJSON(url, &result)
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, err)
 	}
 
-	defer resp.Body.Close()
+	return result, nil
 
-	if err = checkAPIResponse(resp); err != nil {
-		return nil, err
-	}
-
-	return decodeInvoice(resp)
 }
 
 func (c publicClientImpl) GeneratePaymentMethodAdress(invoiceID string, currency string) (*dtos.InvoiceDto, error) {
+	const op errors.Op = "publicClient.getInvoice"
+
 	url, err := c.getAPIURL("/v1/invoices/" + invoiceID + "/payment-method/address")
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, errors.Internal, err)
 	}
 
-	params, err := json.Marshal(&dtos.InvoiceGeneratePaymentMethodAddressParams{
+	params := dtos.InvoiceGeneratePaymentMethodAddressParams{
 		Currency: currency,
-	})
+	}
 
+	var result *dtos.InvoiceDto
+	_, err = c.client.PostJSON(url, params, &result)
 	if err != nil {
-		return nil, err
+		return nil, errors.E(op, err)
 	}
 
-	resp, err := c.client.Post(url, "application/json", bytes.NewBuffer(params))
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	if err = checkAPIResponse(resp); err != nil {
-		return nil, err
-	}
-
-	return decodeInvoice(resp)
+	return result, nil
 }

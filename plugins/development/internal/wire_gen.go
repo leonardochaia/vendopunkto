@@ -7,13 +7,15 @@ package development
 
 import (
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/plugin"
 )
 
 // Injectors from wire.go:
 
 func NewContainer(globalLogger hclog.Logger) (*Container, error) {
-	server := plugin.NewServer(globalLogger)
+	http := clients.NewHTTPClient()
+	server := plugin.NewServer(globalLogger, http)
 	exchangeRatesPlugin := newFakeExchangeRatesPlugin(globalLogger)
 	container := newContainer(server, exchangeRatesPlugin)
 	return container, nil

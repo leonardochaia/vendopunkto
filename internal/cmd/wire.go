@@ -5,12 +5,10 @@
 package cmd
 
 import (
-	"net/http"
-	"time"
-
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
 
+	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
@@ -26,15 +24,9 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 		invoice.InvoiceProviders,
 		server.ServerProviders,
 		currency.CurrencyProviders,
-		NewHttpClient,
+		clients.Providers,
 		repositories.Providers,
 		store.NewDB,
 	)
 	return &server.Server{}, nil
-}
-
-func NewHttpClient() http.Client {
-	return http.Client{
-		Timeout: 15 * time.Second,
-	}
 }

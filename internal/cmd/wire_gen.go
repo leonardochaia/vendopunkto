@@ -7,14 +7,13 @@ package cmd
 
 import (
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/server"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 	"github.com/leonardochaia/vendopunkto/internal/store/repositories"
-	"net/http"
-	"time"
 )
 
 import (
@@ -32,8 +31,8 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := NewHttpClient()
-	manager := pluginmgr.NewManager(globalLogger, client)
+	http := clients.NewHTTPClient()
+	manager := pluginmgr.NewManager(globalLogger, http)
 	invoiceManager, err := invoice.NewManager(invoiceRepository, manager, globalLogger)
 	if err != nil {
 		return nil, err
@@ -47,7 +46,7 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	pluginRouter, err := server.NewPluginRouter(handler, globalLogger)
+	pluginRouter, err := server.NewPluginRouter(handler, globalLogger, db)
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +55,4 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 		return nil, err
 	}
 	return serverServer, nil
-}
-
-// wire.go:
-
-func NewHttpClient() http.Client {
-	return http.Client{
-		Timeout: 15 * time.Second,
-	}
 }

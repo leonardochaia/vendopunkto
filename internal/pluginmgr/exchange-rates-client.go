@@ -1,25 +1,23 @@
 package pluginmgr
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
 	"net/url"
 
+	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/plugin"
 )
 
 type exchangeRatesClientImpl struct {
 	apiURL url.URL
-	client http.Client
+	client clients.HTTP
 	info   plugin.PluginInfo
 }
 
 func NewExchangeRatesClient(
 	url url.URL,
 	info plugin.PluginInfo,
-	client http.Client) plugin.ExchangeRatesPlugin {
+	client clients.HTTP) plugin.ExchangeRatesPlugin {
 	return &exchangeRatesClientImpl{
 		apiURL: url,
 		info:   info,
@@ -45,27 +43,18 @@ func (c exchangeRatesClientImpl) GetExchangeRates(
 		return nil, errors.E(op, errors.Internal, err)
 	}
 
-	final := c.apiURL.ResolveReference(u)
+	final := c.apiURL.ResolveReference(u).String()
 
-	params, err := json.Marshal(&plugin.GetExchangeRatesParams{
+	params := &plugin.GetExchangeRatesParams{
 		Currency:   currency,
 		Currencies: currencies,
-	})
-
-	if err != nil {
-		return nil, errors.E(op, errors.Parameters, err)
-	}
-
-	resp, err := c.client.Post(final.String(), "application/json", bytes.NewBuffer(params))
-
-	if err != nil {
-		return nil, errors.E(op, errors.Invalid, err)
 	}
 
 	var result plugin.ExchangeRatesResult
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	_, err = c.client.PostJSON(final, params, &result)
+
 	if err != nil {
-		return nil, errors.E(op, errors.Invalid, err)
+		return nil, errors.E(op, err)
 	}
 
 	return result, nil
