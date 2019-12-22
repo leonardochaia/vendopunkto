@@ -56,7 +56,7 @@ func (c internalClientImpl) ConfirmPayment(
 		Confirmations: confirmations,
 	}
 
-	_, err = c.client.PostJSON(final, params, nil)
+	_, err = c.client.PostJSONNoResult(final, params)
 
 	if err != nil {
 		return errors.E(op, err)

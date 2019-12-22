@@ -16,6 +16,17 @@ func init() {
 
 	invoiceViewCmd.Flags().BoolP("qr", "q", false, "Show QR code")
 	invoiceViewCmd.Flags().StringP("method", "m", "", "Payment method. i.e --method=xmr")
+
+	invoiceConfirmCmd.Flags().StringP("address", "a", "", "Received address")
+	invoiceConfirmCmd.Flags().StringP("tx-hash", "t", "", "Transaction Hash")
+	invoiceConfirmCmd.Flags().Float64("amount", 0, "Received amount")
+	invoiceConfirmCmd.Flags().Uint64("confirmations", 0, "Current confirmation amount")
+
+	invoiceConfirmCmd.MarkFlagRequired("address")
+	invoiceConfirmCmd.MarkFlagRequired("tx-hash")
+	invoiceConfirmCmd.MarkFlagRequired("amount")
+
+	invoiceCmd.AddCommand(invoiceConfirmCmd)
 	invoiceCmd.AddCommand(invoiceCreateCmd)
 	invoiceCmd.AddCommand(invoiceViewCmd)
 
@@ -113,24 +124,82 @@ var (
 			return nil
 		},
 	}
+
+	invoiceConfirmCmd = &cobra.Command{
+		Use:   "confirm",
+		Short: "Confirm payment for an Invoice",
+		Long:  "Confirm payment for an Invoice",
+		RunE: func(cmd *cobra.Command, args []string) error { // Initialize the databse
+
+			txHash, err := cmd.Flags().GetString("tx-hash")
+			if err != nil {
+				return err
+			}
+
+			address, err := cmd.Flags().GetString("address")
+			if err != nil {
+				return err
+			}
+
+			amount, err := cmd.Flags().GetFloat64("amount")
+			if err != nil {
+				return err
+			}
+
+			confirmations, err := cmd.Flags().GetUint64("confirmations")
+			if err != nil {
+				return err
+			}
+
+			cmd.SilenceUsage = true
+
+			err = internalClient.ConfirmPayment(
+				address,
+				unit.NewFromFloat(amount),
+				txHash,
+				confirmations,
+			)
+
+			if err != nil {
+				return err
+			}
+
+			fmt.Print("Payment confirmed\n")
+
+			return nil
+		},
+	}
 )
 
 func printInvoice(invoice *dtos.InvoiceDto) {
 	fmt.Printf("  Invoice ID: %s\n", invoice.ID)
-	fmt.Printf("  Total: %s %s\n", strings.ToUpper(invoice.Currency), invoice.Total.ValueFormatted)
+	fmt.Printf("  Total: %s %s\n", invoice.Total.ValueFormatted, strings.ToUpper(invoice.Currency))
 	fmt.Printf("  Status: %s %s%%\n", getInvoiceStatus(invoice.Status),
 		strconv.FormatFloat(invoice.PaymentPercentage, 'f', -1, 64))
 	if invoice.Total.Value != invoice.Remaining.Value {
-		fmt.Printf("  Remaining: %s %s\n", strings.ToUpper(invoice.Currency), invoice.Remaining.ValueFormatted)
+		fmt.Printf("  Remaining: %s %s\n", invoice.Remaining.ValueFormatted, strings.ToUpper(invoice.Currency))
 	}
 
-	fmt.Print("You can pay using any of the following methods:\n")
+	if invoice.PaymentPercentage < 100 {
+		fmt.Print("You can pay using any of the following methods:\n")
 
-	for _, method := range invoice.PaymentMethods {
-		fmt.Printf("  %s %s %s\n",
-			strings.ToUpper(method.Currency),
-			method.Remaining.ValueFormatted,
-			method.Address)
+		for _, method := range invoice.PaymentMethods {
+			fmt.Printf("  %s %s %s\n",
+				strings.ToUpper(method.Currency),
+				method.Remaining.ValueFormatted,
+				method.Address)
+		}
+	}
+
+	if len(invoice.Payments) > 0 {
+		fmt.Println("Payments")
+		for _, payment := range invoice.Payments {
+			fmt.Printf("  %s %s (%s) (Conf. #%d)\n",
+				payment.Amount.ValueFormatted,
+				strings.ToUpper(payment.Currency),
+				payment.TxHash,
+				payment.Confirmations)
+		}
 	}
 }
 

@@ -30,7 +30,7 @@ func TestHTTPGetWithResult(t *testing.T) {
 
 	client := NewHTTPClient()
 	var result dto
-	resp, err := client.Get(server.URL+"/some/path", &result)
+	resp, err := client.GetJSON(server.URL+"/some/path", &result)
 
 	testutils.Ok(t, err)
 	testutils.Equals(t, expected, result)
@@ -52,7 +52,7 @@ func TestHTTPGetWithError(t *testing.T) {
 
 	client := NewHTTPClient()
 	var result dto
-	resp, err := client.Get(server.URL+"/some/path", &result)
+	resp, err := client.GetJSON(server.URL+"/some/path", &result)
 
 	testutils.Assert(t, resp.StatusCode >= 400, "expected an error status code")
 	testutils.Assert(t, err != nil, "expected an error, got nil")
