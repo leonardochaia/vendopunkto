@@ -7,7 +7,7 @@
 
 <ng-container *ngIf="invoice.status == 1">
     <div style="text-align:center;margin: 0 auto;">
-        <ngx-kjua [text]="paymentMethod.qrCode"></ngx-kjua>
+        <ngx-kjua [text]="paymentMethod.qrCode" ecLevel="Q" cssClass="qr-code"></ngx-kjua>
     </div>
 
     <h2 style="text-align: center; margin-top:0">
