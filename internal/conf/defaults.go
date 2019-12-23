@@ -17,12 +17,19 @@ func init() {
 	viper.SetDefault("profiler.host", "")
 	viper.SetDefault("profiler.port", "6060")
 
-	// Server Configuration
-	viper.SetDefault("server.host", "0.0.0.0")
-	viper.SetDefault("server.port", "8080")
+	// Public Server Configuration
+	viper.SetDefault("server.public.host", "0.0.0.0")
+	viper.SetDefault("server.public.port", "8080")
 	viper.SetDefault("server.log_requests", true)
 	viper.SetDefault("server.profiler_enabled", false)
 	viper.SetDefault("server.profiler_path", "/debug")
+
+	// Internal Server Configuration
+	viper.SetDefault("server.internal.host", "0.0.0.0")
+	viper.SetDefault("server.internal.port", "9080")
+	// The URL that will be given tu plugins to find
+	// the internal API
+	viper.SetDefault("server.internal.advertise_url", "http://localhost:9080")
 
 	// Database Settings
 	viper.SetDefault("storage.type", "postgres")
@@ -32,14 +39,13 @@ func init() {
 	viper.SetDefault("storage.port", 5432)
 	viper.SetDefault("storage.database", "vendopunkto")
 	viper.SetDefault("storage.sslmode", "disable")
-	// viper.SetDefault("storage.max_connections", 80)
 
 	// Plugins
-	// PLUGINS_ENABLED="wallet|http://localhost3333"
+	// string separated list of plugin URLs to activate on startup
 	viper.SetDefault("plugins.enabled", []string{})
-	viper.SetDefault("plugins.server.host", "0.0.0.0")
-	viper.SetDefault("plugins.server.port", "9080")
-	viper.SetDefault("plugins.server.plugin_host_address", "http://localhost:9080")
+
+	// this is the address that VendoPunkto will provide to plugins
+	// for them to reach back
 	viper.SetDefault("plugins.default_exchange_rates", "")
 
 }

@@ -32,8 +32,11 @@ type Manager struct {
 
 func (manager *Manager) LoadPlugins() {
 	plugins := viper.GetStringSlice("plugins.enabled")
-	hostAddress := viper.GetString("plugins.server.plugin_host_address")
+	advertiseURL := viper.GetString("server.internal.advertise_url")
 
+	manager.logger.Debug("Loading plugin from URLs",
+		"urlAmount", len(plugins),
+		"advertise_url", advertiseURL)
 	for _, addr := range plugins {
 
 		url, err := url.Parse(addr)
@@ -44,7 +47,7 @@ func (manager *Manager) LoadPlugins() {
 			continue
 		}
 
-		err = manager.initializePlugin(*url, hostAddress)
+		err = manager.initializePlugin(*url, advertiseURL)
 		if err != nil {
 			manager.logger.Error("Failed to communicate with plugin", "error", err, "URL", url.String())
 			continue

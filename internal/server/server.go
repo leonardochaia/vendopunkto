@@ -24,10 +24,12 @@ type Server struct {
 
 // startInternalServer serves the internal server on the configured listener.
 func (s *Server) startInternalServer() error {
-	s.pluginManager.LoadPlugins()
 
+	addr := net.JoinHostPort(
+		viper.GetString("server.internal.host"),
+		viper.GetString("server.internal.port"))
 	server := &http.Server{
-		Addr:    net.JoinHostPort(viper.GetString("plugins.server.host"), viper.GetString("plugins.server.port")),
+		Addr:    addr,
 		Handler: *s.internalRouter,
 	}
 
@@ -51,13 +53,18 @@ func (s *Server) startInternalServer() error {
 // ListenAndServe will listen for requests
 func (s *Server) ListenAndServe() error {
 
+	s.pluginManager.LoadPlugins()
+
 	err := s.startInternalServer()
 	if err != nil {
 		return err
 	}
 
+	addr := net.JoinHostPort(
+		viper.GetString("server.public.host"),
+		viper.GetString("server.public.port"))
 	s.server = &http.Server{
-		Addr:    net.JoinHostPort(viper.GetString("server.host"), viper.GetString("server.port")),
+		Addr:    addr,
 		Handler: *s.router,
 	}
 
