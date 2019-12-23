@@ -73,15 +73,18 @@ func initConfig() {
 	viper.AutomaticEnv()                                   // Automatically use environment variables where available
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // Environement variables use underscores instead of periods
 
-	// If a config file is found, read it in.
+	// If a config file is found, initialize it
 	if configFile != "" {
-		viper.SetConfigFile(configFile)
-		err := viper.ReadInConfig()
+		created, err := conf.InitializeConfigFile(configFile)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Could not read config file: %s ERROR: %s\n", configFile, err.Error())
+			fmt.Fprintf(os.Stderr, "Error ocurred while initializing config: %s ERROR: %s\n", configFile, err.Error())
 			os.Exit(1)
 		}
 
+		if created {
+			fmt.Fprintf(os.Stdout, "New config file created at: %s\n", configFile)
+			os.Exit(0)
+		}
 	}
 }
 
