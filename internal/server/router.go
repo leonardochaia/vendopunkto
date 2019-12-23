@@ -15,9 +15,9 @@ import (
 	"github.com/go-chi/render"
 	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/store"
-	"github.com/spf13/viper"
 )
 
 // VendoPunktoRouter is the public routerplugin
@@ -30,6 +30,7 @@ func NewRouter(
 	invoices *invoice.Handler,
 	globalLogger hclog.Logger,
 	db *pg.DB,
+	startupConf conf.Startup,
 ) (*VendoPunktoRouter, error) {
 
 	var router VendoPunktoRouter
@@ -38,7 +39,7 @@ func NewRouter(
 	logger := globalLogger.Named("api-server")
 
 	// add basic middlewares
-	setupMiddlewares(router, logger)
+	setupMiddlewares(router, startupConf, logger)
 
 	// tx per request
 	router.Use(store.NewTxPerRequestMiddleware(globalLogger, db))
@@ -54,7 +55,10 @@ func NewRouter(
 	return &router, nil
 }
 
-func setupMiddlewares(router chi.Router, logger hclog.Logger) {
+func setupMiddlewares(
+	router chi.Router,
+	startupConf conf.Startup,
+	logger hclog.Logger) {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Recoverer)
@@ -62,7 +66,7 @@ func setupMiddlewares(router chi.Router, logger hclog.Logger) {
 	router.Use(middleware.GetHead)
 
 	// Log Requests
-	if viper.GetBool("server.log_requests") {
+	if startupConf.Server.LogRequests {
 		router.Use(newRequestLogger(logger))
 	}
 
@@ -80,9 +84,9 @@ func setupMiddlewares(router chi.Router, logger hclog.Logger) {
 	}).Handler)
 
 	// Enable profiler
-	if viper.GetBool("server.profiler_enabled") && viper.GetString("server.profiler_path") != "" {
-		logger.Debug("Profiler enabled on API", "path", viper.GetString("server.profiler_path"))
-		router.Mount(viper.GetString("server.profiler_path"), middleware.Profiler())
+	if startupConf.Server.ProfilerEnabled && startupConf.Server.ProfilerPath != "" {
+		logger.Debug("Profiler enabled on API", "path", startupConf.Server.ProfilerPath)
+		router.Mount(startupConf.Server.ProfilerPath, middleware.Profiler())
 	}
 }
 func newRequestLogger(parentLogger hclog.Logger) func(next http.Handler) http.Handler {

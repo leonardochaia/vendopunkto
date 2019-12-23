@@ -2,11 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"strings"
 
-	"net/http"
 	_ "net/http/pprof" // Import for pprof
 
 	"github.com/spf13/cobra"
@@ -61,7 +59,7 @@ func Execute() {
 // This is the main initializer handling cli, config and log
 func init() {
 	// Initialize configuration
-	cobra.OnInitialize(initConfig, initProfiler)
+	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Config file")
 }
 
@@ -85,14 +83,5 @@ func initConfig() {
 			fmt.Fprintf(os.Stdout, "New config file created at: %s\n", configFile)
 			os.Exit(0)
 		}
-	}
-}
-
-// Profliter can explicitly listen on address/port
-func initProfiler() {
-	if viper.GetBool("profiler.enabled") {
-		hostPort := net.JoinHostPort(viper.GetString("profiler.host"), viper.GetString("profiler.port"))
-		go http.ListenAndServe(hostPort, nil)
-		fmt.Printf("Profiler enabled on http://%s", hostPort)
 	}
 }

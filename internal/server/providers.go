@@ -4,6 +4,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 )
 
@@ -16,7 +17,8 @@ func NewServer(
 	internalRouter *InternalRouter,
 	db *pg.DB,
 	globalLogger hclog.Logger,
-	pluginManager *pluginmgr.Manager) (*Server, error) {
+	pluginManager *pluginmgr.Manager,
+	startupConf conf.Startup) (*Server, error) {
 
 	server := &Server{
 		logger:         globalLogger.Named("server"),
@@ -24,6 +26,7 @@ func NewServer(
 		db:             db,
 		pluginManager:  pluginManager,
 		internalRouter: internalRouter,
+		startupConf:    startupConf,
 	}
 
 	return server, nil

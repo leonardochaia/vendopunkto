@@ -12,11 +12,6 @@ func init() {
 	// Pidfile
 	viper.SetDefault("pidfile", "")
 
-	// Profiler config
-	viper.SetDefault("profiler.enabled", false)
-	viper.SetDefault("profiler.host", "")
-	viper.SetDefault("profiler.port", "6060")
-
 	// Public Server Configuration
 	viper.SetDefault("server.public.host", "0.0.0.0")
 	viper.SetDefault("server.public.port", "8080")

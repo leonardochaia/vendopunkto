@@ -8,6 +8,7 @@ package cmd
 import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/clients"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
@@ -23,7 +24,11 @@ import (
 // Injectors from wire.go:
 
 func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
-	db, err := store.NewDB(globalLogger)
+	startup, err := conf.LoadStartupConfig()
+	if err != nil {
+		return nil, err
+	}
+	db, err := store.NewDB(globalLogger, startup)
 	if err != nil {
 		return nil, err
 	}
@@ -32,13 +37,13 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 		return nil, err
 	}
 	http := clients.NewHTTPClient()
-	manager := pluginmgr.NewManager(globalLogger, http)
+	manager := pluginmgr.NewManager(globalLogger, http, startup)
 	invoiceManager, err := invoice.NewManager(invoiceRepository, manager, globalLogger)
 	if err != nil {
 		return nil, err
 	}
 	handler := invoice.NewHandler(invoiceManager, globalLogger, manager)
-	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger, db)
+	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger, db, startup)
 	if err != nil {
 		return nil, err
 	}
@@ -46,11 +51,11 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	internalRouter, err := server.NewInternalRouter(handler, globalLogger, currencyHandler, db)
+	internalRouter, err := server.NewInternalRouter(handler, globalLogger, currencyHandler, db, startup)
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.NewServer(vendoPunktoRouter, internalRouter, db, globalLogger, manager)
+	serverServer, err := server.NewServer(vendoPunktoRouter, internalRouter, db, globalLogger, manager, startup)
 	if err != nil {
 		return nil, err
 	}

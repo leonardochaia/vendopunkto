@@ -8,17 +8,21 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
-	"github.com/spf13/viper"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 )
 
-func NewDB(globalLogger hclog.Logger) (*pg.DB, error) {
+// NewDB Initialices the database
+func NewDB(
+	globalLogger hclog.Logger,
+	startupConf conf.Startup,
+) (*pg.DB, error) {
 	var (
-		username string = viper.GetString("storage.username")
-		password string = viper.GetString("storage.password")
-		hostname string = viper.GetString("storage.host")
-		port     string = viper.GetString("storage.port")
-		database string = viper.GetString("storage.database")
-		sslMode  string = viper.GetString("storage.ssl_mode")
+		username string = startupConf.Storage.Username
+		password string = startupConf.Storage.Password
+		hostname string = startupConf.Storage.Host
+		port     string = startupConf.Storage.Port
+		database string = startupConf.Storage.Database
+		sslMode  string = startupConf.Storage.SSLMode
 	)
 
 	// Username

@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
-	"github.com/spf13/viper"
 )
 
 // Server is the API web server
@@ -20,14 +20,16 @@ type Server struct {
 	server         *http.Server
 	db             *pg.DB
 	pluginManager  *pluginmgr.Manager
+	startupConf    conf.Startup
 }
 
 // startInternalServer serves the internal server on the configured listener.
 func (s *Server) startInternalServer() error {
 
 	addr := net.JoinHostPort(
-		viper.GetString("server.internal.host"),
-		viper.GetString("server.internal.port"))
+		s.startupConf.Server.Internal.Host,
+		s.startupConf.Server.Internal.Port,
+	)
 	server := &http.Server{
 		Addr:    addr,
 		Handler: *s.internalRouter,
@@ -61,8 +63,9 @@ func (s *Server) ListenAndServe() error {
 	}
 
 	addr := net.JoinHostPort(
-		viper.GetString("server.public.host"),
-		viper.GetString("server.public.port"))
+		s.startupConf.Server.Public.Host,
+		s.startupConf.Server.Public.Port,
+	)
 	s.server = &http.Server{
 		Addr:    addr,
 		Handler: *s.router,

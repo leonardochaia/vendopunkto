@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/store"
@@ -20,13 +21,14 @@ func NewInternalRouter(
 	globalLogger hclog.Logger,
 	currencies currency.Handler,
 	db *pg.DB,
+	startupConf conf.Startup,
 ) (*InternalRouter, error) {
 
 	var router InternalRouter
 	router = chi.NewRouter()
 
 	logger := globalLogger.Named("internal-server")
-	setupMiddlewares(router, logger)
+	setupMiddlewares(router, startupConf, logger)
 
 	// tx per request
 	router.Use(store.NewTxPerRequestMiddleware(globalLogger, db))

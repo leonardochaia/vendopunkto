@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/errors"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/plugin"
-	"github.com/spf13/viper"
 )
 
 type walletAndInfo struct {
@@ -23,16 +23,17 @@ type exchangeRatesAndInfo struct {
 }
 
 type Manager struct {
-	logger hclog.Logger
-	client clients.HTTP
+	logger      hclog.Logger
+	client      clients.HTTP
+	startupConf conf.Startup
 
 	wallets       map[string]walletAndInfo
 	exchangeRates map[string]exchangeRatesAndInfo
 }
 
 func (manager *Manager) LoadPlugins() {
-	plugins := viper.GetStringSlice("plugins.enabled")
-	advertiseURL := viper.GetString("server.internal.advertise_url")
+	plugins := manager.startupConf.Plugins.Enabled
+	advertiseURL := manager.startupConf.Server.Internal.AdvertiseURL
 
 	manager.logger.Debug("Loading plugin from URLs",
 		"urlAmount", len(plugins),
@@ -52,6 +53,13 @@ func (manager *Manager) LoadPlugins() {
 			manager.logger.Error("Failed to communicate with plugin", "error", err, "URL", url.String())
 			continue
 		}
+	}
+
+	_, err := manager.GetConfiguredExchangeRatesPlugin()
+	if err != nil {
+		manager.logger.Error("Failed to find default exchange plugins. Invoices will fail creation",
+			"defaultExchangeRates", manager.startupConf.Plugins.DefaultExchangeRates,
+			"error", err)
 	}
 }
 
@@ -98,7 +106,7 @@ func (manager *Manager) GetExchangeRatesPlugin(ID string) (plugin.ExchangeRatesP
 }
 
 func (manager *Manager) GetConfiguredExchangeRatesPlugin() (plugin.ExchangeRatesPlugin, error) {
-	return manager.GetExchangeRatesPlugin(viper.GetString("plugins.default_exchange_rates"))
+	return manager.GetExchangeRatesPlugin(manager.startupConf.Plugins.DefaultExchangeRates)
 }
 
 func (manager *Manager) initializePlugin(pluginURL url.URL, hostAddress string) error {

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 
 	"github.com/leonardochaia/vendopunkto/clients"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
@@ -20,6 +21,7 @@ import (
 // Create a new server
 func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	wire.Build(
+		conf.Providers,
 		pluginmgr.PluginProviders,
 		invoice.InvoiceProviders,
 		server.ServerProviders,
