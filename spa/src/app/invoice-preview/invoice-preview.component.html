@@ -1,0 +1,73 @@
+<div>
+    {{invoice.id}}
+    <span style="float:right">
+        {{invoice.createdAt | date}}
+    </span>
+</div>
+
+<ng-container *ngIf="invoice.status == 1">
+    <div style="text-align:center;margin: 0 auto;">
+        <ngx-kjua [text]="paymentMethod.qrCode"></ngx-kjua>
+    </div>
+
+    <h2 style="text-align: center; margin-top:0">
+        {{paymentMethod.remaining.valueFormatted}} {{paymentMethod.currency | uppercase}}
+    </h2>
+    <label for="address">Address</label>
+    <br>
+    <textarea name="address" style="width:100%;" readonly>{{paymentMethod.address}}</textarea>
+</ng-container>
+
+<p>
+    Status:
+    <ng-container [ngSwitch]="invoice.status">
+        <span *ngSwitchCase="1">Pending</span>
+        <span *ngSwitchCase="2">Confirmed</span>
+        <span *ngSwitchCase="3">Failed</span>
+    </ng-container>
+    ({{invoice.paymentPercentage}}%)
+    <br>
+</p>
+
+<ng-container *ngIf="invoice.status == 1">
+    <p *ngIf="!invoice.payments.length">
+        <small>
+            We haven't seen your payment yet.
+            We should see it once it's on the mempool.
+        </small>
+    </p>
+    <button type="button" (click)="verifyPayment()">Verify payment</button>
+</ng-container>
+
+<ng-container *ngIf="invoice.payments.length">
+    <h3>Payments</h3>
+    <div *ngFor="let payment of invoice.payments">
+        Tx Hash: {{payment.txHash}}
+        <br>
+        Amount: {{payment.amount.valueFormatted}} {{payment.currency | uppercase}}
+        <br>
+        Confirmations: {{payment.confirmations}}
+        <br>
+        Status:
+        <ng-container [ngSwitch]="payment.status">
+            <span *ngSwitchCase="1">In Mempool</span>
+            <span *ngSwitchCase="2">
+                Confirmed
+                ({{payment.confirmedAt | date:"medium"}})
+            </span>
+            <span *ngSwitchCase="3">Failed</span>
+        </ng-container>
+        <hr>
+    </div>
+</ng-container>
+
+<ng-container *ngIf="invoice.status == 1 && invoice.paymentMethods.length > 1">
+    <h3>You can also pay with..</h3>
+    <ng-container *ngFor="let method of invoice.paymentMethods">
+        <p *ngIf="method.currency !== paymentMethod.currency">
+            {{method.remaining.valueFormatted}} {{method.currency | uppercase}}
+            <button style="float: right;" (click)="changePaymentMethod(method.currency)">Pay with
+                {{method.currency | uppercase}}</button>
+        </p>
+    </ng-container>
+</ng-container>

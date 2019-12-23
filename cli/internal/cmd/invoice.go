@@ -201,6 +201,8 @@ func printInvoice(invoice *dtos.InvoiceDto) {
 				payment.Confirmations)
 		}
 	}
+
+	fmt.Printf("Public URL: %s:%d/invoices/%s\n", vendoPunktoHost, vendoPunktoPublicPort, invoice.ID)
 }
 
 func ensureMethodAddressExists(invoice *dtos.InvoiceDto, currency string) (*dtos.InvoiceDto, error) {
