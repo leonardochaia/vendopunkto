@@ -14,21 +14,21 @@ import (
 
 // Server is the API web server
 type Server struct {
-	logger        hclog.Logger
-	router        *VendoPunktoRouter
-	pluginRouter  *PluginRouter
-	server        *http.Server
-	db            *pg.DB
-	pluginManager *pluginmgr.Manager
+	logger         hclog.Logger
+	router         *VendoPunktoRouter
+	internalRouter *InternalRouter
+	server         *http.Server
+	db             *pg.DB
+	pluginManager  *pluginmgr.Manager
 }
 
-// StartPluginServer serves the plugin server on the configured listener.
-func (s *Server) startPluginServer() error {
+// startInternalServer serves the internal server on the configured listener.
+func (s *Server) startInternalServer() error {
 	s.pluginManager.LoadPlugins()
 
 	server := &http.Server{
 		Addr:    net.JoinHostPort(viper.GetString("plugins.server.host"), viper.GetString("plugins.server.port")),
-		Handler: *s.pluginRouter,
+		Handler: *s.internalRouter,
 	}
 
 	// Listen
@@ -43,7 +43,7 @@ func (s *Server) startPluginServer() error {
 			os.Exit(1)
 		}
 	}()
-	s.logger.Info("Plugin Server Listening", "address", server.Addr)
+	s.logger.Info("Internal Server Listening", "address", server.Addr)
 
 	return nil
 }
@@ -51,7 +51,7 @@ func (s *Server) startPluginServer() error {
 // ListenAndServe will listen for requests
 func (s *Server) ListenAndServe() error {
 
-	err := s.startPluginServer()
+	err := s.startInternalServer()
 	if err != nil {
 		return err
 	}
@@ -73,11 +73,12 @@ func (s *Server) ListenAndServe() error {
 			os.Exit(1)
 		}
 	}()
-	s.logger.Info("API Server Listening", "address", s.server.Addr)
+	s.logger.Info("Public Server Listening", "address", s.server.Addr)
 
 	return nil
 }
 
+// Close finalizes any open resources
 func (s *Server) Close() {
 	s.db.Close()
 }

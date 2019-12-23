@@ -46,11 +46,11 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	pluginRouter, err := server.NewPluginRouter(handler, globalLogger, db)
+	internalRouter, err := server.NewInternalRouter(handler, globalLogger, db)
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.NewServer(vendoPunktoRouter, pluginRouter, db, globalLogger, manager)
+	serverServer, err := server.NewServer(vendoPunktoRouter, internalRouter, db, globalLogger, manager)
 	if err != nil {
 		return nil, err
 	}

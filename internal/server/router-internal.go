@@ -8,20 +8,22 @@ import (
 	"github.com/leonardochaia/vendopunkto/internal/store"
 )
 
-type PluginRouter interface {
+// InternalRouter is the router for the internal api
+type InternalRouter interface {
 	chi.Router
 }
 
-func NewPluginRouter(
+// NewInternalRouter creates the router
+func NewInternalRouter(
 	invoice *invoice.Handler,
 	globalLogger hclog.Logger,
 	db *pg.DB,
-) (*PluginRouter, error) {
+) (*InternalRouter, error) {
 
-	var router PluginRouter
+	var router InternalRouter
 	router = chi.NewRouter()
 
-	logger := globalLogger.Named("plugin-server")
+	logger := globalLogger.Named("internal-server")
 	setupMiddlewares(router, logger)
 
 	// tx per request
