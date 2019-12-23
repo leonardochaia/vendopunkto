@@ -33,8 +33,9 @@ func (p moneroWalletPlugin) GetPluginInfo() (plugin.PluginInfo, error) {
 func (p moneroWalletPlugin) GetWalletInfo() (plugin.WalletPluginInfo, error) {
 	return plugin.WalletPluginInfo{
 		Currency: plugin.WalletPluginCurrency{
-			Name:   "Monero",
-			Symbol: "XMR",
+			Name:           "Monero",
+			Symbol:         "XMR",
+			QRCodeTemplate: "monero:{{.Address}}?tx_amount={{.Amount}}",
 		},
 	}, nil
 }

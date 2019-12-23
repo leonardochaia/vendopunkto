@@ -10,17 +10,19 @@ import (
 	"github.com/leonardochaia/vendopunkto/unit"
 )
 
+// WalletPluginCurrency provides metadata for WalletPlugin currencies
 type WalletPluginCurrency struct {
 	Name           string `json:"name"`
 	Symbol         string `json:"symbol"`
 	QRCodeTemplate string `json:"qrCodeTemplate"`
 }
 
+// WalletPluginInfo provides metadata for the WalletPlugin
 type WalletPluginInfo struct {
 	Currency WalletPluginCurrency `json:"currency"`
 }
 
-// WalletPlugin must be implemented for a Coin to be supported by vendopunkto
+// WalletPlugin must be implemented for a currency to be supported by VendoPunkto
 type WalletPlugin interface {
 	VendoPunktoPlugin
 	GetWalletInfo() (WalletPluginInfo, error)
@@ -33,6 +35,9 @@ type walletServerPlugin struct {
 	Impl WalletPlugin
 }
 
+// BuildWalletPlugin needs to be called by implementors with their WalletPlugin
+// implementation.
+// Afterwards, you need to call server.AddPlugin with the resulting ServerPlugin
 func BuildWalletPlugin(impl WalletPlugin) ServerPlugin {
 	return &walletServerPlugin{
 		Impl: impl,
@@ -51,11 +56,16 @@ func (serverPlugin *walletServerPlugin) GetPluginImpl() (VendoPunktoPlugin, erro
 }
 
 const (
-	WalletMainEndpoint            = "/vp/wallet"
+	// WalletMainEndpoint is root wallet plugin path
+	WalletMainEndpoint = "/vp/wallet"
+	// GenerateAddressWalletEndpoint the suffix for address generation
 	GenerateAddressWalletEndpoint = "/address"
-	WalletInfoEndpoint            = "/info"
+	// WalletInfoEndpoint the suffix for info
+	WalletInfoEndpoint = "/info"
 )
 
+// BuildQRCode generates the string for a QR code based on
+// the template. If the WalletPluginInfo has no template, BIP21 will be used
 func (info WalletPluginInfo) BuildQRCode(
 	address string,
 	amount unit.AtomicUnit) (string, error) {

@@ -1,3 +1,6 @@
+// Package plugin contains utilities for building a VendoPunkto plugin in Go
+// A plugin is basically a binary which runs an HTTP server that VendoPunkto
+// consumes. This package aims to help doing so.
 package plugin
 
 import (
@@ -63,6 +66,29 @@ func (s *Server) Start(addr string) error {
 
 	s.pluginInfos = []PluginInfo{}
 
+	s.initializeAllPlugins(router)
+
+	router.Post(ActivatePluginEndpoint, errors.WrapHandler(s.activatePluginHandler))
+
+	return http.ListenAndServe(addr, router)
+}
+
+// GetInternalClient returns the clients.InternalClient that you can use to
+// consume the VendoPunkto internal API
+func (s *Server) GetInternalClient() (clients.InternalClient, error) {
+
+	if s.internalClient == nil {
+		err := fmt.Errorf("Server has not been activated or activation has failed")
+		s.Logger.Error("Server had no internal client", "error", err)
+		return nil, err
+	}
+
+	return s.internalClient, nil
+}
+
+// initializeAllPlugins loops through registered plugins and
+// initializes their router and stores references to implementations
+func (s *Server) initializeAllPlugins(router chi.Router) error {
 	for _, value := range s.plugins {
 
 		impl, err := value.GetPluginImpl()
@@ -93,20 +119,7 @@ func (s *Server) Start(addr string) error {
 		)
 	}
 
-	router.Post(ActivatePluginEndpoint, errors.WrapHandler(s.activatePluginHandler))
-
-	return http.ListenAndServe(addr, router)
-}
-
-func (s *Server) GetInternalClient() (clients.InternalClient, error) {
-
-	if s.internalClient == nil {
-		err := fmt.Errorf("Server has not been activated or activation has failed")
-		s.Logger.Error("Server had no internal client", "error", err)
-		return nil, err
-	}
-
-	return s.internalClient, nil
+	return nil
 }
 
 func (s *Server) activatePluginHandler(w http.ResponseWriter, r *http.Request) error {
