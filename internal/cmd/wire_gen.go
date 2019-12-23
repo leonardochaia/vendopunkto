@@ -38,15 +38,15 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 		return nil, err
 	}
 	handler := invoice.NewHandler(invoiceManager, globalLogger, manager)
+	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger, db)
+	if err != nil {
+		return nil, err
+	}
 	currencyHandler, err := currency.NewHandler(manager, globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	vendoPunktoRouter, err := server.NewRouter(handler, currencyHandler, globalLogger, db)
-	if err != nil {
-		return nil, err
-	}
-	internalRouter, err := server.NewInternalRouter(handler, globalLogger, db)
+	internalRouter, err := server.NewInternalRouter(handler, globalLogger, currencyHandler, db)
 	if err != nil {
 		return nil, err
 	}

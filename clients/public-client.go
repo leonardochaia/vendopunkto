@@ -5,13 +5,11 @@ import (
 
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
-	"github.com/leonardochaia/vendopunkto/unit"
 )
 
 // PublicClient for the internal plugin server hosted by vendopunkto
 // Used by plugins to "talk back" to the host.
 type PublicClient interface {
-	CreateInvoice(total unit.AtomicUnit, currency string) (*dtos.InvoiceDto, error)
 	GetInvoice(ID string) (*dtos.InvoiceDto, error)
 	GeneratePaymentMethodAdress(invoiceID string, currency string) (*dtos.InvoiceDto, error)
 }
@@ -27,8 +25,12 @@ func NewPublicClient(hostAddress string, client HTTP) (PublicClient, error) {
 	if err != nil {
 		return nil, err
 	}
+	vURL, err := url.Parse("/api/v1/")
+	if err != nil {
+		return nil, err
+	}
 	return &publicClientImpl{
-		apiURL: *apiURL,
+		apiURL: *apiURL.ResolveReference(vURL),
 		client: client,
 	}, nil
 }
@@ -43,35 +45,10 @@ func (c publicClientImpl) getAPIURL(suffix string) (string, error) {
 	return final.String(), nil
 }
 
-func (c publicClientImpl) CreateInvoice(
-	total unit.AtomicUnit,
-	currency string) (*dtos.InvoiceDto, error) {
-	const op errors.Op = "publicClient.createInvoice"
-
-	url, err := c.getAPIURL("/v1/invoices")
-	if err != nil {
-		return nil, errors.E(op, errors.Internal, err)
-	}
-
-	params := dtos.InvoiceCreationParams{
-		Total:    total,
-		Currency: currency,
-		// PaymentMethods: ,
-	}
-
-	var result *dtos.InvoiceDto
-	_, err = c.client.PostJSON(url, params, &result)
-	if err != nil {
-		return nil, errors.E(op, err)
-	}
-
-	return result, nil
-}
-
 func (c publicClientImpl) GetInvoice(ID string) (*dtos.InvoiceDto, error) {
 	const op errors.Op = "publicClient.getInvoice"
 
-	url, err := c.getAPIURL("/v1/invoices/" + ID)
+	url, err := c.getAPIURL("invoices/" + ID)
 	if err != nil {
 		return nil, errors.E(op, errors.Internal, err)
 	}
@@ -89,7 +66,7 @@ func (c publicClientImpl) GetInvoice(ID string) (*dtos.InvoiceDto, error) {
 func (c publicClientImpl) GeneratePaymentMethodAdress(invoiceID string, currency string) (*dtos.InvoiceDto, error) {
 	const op errors.Op = "publicClient.getInvoice"
 
-	url, err := c.getAPIURL("/v1/invoices/" + invoiceID + "/payment-method/address")
+	url, err := c.getAPIURL("invoices/" + invoiceID + "/payment-method/address")
 	if err != nil {
 		return nil, errors.E(op, errors.Internal, err)
 	}

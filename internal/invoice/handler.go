@@ -22,7 +22,6 @@ type Handler struct {
 func (handler *Handler) Routes() chi.Router {
 	router := chi.NewRouter()
 
-	router.Post("/", errors.WrapHandler(handler.createInvoice))
 	router.Post("/{id}/payment-method/address", errors.WrapHandler(handler.generatePaymentMethodAddress))
 	router.Get("/{id}", errors.WrapHandler(handler.getInvoice))
 
@@ -32,6 +31,8 @@ func (handler *Handler) Routes() chi.Router {
 // InternalRoutes are the internal routes, added to the internal API
 func (handler *Handler) InternalRoutes() chi.Router {
 	router := chi.NewRouter()
+
+	router.Post("/", errors.WrapHandler(handler.createInvoice))
 
 	router.Post("/payments/confirm", errors.WrapHandler(handler.confirmPayment))
 

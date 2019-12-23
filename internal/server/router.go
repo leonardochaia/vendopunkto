@@ -3,6 +3,10 @@ package server
 import (
 	"bytes"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -11,20 +15,19 @@ import (
 	"github.com/go-chi/render"
 	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
-	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 	"github.com/spf13/viper"
 )
 
+// VendoPunktoRouter is the public routerplugin
 type VendoPunktoRouter interface {
 	chi.Router
 }
 
-// Creates the chi Router and configures global paths
+// NewRouter Creates the chi Router and configures global paths
 func NewRouter(
 	invoices *invoice.Handler,
-	currencies currency.Handler,
 	globalLogger hclog.Logger,
 	db *pg.DB,
 ) (*VendoPunktoRouter, error) {
@@ -40,13 +43,10 @@ func NewRouter(
 	// tx per request
 	router.Use(store.NewTxPerRequestMiddleware(globalLogger, db))
 
-	// global routes
-	router.Get("/info", GetVersion())
-
 	// versions
-	router.Route("/v1", func(r chi.Router) {
+	router.Route("/api/v1", func(r chi.Router) {
+		r.Get("/info", GetVersion())
 		r.Mount("/invoices", invoices.Routes())
-		r.Mount("/currencies", currencies.Routes())
 	})
 
 	return &router, nil

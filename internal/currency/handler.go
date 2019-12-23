@@ -15,7 +15,7 @@ type Handler struct {
 	logger  hclog.Logger
 }
 
-func (handler *Handler) Routes() chi.Router {
+func (handler *Handler) InternalRoutes() chi.Router {
 	router := chi.NewRouter()
 
 	router.Get("/", errors.WrapHandler(handler.getAllCurrencies))

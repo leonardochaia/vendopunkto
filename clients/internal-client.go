@@ -11,6 +11,7 @@ import (
 // InternalClient for the internal plugin server hosted by vendopunkto
 // Used by plugins to "talk back" to the host.
 type InternalClient interface {
+	CreateInvoice(total unit.AtomicUnit, currency string) (*dtos.InvoiceDto, error)
 	ConfirmPayment(address string, amount unit.AtomicUnit, txHash string, confirmations uint64) error
 }
 
@@ -25,10 +26,51 @@ func NewInternalClient(hostAddress string, client HTTP) (InternalClient, error) 
 	if err != nil {
 		return nil, err
 	}
+	vURL, err := url.Parse("/api/v1/")
+	if err != nil {
+		return nil, err
+	}
+
 	return &internalClientImpl{
-		apiURL: *apiURL,
+		apiURL: *apiURL.ResolveReference(vURL),
 		client: client,
 	}, nil
+}
+
+func (c internalClientImpl) getAPIURL(suffix string) (string, error) {
+	u, err := url.Parse(suffix)
+	if err != nil {
+		return "", err
+	}
+
+	final := c.apiURL.ResolveReference(u)
+	return final.String(), nil
+}
+
+// CreateInvoice will create a new invoice with the provided total and currency
+// all payment methods will be added
+func (c internalClientImpl) CreateInvoice(
+	total unit.AtomicUnit,
+	currency string) (*dtos.InvoiceDto, error) {
+	const op errors.Op = "internalClient.createInvoice"
+
+	url, err := c.getAPIURL("invoices")
+	if err != nil {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	params := dtos.InvoiceCreationParams{
+		Total:    total,
+		Currency: currency,
+	}
+
+	var result *dtos.InvoiceDto
+	_, err = c.client.PostJSON(url, params, &result)
+	if err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	return result, nil
 }
 
 // ConfirmPayment should be called when a payment has been confirmed
@@ -42,12 +84,10 @@ func (c internalClientImpl) ConfirmPayment(
 
 	const op errors.Op = "internalClient.confirmPayment"
 
-	u, err := url.Parse("/v1/invoices/payments/confirm")
+	u, err := c.getAPIURL("invoices/payments/confirm")
 	if err != nil {
 		return errors.E(op, errors.Internal, err)
 	}
-
-	final := c.apiURL.ResolveReference(u).String()
 
 	params := dtos.InvoiceConfirmPaymentsParams{
 		Address:       address,
@@ -56,7 +96,7 @@ func (c internalClientImpl) ConfirmPayment(
 		Confirmations: confirmations,
 	}
 
-	_, err = c.client.PostJSONNoResult(final, params)
+	_, err = c.client.PostJSONNoResult(u, params)
 
 	if err != nil {
 		return errors.E(op, err)

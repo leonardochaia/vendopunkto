@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 )
@@ -17,6 +18,7 @@ type InternalRouter interface {
 func NewInternalRouter(
 	invoice *invoice.Handler,
 	globalLogger hclog.Logger,
+	currencies currency.Handler,
 	db *pg.DB,
 ) (*InternalRouter, error) {
 
@@ -29,8 +31,9 @@ func NewInternalRouter(
 	// tx per request
 	router.Use(store.NewTxPerRequestMiddleware(globalLogger, db))
 
-	router.Route("/v1", func(r chi.Router) {
+	router.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/invoices", invoice.InternalRoutes())
+		r.Mount("/currencies", currencies.InternalRoutes())
 	})
 	return &router, nil
 }

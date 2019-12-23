@@ -60,7 +60,7 @@ var (
 				return err
 			}
 
-			invoice, err := publicClient.CreateInvoice(unit.NewFromFloat(total), currency)
+			invoice, err := internalClient.CreateInvoice(unit.NewFromFloat(total), currency)
 
 			if err != nil {
 				return err
