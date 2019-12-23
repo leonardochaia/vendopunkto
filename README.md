@@ -125,7 +125,7 @@ payment method's wallet and QR code is displayed for the payee to pay.
 ## Development
 
 For development you need a Postgress database, plugin implementations for at
-at least a coin and exchange rates, Go and Make.
+at least a coin and exchange rates, Go and Make. To build the web client, npm
 
 The startup order is important, you want to make sure that plugins are started
 before VendoPunkto, given that plugins are currently loaded at startup.
@@ -140,8 +140,11 @@ There're mock plugin immplementations which can be started with
 make dev-plugin
 ```
 
-To build and run VendoPunkto API
+To build and run VendoPunkto API, in a different shell
 ```bash
+# do this once
+cd ./spa && npm install && npm run build && cd ../
+# and then just
 make && make run
 ```
 
