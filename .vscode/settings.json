@@ -5,5 +5,17 @@
     ],
     "[go]": {
         "editor.formatOnSave": true
-    }
+    },
+    "cSpell.words": [
+        "VendoPunkto",
+        "bitcoin",
+        "cryptocurrencies",
+        "hashicorp",
+        "hclog",
+        "leonardochaia",
+        "mempool",
+        "monero",
+        "punkto",
+        "vendo"
+    ]
 }
