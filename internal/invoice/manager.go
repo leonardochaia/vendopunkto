@@ -244,7 +244,8 @@ func (mgr *Manager) ConfirmPayment(
 	address string,
 	confirmations uint64,
 	amount unit.AtomicUnit,
-	txHash string) (*Invoice, error) {
+	txHash string,
+	blockHeight uint64) (*Invoice, error) {
 	const op errors.Op = "invoicemgr.confirmPayment"
 	path := errors.PathName("address/" + address)
 
@@ -255,22 +256,33 @@ func (mgr *Manager) ConfirmPayment(
 	}
 
 	method := invoice.FindPaymentMethodForAddress(address)
+	if method == nil {
+		return nil, errors.E(op, path, errors.NotExist,
+			errors.Errorf("Method not found for address %s", address))
+	}
+
 	payment := method.FindPayment(txHash)
 
-	mgr.logger.Info("Received payment confirmation",
+	logger := mgr.logger.With(
 		"invoice", invoice.ID,
 		"method", method.Currency,
 		"address", address,
 		"txHash", txHash,
-		"amount", amount)
+		"amount", amount,
+		"confirmations", confirmations,
+		"blockHeight", blockHeight,
+	)
 
 	// Update the payment
 	if payment != nil {
-		payment.Update(confirmations)
-		err = mgr.repository.UpdatePayment(ctx, payment)
+		if payment.Update(confirmations, blockHeight) {
+			logger.Info("Updating payment")
+			err = mgr.repository.UpdatePayment(ctx, payment)
+		}
 	} else {
 		// New payment
-		payment = method.AddPayment(txHash, amount, confirmations)
+		logger.Info("Received new payment")
+		payment = method.AddPayment(txHash, amount, confirmations, blockHeight)
 		err = mgr.repository.CreatePayment(ctx, payment)
 	}
 

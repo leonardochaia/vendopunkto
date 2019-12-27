@@ -53,6 +53,13 @@ run:
 	LOGGER_LEVEL=debug \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
 
+run-vp-monero:
+	STORAGE_HOST=localhost \
+	PLUGINS_ENABLED="http://localhost:4200 http://localhost:4201" \
+	PLUGINS_DEFAULT_EXCHANGE_RATES=gecko-exchange-rates \
+	LOGGER_LEVEL=debug \
+	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
+
 
 build-cli:
 	go build -ldflags "-X ${PACKAGENAME}/internal/conf.Executable=vendopunkto-cli -X ${PACKAGENAME}/internal/conf.GitVersion=${GITVERSION}" -o ./vendopunkto-cli ./cli/main.go

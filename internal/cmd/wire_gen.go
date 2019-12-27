@@ -12,6 +12,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
 	"github.com/leonardochaia/vendopunkto/internal/server"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 	"github.com/leonardochaia/vendopunkto/internal/store/repositories"
@@ -43,7 +44,8 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 		return nil, err
 	}
 	handler := invoice.NewHandler(invoiceManager, globalLogger, manager)
-	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger, db, startup)
+	transactionBuilder := store.NewPostgreTransactionBuilder(db)
+	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger, transactionBuilder, startup)
 	if err != nil {
 		return nil, err
 	}
@@ -51,11 +53,15 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	internalRouter, err := server.NewInternalRouter(handler, globalLogger, currencyHandler, db, startup)
+	internalRouter, err := server.NewInternalRouter(handler, globalLogger, currencyHandler, transactionBuilder, startup)
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.NewServer(vendoPunktoRouter, internalRouter, db, globalLogger, manager, startup)
+	walletPoller, err := pluginwallet.NewPoller(globalLogger, startup, transactionBuilder, manager, invoiceRepository, invoiceManager)
+	if err != nil {
+		return nil, err
+	}
+	serverServer, err := server.NewServer(vendoPunktoRouter, internalRouter, db, globalLogger, manager, walletPoller, startup)
 	if err != nil {
 		return nil, err
 	}

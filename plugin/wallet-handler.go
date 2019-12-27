@@ -26,10 +26,6 @@ type CoinWalletAddressParams struct {
 	InvoiceID string `json:"invoiceId"`
 }
 
-type ActivatePluginParams struct {
-	HostAddress string `json:"hostAddress"`
-}
-
 func NewWalletHandler(plugin WalletPlugin, serverPlugin ServerPlugin) *chi.Mux {
 	router := chi.NewRouter()
 
@@ -39,6 +35,7 @@ func NewWalletHandler(plugin WalletPlugin, serverPlugin ServerPlugin) *chi.Mux {
 	}
 
 	router.Post(GenerateAddressWalletEndpoint, errors.WrapHandler(handler.generateAddress))
+	router.Post(GetIncomingTransfersWalletEndpoint, errors.WrapHandler(handler.getIncomingTransfers))
 	router.Get(WalletInfoEndpoint, errors.WrapHandler(handler.getWalletInfo))
 
 	return router
@@ -60,6 +57,24 @@ func (handler *WalletPluginHandler) generateAddress(w http.ResponseWriter, r *ht
 	render.JSON(w, r, &CoinWalletAddressResponse{
 		Address: res,
 	})
+
+	return nil
+}
+
+func (handler *WalletPluginHandler) getIncomingTransfers(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "plugin.wallet.getIncomingTransfers"
+	var params = new(WalletPluginIncomingTransferParams)
+
+	if err := render.DecodeJSON(r.Body, &params); err != nil {
+		return errors.E(op, errors.Parameters, err)
+	}
+
+	res, err := handler.wallet.GetIncomingTransfers(*params)
+	if err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	render.JSON(w, r, res)
 
 	return nil
 }

@@ -14,13 +14,11 @@ type Container struct {
 	Plugin       plugin.WalletPlugin
 	Server       *plugin.Server
 	WalletClient wallet.Client
-	Handler      Handler
 }
 
 var Providers = wire.NewSet(
 	newMoneroWalletPlugin,
 	newMoneroWalletClient,
-	newMoneroHandler,
 	plugin.NewServer,
 	newContainer)
 
@@ -28,12 +26,10 @@ func newContainer(
 	plugin plugin.WalletPlugin,
 	server *plugin.Server,
 	walletClient wallet.Client,
-	handler Handler,
 ) *Container {
 	return &Container{
 		Plugin:       plugin,
 		WalletClient: walletClient,
-		Handler:      handler,
 		Server:       server,
 	}
 }
@@ -67,14 +63,4 @@ func newMoneroWalletClient(globalLogger hclog.Logger) (wallet.Client, error) {
 	logger.Info("Monero Wallet RPC Test Success", "version", version.Version)
 
 	return client, nil
-}
-
-func newMoneroHandler(logger hclog.Logger,
-	client wallet.Client,
-	server *plugin.Server) (Handler, error) {
-	return Handler{
-		logger: logger,
-		client: client,
-		server: *server,
-	}, nil
 }

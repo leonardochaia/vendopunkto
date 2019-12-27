@@ -33,7 +33,7 @@ func newContainer(
 }
 
 func newFakeMoneroWalletPlugin() plugin.WalletPlugin {
-	return fakeWalletPlugin{
+	return &fakeWalletPlugin{
 		name:           "Monero",
 		symbol:         "xmr",
 		qrCodeTemplate: "monero:{{.Address}}?tx_amount={{.Amount}}",
@@ -41,14 +41,14 @@ func newFakeMoneroWalletPlugin() plugin.WalletPlugin {
 }
 
 func newFakeBitcoinWalletPlugin() plugin.WalletPlugin {
-	return fakeWalletPlugin{
+	return &fakeWalletPlugin{
 		name:   "Bitcoin",
 		symbol: "btc",
 	}
 }
 
 func newFakeBitcoinCashWalletPlugin() plugin.WalletPlugin {
-	return fakeWalletPlugin{
+	return &fakeWalletPlugin{
 		name:   "Bitcoin Cash",
 		symbol: "bch",
 	}

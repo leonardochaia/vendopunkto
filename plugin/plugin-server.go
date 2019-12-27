@@ -10,18 +10,15 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/hashicorp/go-hclog"
-	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/errors"
 )
 
 // Server is the plugin server running on every plugin
 type Server struct {
-	plugins        []ServerPlugin
-	pluginInfos    []PluginInfo
-	started        bool
-	internalClient clients.InternalClient
-	Logger         hclog.Logger
-	http           clients.HTTP
+	plugins     []ServerPlugin
+	pluginInfos []PluginInfo
+	started     bool
+	Logger      hclog.Logger
 }
 
 // ServerPlugin wraps the plugin implementation.
@@ -33,15 +30,12 @@ type ServerPlugin interface {
 }
 
 // NewServer creates the plugin server which must be run by every plugin
-func NewServer(
-	logger hclog.Logger,
-	http clients.HTTP) *Server {
+func NewServer(logger hclog.Logger) *Server {
 	return &Server{
 		plugins:     []ServerPlugin{},
 		pluginInfos: []PluginInfo{},
 		started:     false,
 		Logger:      logger,
-		http:        http,
 	}
 }
 
@@ -71,19 +65,6 @@ func (s *Server) Start(addr string) error {
 	router.Post(ActivatePluginEndpoint, errors.WrapHandler(s.activatePluginHandler))
 
 	return http.ListenAndServe(addr, router)
-}
-
-// GetInternalClient returns the clients.InternalClient that you can use to
-// consume the VendoPunkto internal API
-func (s *Server) GetInternalClient() (clients.InternalClient, error) {
-
-	if s.internalClient == nil {
-		err := fmt.Errorf("Server has not been activated or activation has failed")
-		s.Logger.Error("Server had no internal client", "error", err)
-		return nil, err
-	}
-
-	return s.internalClient, nil
 }
 
 // initializeAllPlugins loops through registered plugins and
@@ -125,20 +106,7 @@ func (s *Server) initializeAllPlugins(router chi.Router) error {
 func (s *Server) activatePluginHandler(w http.ResponseWriter, r *http.Request) error {
 	const op errors.Op = "plugin.base.activate"
 
-	var params = new(ActivatePluginParams)
-
-	if err := render.DecodeJSON(r.Body, &params); err != nil {
-		return errors.E(op, errors.Parameters, err)
-	}
-
-	client, err := clients.NewInternalClient(params.HostAddress, s.http)
-
-	if err != nil {
-		s.Logger.Error("Failed to create internal client", "error", err)
-	}
-
-	s.Logger.Info("Activating plugin", "host", params.HostAddress)
-	s.internalClient = client
+	s.Logger.Info("Activating plugin")
 
 	render.JSON(w, r, s.pluginInfos)
 	return nil

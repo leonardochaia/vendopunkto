@@ -7,7 +7,6 @@ package rates
 
 import (
 	"github.com/hashicorp/go-hclog"
-	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/plugin"
 )
 
@@ -22,8 +21,7 @@ func NewContainer(globalLogger hclog.Logger) (*Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	http := clients.NewHTTPClient()
-	server := plugin.NewServer(globalLogger, http)
+	server := plugin.NewServer(globalLogger)
 	container := newContainer(exchangeRatesPlugin, server, client)
 	return container, nil
 }

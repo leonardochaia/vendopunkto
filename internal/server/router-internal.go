@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/currency"
@@ -20,7 +19,7 @@ func NewInternalRouter(
 	invoice *invoice.Handler,
 	globalLogger hclog.Logger,
 	currencies currency.Handler,
-	db *pg.DB,
+	txBuilder store.TransactionBuilder,
 	startupConf conf.Startup,
 ) (*InternalRouter, error) {
 
@@ -31,7 +30,7 @@ func NewInternalRouter(
 	setupMiddlewares(router, startupConf, logger)
 
 	// tx per request
-	router.Use(store.NewTxPerRequestMiddleware(globalLogger, db))
+	router.Use(store.NewTxPerRequestMiddleware(globalLogger, txBuilder))
 
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/invoices", invoice.InternalRoutes())

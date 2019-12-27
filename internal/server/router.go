@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
-	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
@@ -29,7 +28,7 @@ type VendoPunktoRouter interface {
 func NewRouter(
 	invoices *invoice.Handler,
 	globalLogger hclog.Logger,
-	db *pg.DB,
+	txBuilder store.TransactionBuilder,
 	startupConf conf.Startup,
 ) (*VendoPunktoRouter, error) {
 
@@ -42,7 +41,7 @@ func NewRouter(
 	setupMiddlewares(router, startupConf, logger)
 
 	// tx per request
-	router.Use(store.NewTxPerRequestMiddleware(globalLogger, db))
+	router.Use(store.NewTxPerRequestMiddleware(globalLogger, txBuilder))
 
 	// versions
 	router.Route("/api/v1", func(r chi.Router) {

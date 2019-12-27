@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
 )
 
 // Server is the API web server
@@ -20,6 +21,7 @@ type Server struct {
 	server         *http.Server
 	db             *pg.DB
 	pluginManager  *pluginmgr.Manager
+	walletPoller   *pluginwallet.WalletPoller
 	startupConf    conf.Startup
 }
 
@@ -85,10 +87,13 @@ func (s *Server) ListenAndServe() error {
 	}()
 	s.logger.Info("Public Server Listening", "address", s.server.Addr)
 
+	go s.walletPoller.Start()
+
 	return nil
 }
 
 // Close finalizes any open resources
 func (s *Server) Close() {
+	s.walletPoller.Stop()
 	s.db.Close()
 }

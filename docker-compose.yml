@@ -29,10 +29,8 @@ services:
       - "--disable-rpc-login"
       - "--confirm-external-bind"
       - "--non-interactive"
-      - "--tx-notify=/usr/bin/curl -X POST http://172.17.0.1:4300/txNotify?txHash=%s" # replace with your docker host ip
-      # - "--daemon-address=astonishinglabs.duckdns.org:38081"
-      # - "--trusted-daemon"
-      - "--offline"
+      - "--daemon-address=astonishinglabs.duckdns.org:38081"
+      # - "--offline"
       - "--wallet-file=/home/monero/wallets/wallet-01"
       - "--password=password"
       # - "--log-level=2"

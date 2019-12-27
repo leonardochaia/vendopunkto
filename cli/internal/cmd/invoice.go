@@ -17,16 +17,6 @@ func init() {
 	invoiceViewCmd.Flags().BoolP("qr", "q", false, "Show QR code")
 	invoiceViewCmd.Flags().StringP("method", "m", "", "Payment method. i.e --method=xmr")
 
-	invoiceConfirmCmd.Flags().StringP("address", "a", "", "Received address")
-	invoiceConfirmCmd.Flags().StringP("tx-hash", "t", "", "Transaction Hash")
-	invoiceConfirmCmd.Flags().Float64("amount", 0, "Received amount")
-	invoiceConfirmCmd.Flags().Uint64("confirmations", 0, "Current confirmation amount")
-
-	invoiceConfirmCmd.MarkFlagRequired("address")
-	invoiceConfirmCmd.MarkFlagRequired("tx-hash")
-	invoiceConfirmCmd.MarkFlagRequired("amount")
-
-	invoiceCmd.AddCommand(invoiceConfirmCmd)
 	invoiceCmd.AddCommand(invoiceCreateCmd)
 	invoiceCmd.AddCommand(invoiceViewCmd)
 
@@ -120,51 +110,6 @@ var (
 					}
 				}
 			}
-
-			return nil
-		},
-	}
-
-	invoiceConfirmCmd = &cobra.Command{
-		Use:   "confirm",
-		Short: "Confirm payment for an Invoice",
-		Long:  "Confirm payment for an Invoice",
-		RunE: func(cmd *cobra.Command, args []string) error { // Initialize the databse
-
-			txHash, err := cmd.Flags().GetString("tx-hash")
-			if err != nil {
-				return err
-			}
-
-			address, err := cmd.Flags().GetString("address")
-			if err != nil {
-				return err
-			}
-
-			amount, err := cmd.Flags().GetFloat64("amount")
-			if err != nil {
-				return err
-			}
-
-			confirmations, err := cmd.Flags().GetUint64("confirmations")
-			if err != nil {
-				return err
-			}
-
-			cmd.SilenceUsage = true
-
-			err = internalClient.ConfirmPayment(
-				address,
-				unit.NewFromFloat(amount),
-				txHash,
-				confirmations,
-			)
-
-			if err != nil {
-				return err
-			}
-
-			fmt.Print("Payment confirmed\n")
 
 			return nil
 		},

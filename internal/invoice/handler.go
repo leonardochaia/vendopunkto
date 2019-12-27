@@ -34,8 +34,6 @@ func (handler *Handler) InternalRoutes() chi.Router {
 
 	router.Post("/", errors.WrapHandler(handler.createInvoice))
 
-	router.Post("/payments/confirm", errors.WrapHandler(handler.confirmPayment))
-
 	return router
 }
 
@@ -97,31 +95,6 @@ func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *h
 	}
 
 	return handler.renderInvoiceDto(w, r, *invoice)
-}
-
-// confirmPayment is an internal endpoint that confirms an invoice has been paid
-func (handler *Handler) confirmPayment(w http.ResponseWriter, r *http.Request) error {
-	const op errors.Op = "api.invoice.confirmPayment"
-
-	var params = new(dtos.InvoiceConfirmPaymentsParams)
-
-	if err := render.DecodeJSON(r.Body, &params); err != nil {
-		return errors.E(op, errors.Parameters, err)
-	}
-
-	_, err := handler.manager.ConfirmPayment(r.Context(),
-		params.Address,
-		params.Confirmations,
-		params.Amount,
-		params.TxHash,
-	)
-
-	if err != nil {
-		return errors.E(op, err)
-	}
-
-	render.NoContent(w, r)
-	return nil
 }
 
 func (handler *Handler) renderInvoiceDto(

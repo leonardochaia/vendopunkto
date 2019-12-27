@@ -53,6 +53,7 @@ type Payment struct {
 	PaymentMethodID uint
 	Amount          unit.AtomicUnit
 	Confirmations   uint64
+	BlockHeight     uint64
 	ConfirmedAt     time.Time
 	CreatedAt       time.Time
 }
@@ -168,7 +169,11 @@ func (payment *Payment) Status() PaymentStatus {
 	return Mempool
 }
 
-func (payment *Payment) Update(confirmations uint64) {
+func (payment *Payment) Update(confirmations uint64, blockHeight uint64) bool {
+
+	if confirmations == payment.Confirmations && blockHeight == payment.BlockHeight {
+		return false
+	}
 
 	if confirmations > 0 && payment.Confirmations == 0 {
 		payment.ConfirmedAt = time.Now()
@@ -176,12 +181,15 @@ func (payment *Payment) Update(confirmations uint64) {
 
 	// Wallet always win. In order to support reorgs.
 	payment.Confirmations = confirmations
+	payment.BlockHeight = blockHeight
+	return true
 }
 
 func (method *PaymentMethod) AddPayment(
 	txHash string,
 	amount unit.AtomicUnit,
 	confirmations uint64,
+	blockHeight uint64,
 ) *Payment {
 
 	payment := &Payment{
@@ -189,6 +197,7 @@ func (method *PaymentMethod) AddPayment(
 		PaymentMethodID: method.ID,
 		Amount:          amount,
 		Confirmations:   confirmations,
+		BlockHeight:     blockHeight,
 	}
 
 	method.Payments = append(method.Payments, payment)
@@ -271,6 +280,7 @@ func convertInvoiceToDto(invoice Invoice, pluginMgr *pluginmgr.Manager) (dtos.In
 				CreatedAt:     payment.CreatedAt,
 				Status:        uint(payment.Status()),
 				Currency:      method.Currency,
+				BlockHeight:   payment.BlockHeight,
 			}
 			dto.Payments = append(dto.Payments, paymentDto)
 		}

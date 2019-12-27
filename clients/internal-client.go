@@ -12,7 +12,6 @@ import (
 // Used by plugins to "talk back" to the host.
 type InternalClient interface {
 	CreateInvoice(total unit.AtomicUnit, currency string) (*dtos.InvoiceDto, error)
-	ConfirmPayment(address string, amount unit.AtomicUnit, txHash string, confirmations uint64) error
 }
 
 type internalClientImpl struct {
@@ -71,36 +70,4 @@ func (c internalClientImpl) CreateInvoice(
 	}
 
 	return result, nil
-}
-
-// ConfirmPayment should be called when a payment has been confirmed
-// on the wallet. Ideally this should be called with 0 confirmations
-// when the transaction appears on the mempool, and again when it is confirmed.
-func (c internalClientImpl) ConfirmPayment(
-	address string,
-	amount unit.AtomicUnit,
-	txHash string,
-	confirmations uint64) error {
-
-	const op errors.Op = "internalClient.confirmPayment"
-
-	u, err := c.getAPIURL("invoices/payments/confirm")
-	if err != nil {
-		return errors.E(op, errors.Internal, err)
-	}
-
-	params := dtos.InvoiceConfirmPaymentsParams{
-		Address:       address,
-		Amount:        amount,
-		TxHash:        txHash,
-		Confirmations: confirmations,
-	}
-
-	_, err = c.client.PostJSONNoResult(u, params)
-
-	if err != nil {
-		return errors.E(op, err)
-	}
-
-	return nil
 }

@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 	"github.com/leonardochaia/vendopunkto/errors"
@@ -150,6 +151,39 @@ func (r postgresInvoiceRepository) UpdatePaymentMethod(ctx context.Context, meth
 	}
 
 	return nil
+}
+
+func (r postgresInvoiceRepository) GetMaxBlockHeightForCurrencies(ctx context.Context) (map[string]uint64, error) {
+	const op errors.Op = "invoiceRepository.findPendingPaymentMethods"
+	tx, err := store.GetTransactionFromContextOrCreate(ctx, r.db)
+	if err != nil {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	type PaymentWithCurrency struct {
+		invoice.Payment `pg:",inherit"`
+		Currency        string
+	}
+
+	payments := []PaymentWithCurrency{}
+	err = tx.Model(&payments).
+		ColumnExpr("COALESCE(MAX(payment.block_height),0) block_height").
+		ColumnExpr("LOWER(payment_method.currency) AS currency").
+		Join("RIGHT JOIN payment_methods AS payment_method").
+		JoinOn("payment.payment_method_id = payment_method.id").
+		Group("payment_method.currency").
+		Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	output := make(map[string]uint64)
+	for _, m := range payments {
+		output[m.Currency] = m.BlockHeight
+	}
+
+	return output, nil
 }
 
 func createSchema(db *pg.DB) error {

@@ -18,13 +18,13 @@ func TestInvoiceStatus(t *testing.T) {
 		t.Errorf("Expected invoice to be pending but it's %d", inv.Status())
 	}
 
-	payment := method.AddPayment("fake-hash", total, 0)
+	payment := method.AddPayment("fake-hash", total, 0, 123)
 
 	if inv.Status() != Pending {
 		t.Errorf("Expected invoice to be pending but it's %d", inv.Status())
 	}
 
-	payment.Update(10)
+	payment.Update(10, 123)
 
 	if inv.Status() != Completed {
 		t.Errorf("Expected invoice to be completed but it's %d", inv.Status())
@@ -45,15 +45,15 @@ func TestInvoicePaymentPercentageSameCurrency(t *testing.T) {
 		t.Errorf("Expected invoice to be 0 but it's %f", p)
 	}
 
-	method.AddPayment("fake-hash", total/2, 1)
+	method.AddPayment("fake-hash", total/2, 1, 123)
 
 	p = inv.CalculatePaymentPercentage()
 	if p != 50 {
 		t.Errorf("Expected invoice to be 50 but it's %f", p)
 	}
 
-	method.AddPayment("fake-hash", total/4, 1)
-	method.AddPayment("fake-hash", total/4, 1)
+	method.AddPayment("fake-hash", total/4, 1, 123)
+	method.AddPayment("fake-hash", total/4, 1, 123)
 
 	p = inv.CalculatePaymentPercentage()
 	if p != 100 {
@@ -77,14 +77,14 @@ func TestInvoicePaymentPercentageDiffCurrency(t *testing.T) {
 		t.Errorf("Expected invoice to be 0 but it's %f", p)
 	}
 
-	second.AddPayment("fake-hash2", total, 1)
+	second.AddPayment("fake-hash2", total, 1, 123)
 
 	p = inv.CalculatePaymentPercentage()
 	if p != 50 {
 		t.Errorf("Expected invoice to be 50 but it's %f", p)
 	}
 
-	first.AddPayment("fake-hash", total/2, 1)
+	first.AddPayment("fake-hash", total/2, 1, 123)
 
 	p = inv.CalculatePaymentPercentage()
 	if p != 100 {
@@ -106,14 +106,14 @@ func TestInvoiceRemainingAmount(t *testing.T) {
 		t.Errorf("Expected invoice to be %d but it's %d", total, r)
 	}
 
-	method.AddPayment("fake-hash", total/2, 1)
+	method.AddPayment("fake-hash", total/2, 1, 123)
 
 	r = inv.CalculateRemainingAmount()
 	if r != total/2 {
 		t.Errorf("Expected invoice to be %d but it's %d", total/2, r)
 	}
 
-	method.AddPayment("fake-hash", total/2, 1)
+	method.AddPayment("fake-hash", total/2, 1, 123)
 
 	r = inv.CalculateRemainingAmount()
 	if r != 0 {
@@ -136,14 +136,14 @@ func TestInvoicePaymentMethodRemainingAmount(t *testing.T) {
 		t.Errorf("Expected invoice to be %d but it's %d", converted, r)
 	}
 
-	method.AddPayment("fake-hash", converted/2, 1)
+	method.AddPayment("fake-hash", converted/2, 1, 123)
 
 	r = inv.CalculatePaymentMethodRemaining(*method)
 	if r != converted/2 {
 		t.Errorf("Expected invoice to be %d but it's %d", converted/2, r)
 	}
 
-	method.AddPayment("fake-hash", converted/2, 1)
+	method.AddPayment("fake-hash", converted/2, 1, 123)
 
 	r = inv.CalculatePaymentMethodRemaining(*method)
 	if r != 0 {
@@ -165,7 +165,7 @@ func TestInvoicePaymentMethodRemainingAmountOverPayed(t *testing.T) {
 		t.Errorf("Expected invoice to be %d but it's %d", total, r)
 	}
 
-	method.AddPayment("fake-hash", total*2, 1)
+	method.AddPayment("fake-hash", total*2, 1, 123)
 
 	r = inv.CalculateRemainingAmount()
 	if r != 0 {

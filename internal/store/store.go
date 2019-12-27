@@ -69,7 +69,7 @@ func NewDB(
 	db := pg.Connect(&pg.Options{
 		User:     username,
 		Password: password,
-		Database: "postgres",
+		Database: database,
 		Addr:     net.JoinHostPort(hostname, port),
 	})
 

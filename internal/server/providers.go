@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
 )
 
 // ServerProviders wire providers for the server package
@@ -18,6 +19,7 @@ func NewServer(
 	db *pg.DB,
 	globalLogger hclog.Logger,
 	pluginManager *pluginmgr.Manager,
+	walletPoller *pluginwallet.WalletPoller,
 	startupConf conf.Startup) (*Server, error) {
 
 	server := &Server{
@@ -27,6 +29,7 @@ func NewServer(
 		pluginManager:  pluginManager,
 		internalRouter: internalRouter,
 		startupConf:    startupConf,
+		walletPoller:   walletPoller,
 	}
 
 	return server, nil

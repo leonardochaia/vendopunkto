@@ -13,6 +13,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
 	"github.com/leonardochaia/vendopunkto/internal/server"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 	"github.com/leonardochaia/vendopunkto/internal/store/repositories"
@@ -28,7 +29,8 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 		currency.CurrencyProviders,
 		clients.Providers,
 		repositories.Providers,
-		store.NewDB,
+		store.Providers,
+		pluginwallet.NewPoller,
 	)
 	return &server.Server{}, nil
 }

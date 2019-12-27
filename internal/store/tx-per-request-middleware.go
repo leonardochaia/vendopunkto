@@ -35,19 +35,19 @@ func GetTransactionFromContextOrCreate(ctx context.Context, db *pg.DB) (*pg.Tx, 
 
 func NewTxPerRequestMiddleware(
 	parentLogger hclog.Logger,
-	db *pg.DB,
+	txBuilder TransactionBuilder,
 ) func(next http.Handler) http.Handler {
 	logger := parentLogger.Named("tx-per-request")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(errors.WrapHandler(
 			func(w http.ResponseWriter, r *http.Request) error {
 				const op errors.Op = "api.txPerRequestMiddleware"
-				// create the transaction
-				tx := NewLazyTransaction(db)
 
-				// add it to context
-				ctx := r.Context()
-				ctx = context.WithValue(ctx, TransactionPerRequestKey, tx)
+				// create the transaction
+				ctx, tx, err := txBuilder.BuildLazyTransactionContext(r.Context())
+				if err != nil {
+					return err
+				}
 
 				var requestID string
 				if reqID := r.Context().Value(middleware.RequestIDKey); reqID != nil {

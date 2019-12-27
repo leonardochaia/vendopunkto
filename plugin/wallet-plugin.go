@@ -22,11 +22,32 @@ type WalletPluginInfo struct {
 	Currency WalletPluginCurrency `json:"currency"`
 }
 
+// WalletPluginIncomingTransferParams are the filters for returning transfers
+type WalletPluginIncomingTransferParams struct {
+	MinBlockHeight uint64 `json:"minBlockHeight"`
+}
+
+// WalletPluginIncomingTransferResult is a transfer representation
+type WalletPluginIncomingTransferResult struct {
+	TxHash        string          `json:"txHash"`
+	Address       string          `json:"address"`
+	BlockHeight   uint64          `json:"blockHeight"`
+	Confirmations uint64          `json:"confirmations"`
+	Amount        unit.AtomicUnit `json:"amount"`
+}
+
 // WalletPlugin must be implemented for a currency to be supported by VendoPunkto
 type WalletPlugin interface {
 	VendoPunktoPlugin
+	// GetWalletInfo returns information about the currency of this wallet
 	GetWalletInfo() (WalletPluginInfo, error)
+	// GenerateNewAddress will be called everytime a new payment for this
+	// currency is requested. It must generate a new addres everytime. This is
+	// by design, given that received payments will be matched by address.
 	GenerateNewAddress(invoiceID string) (string, error)
+	// GetIncomingTransfers returns the list of input transfers, confirmed and
+	// on the mempool. Filters should be applied
+	GetIncomingTransfers(params WalletPluginIncomingTransferParams) ([]WalletPluginIncomingTransferResult, error)
 }
 
 // walletServerPlugin mounts the router and provides the actual plugin
@@ -60,6 +81,8 @@ const (
 	WalletMainEndpoint = "/vp/wallet"
 	// GenerateAddressWalletEndpoint the suffix for address generation
 	GenerateAddressWalletEndpoint = "/address"
+	// GetIncomingTransfersWalletEndpoint returns incoming transfers
+	GetIncomingTransfersWalletEndpoint = "/incoming-transfers"
 	// WalletInfoEndpoint the suffix for info
 	WalletInfoEndpoint = "/info"
 )

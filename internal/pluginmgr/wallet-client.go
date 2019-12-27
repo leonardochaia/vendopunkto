@@ -57,6 +57,25 @@ func (c coinWalletClientImpl) GenerateNewAddress(invoiceID string) (string, erro
 	return result.Address, nil
 }
 
+func (c coinWalletClientImpl) GetIncomingTransfers(params plugin.WalletPluginIncomingTransferParams) ([]plugin.WalletPluginIncomingTransferResult, error) {
+	const op errors.Op = "wallet.getIncomingTransfers"
+	u, err := c.getBaseURL(plugin.GetIncomingTransfersWalletEndpoint)
+	if err != nil {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	final := c.apiURL.ResolveReference(u).String()
+
+	var result []plugin.WalletPluginIncomingTransferResult
+	_, err = c.client.PostJSON(final, params, &result)
+
+	if err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	return result, nil
+}
+
 func (c coinWalletClientImpl) GetPluginInfo() (plugin.PluginInfo, error) {
 	return c.info, nil
 }

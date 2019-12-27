@@ -10,6 +10,7 @@ type Startup struct {
 
 type StartupPlugins struct {
 	DefaultExchangeRates string   `mapstructure:"default_exchange_rates"`
+	WalletPollInterval   string   `mapstructure:"wallet_poll_interval"`
 	Enabled              []string `mapstructure:"enabled"`
 }
 
@@ -26,9 +27,8 @@ type StartupServer struct {
 }
 
 type StartupInternalServer struct {
-	Host         string `mapstructure:"host"`
-	Port         string `mapstructure:"port"`
-	AdvertiseURL string `mapstructure:"advertise_url"`
+	Host string `mapstructure:"host"`
+	Port string `mapstructure:"port"`
 }
 
 type StartupPublicServer struct {

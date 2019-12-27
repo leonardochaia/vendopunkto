@@ -33,11 +33,9 @@ type Manager struct {
 
 func (manager *Manager) LoadPlugins() {
 	plugins := manager.startupConf.Plugins.Enabled
-	advertiseURL := manager.startupConf.Server.Internal.AdvertiseURL
 
 	manager.logger.Debug("Loading plugin from URLs",
-		"urlAmount", len(plugins),
-		"advertise_url", advertiseURL)
+		"urlAmount", len(plugins))
 	for _, addr := range plugins {
 
 		url, err := url.Parse(addr)
@@ -48,7 +46,7 @@ func (manager *Manager) LoadPlugins() {
 			continue
 		}
 
-		err = manager.initializePlugin(*url, advertiseURL)
+		err = manager.initializePlugin(*url)
 		if err != nil {
 			manager.logger.Error("Failed to communicate with plugin", "error", err, "URL", url.String())
 			continue
@@ -109,9 +107,9 @@ func (manager *Manager) GetConfiguredExchangeRatesPlugin() (plugin.ExchangeRates
 	return manager.GetExchangeRatesPlugin(manager.startupConf.Plugins.DefaultExchangeRates)
 }
 
-func (manager *Manager) initializePlugin(pluginURL url.URL, hostAddress string) error {
+func (manager *Manager) initializePlugin(pluginURL url.URL) error {
 
-	infos, err := manager.activatePlugin(pluginURL, hostAddress)
+	infos, err := manager.activatePlugin(pluginURL)
 
 	if err != nil {
 		return err
@@ -192,7 +190,7 @@ func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.Pl
 
 // activatePlugin does the initial handshake where the plugin returns its basic
 // info while the host address is provided so the plugin can reach back
-func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) ([]plugin.PluginInfo, error) {
+func (manager *Manager) activatePlugin(apiURL url.URL) ([]plugin.PluginInfo, error) {
 	u, err := url.Parse(plugin.ActivatePluginEndpoint)
 	if err != nil {
 		return nil, err
@@ -204,11 +202,8 @@ func (manager *Manager) activatePlugin(apiURL url.URL, hostAddress string) ([]pl
 		return nil, err
 	}
 
-	params := plugin.ActivatePluginParams{
-		HostAddress: hostAddress,
-	}
-
 	var result []plugin.PluginInfo
-	_, err = manager.client.PostJSON(final, params, &result)
+	var p interface{}
+	_, err = manager.client.PostJSON(final, &p, &result)
 	return result, err
 }

@@ -1,10 +1,15 @@
 package plugin
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/go-chi/chi"
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/testutils"
 )
 
@@ -36,6 +41,10 @@ func (p testWalletPlugin) GetPluginInfo() (PluginInfo, error) {
 	}, nil
 }
 
+func (p testWalletPlugin) GetIncomingTransfers(params WalletPluginIncomingTransferParams) ([]WalletPluginIncomingTransferResult, error) {
+	return nil, nil
+}
+
 func TestServerPluginAddition(t *testing.T) {
 
 	server := &Server{
@@ -65,4 +74,32 @@ func TestServerPluginAddition(t *testing.T) {
 
 	r := router.Routes()
 	testutils.Equals(t, r[0].Pattern, pInfo.GetAddress()+"/*")
+}
+
+func TestActivationHandler(t *testing.T) {
+	expected := PluginInfo{
+		Name: "Test",
+		ID:   "test",
+	}
+	server := &Server{
+		Logger:      hclog.Default(),
+		pluginInfos: []PluginInfo{expected},
+	}
+
+	req, err := http.NewRequest("POST", "/activate", bytes.NewBuffer([]byte{}))
+	testutils.Ok(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(errors.WrapHandler(server.activatePluginHandler))
+
+	handler.ServeHTTP(rr, req)
+
+	var result []PluginInfo
+
+	err = json.NewDecoder(rr.Body).Decode(&result)
+	testutils.Ok(t, err)
+
+	testutils.Assert(t, result[0].ID == expected.ID,
+		"Expected plugin info to be returned")
+	testutils.Assert(t, rr.Code == 200, "Expected request code to be 200")
 }

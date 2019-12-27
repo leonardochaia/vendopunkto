@@ -17,6 +17,7 @@ type InvoiceConfirmPaymentsParams struct {
 	Address       string          `json:"address"`
 	Amount        unit.AtomicUnit `json:"amount"`
 	Confirmations uint64          `json:"confirmations"`
+	BlockHeight   uint64          `json:"blockHeight"`
 }
 
 type InvoiceGeneratePaymentMethodAddressParams struct {
@@ -49,6 +50,7 @@ type PaymentDto struct {
 	Amount        AtomicUnitDTO `json:"amount"`
 	Currency      string        `json:"currency"`
 	Confirmations uint64        `json:"confirmations"`
+	BlockHeight   uint64        `json:"blockHeight"`
 	ConfirmedAt   time.Time     `json:"confirmedAt"`
 	CreatedAt     time.Time     `json:"createdAt"`
 	Status        uint          `json:"status"`

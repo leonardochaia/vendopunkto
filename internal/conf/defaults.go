@@ -22,9 +22,6 @@ func init() {
 	// Internal Server Configuration
 	viper.SetDefault("server.internal.host", "0.0.0.0")
 	viper.SetDefault("server.internal.port", "9080")
-	// The URL that will be given tu plugins to find
-	// the internal API
-	viper.SetDefault("server.internal.advertise_url", "http://localhost:9080")
 
 	// Database Settings
 	viper.SetDefault("storage.type", "postgres")
@@ -42,5 +39,8 @@ func init() {
 	// this is the address that VendoPunkto will provide to plugins
 	// for them to reach back
 	viper.SetDefault("plugins.default_exchange_rates", "")
+
+	// How often to poll wallets for new transfers
+	viper.SetDefault("plugins.wallet_poll_interval", "10s")
 
 }
