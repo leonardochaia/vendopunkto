@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { InvoiceDTO } from '../model';
 import { VendopunktoApiService } from '../vendopunkto-api.service';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-invoice-search-container',
@@ -15,19 +15,14 @@ export class InvoiceSearchContainerComponent implements OnInit {
     private readonly api: VendopunktoApiService,
   ) { }
 
-  public current: InvoiceDTO;
+  public get invoiceId$() {
+    return this.snapshot.paramMap
+      .pipe(
+        map(params => params.get('invoiceID'))
+      );
+  }
 
   ngOnInit() {
-    this.snapshot.paramMap
-      .subscribe(params => {
-        const invoiceID = params.get('invoiceID');
-        if (invoiceID) {
-          this.api.getInvoice(invoiceID)
-            .subscribe(invoice => {
-              this.current = invoice;
-            });
-        }
-      });
   }
 
 }

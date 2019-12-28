@@ -16,6 +16,7 @@ type Handler struct {
 	manager   *Manager
 	pluginMgr *pluginmgr.Manager
 	logger    hclog.Logger
+	topic     Topic
 }
 
 // Routes are the public routes, added to the public API
@@ -24,6 +25,7 @@ func (handler *Handler) Routes() chi.Router {
 
 	router.Post("/{id}/payment-method/address", errors.WrapHandler(handler.generatePaymentMethodAddress))
 	router.Get("/{id}", errors.WrapHandler(handler.getInvoice))
+	router.Get("/{id}/ws", errors.WrapHandler(handler.invoiceWebSocket))
 
 	return router
 }

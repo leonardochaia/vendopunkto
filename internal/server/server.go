@@ -9,6 +9,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
+	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
 )
@@ -22,6 +23,7 @@ type Server struct {
 	db             *pg.DB
 	pluginManager  *pluginmgr.Manager
 	walletPoller   *pluginwallet.WalletPoller
+	invoiceTopic   invoice.Topic
 	startupConf    conf.Startup
 }
 
@@ -94,6 +96,7 @@ func (s *Server) ListenAndServe() error {
 
 // Close finalizes any open resources
 func (s *Server) Close() {
+	s.invoiceTopic.Close()
 	s.walletPoller.Stop()
 	s.db.Close()
 }

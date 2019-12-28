@@ -106,11 +106,16 @@ func (poller *WalletPoller) doPoll() error {
 			continue
 		}
 
+		if len(transfers) == 0 {
+			continue
+		}
+
 		// match transfers to payments
 		poller.logger.Info("Got transfers from wallet",
 			"wallet", info.Currency.Name,
 			"minHeight", height,
 			"transfers", len(transfers))
+
 		for _, transfer := range transfers {
 			_, err := poller.invoiceMgr.ConfirmPayment(ctx, transfer.Address,
 				transfer.Confirmations, transfer.Amount,

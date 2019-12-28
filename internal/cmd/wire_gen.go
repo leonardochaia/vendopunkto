@@ -39,11 +39,12 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	}
 	http := clients.NewHTTPClient()
 	manager := pluginmgr.NewManager(globalLogger, http, startup)
-	invoiceManager, err := invoice.NewManager(invoiceRepository, manager, globalLogger)
+	topic := invoice.NewTopic()
+	invoiceManager, err := invoice.NewManager(invoiceRepository, manager, globalLogger, topic)
 	if err != nil {
 		return nil, err
 	}
-	handler := invoice.NewHandler(invoiceManager, globalLogger, manager)
+	handler := invoice.NewHandler(invoiceManager, globalLogger, manager, topic)
 	transactionBuilder := store.NewPostgreTransactionBuilder(db)
 	vendoPunktoRouter, err := server.NewRouter(handler, globalLogger, transactionBuilder, startup)
 	if err != nil {
@@ -61,7 +62,7 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.NewServer(vendoPunktoRouter, internalRouter, db, globalLogger, manager, walletPoller, startup)
+	serverServer, err := server.NewServer(vendoPunktoRouter, internalRouter, db, globalLogger, manager, walletPoller, topic, startup)
 	if err != nil {
 		return nil, err
 	}

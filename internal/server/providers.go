@@ -5,6 +5,7 @@ import (
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
+	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
 )
@@ -20,6 +21,7 @@ func NewServer(
 	globalLogger hclog.Logger,
 	pluginManager *pluginmgr.Manager,
 	walletPoller *pluginwallet.WalletPoller,
+	invoiceTopic invoice.Topic,
 	startupConf conf.Startup) (*Server, error) {
 
 	server := &Server{
@@ -30,6 +32,7 @@ func NewServer(
 		internalRouter: internalRouter,
 		startupConf:    startupConf,
 		walletPoller:   walletPoller,
+		invoiceTopic:   invoiceTopic,
 	}
 
 	return server, nil

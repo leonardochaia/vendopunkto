@@ -17,6 +17,7 @@ type Manager struct {
 	repository    InvoiceRepository
 	logger        hclog.Logger
 	pluginManager *pluginmgr.Manager
+	topic         Topic
 }
 
 func (mgr *Manager) createAddressForInvoice(invoiceID string, currency string) (string, error) {
@@ -235,6 +236,8 @@ func (mgr *Manager) CreateAddressForPaymentMethod(
 		"address", address,
 	)
 
+	mgr.topic.Send(*invoice)
+
 	return invoice, nil
 }
 
@@ -289,6 +292,8 @@ func (mgr *Manager) ConfirmPayment(
 	if err != nil {
 		return nil, errors.E(op, path, err)
 	}
+
+	mgr.topic.Send(*invoice)
 
 	return invoice, nil
 }

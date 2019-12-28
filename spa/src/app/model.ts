@@ -29,6 +29,7 @@ export interface Payment {
     txHash: string;
     amount: AtomicUnit;
     confirmations: number;
+    blockHeight: number;
     currency: string;
     confirmedAt: Date;
     createdAt: Date;
