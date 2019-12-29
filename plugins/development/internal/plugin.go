@@ -1,6 +1,7 @@
 package development
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"time"
 
@@ -22,8 +23,9 @@ type fakeWalletPlugin struct {
 }
 
 func (p *fakeWalletPlugin) GenerateNewAddress(invoiceID string) (string, error) {
+	h := sha256.Sum256([]byte(p.symbol + "-fake-" + xid.New().String()))
 	addr := fakeAddress{
-		address:      p.symbol + "-fake-" + xid.New().String(),
+		address:      fmt.Sprintf("%x", h),
 		creationTime: time.Now(),
 	}
 	p.addresses = append(p.addresses, addr)
@@ -65,8 +67,9 @@ func (p *fakeWalletPlugin) GetIncomingTransfers(params plugin.WalletPluginIncomi
 		height := uint64(memPoolTime.Unix())
 
 		if memPoolTime.Before(now) {
+			h := sha256.Sum256([]byte(fmt.Sprintf("fake-tx-hash-%d", height)))
 			tx := plugin.WalletPluginIncomingTransferResult{
-				TxHash:        fmt.Sprintf("fake-tx-hash-%d", height),
+				TxHash:        fmt.Sprintf("%x", h),
 				Address:       addr.address,
 				BlockHeight:   height,
 				Amount:        unit.NewFromFloat(1),
