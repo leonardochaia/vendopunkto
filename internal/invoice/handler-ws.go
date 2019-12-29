@@ -50,10 +50,10 @@ func (handler *Handler) invoiceWebSocket(w http.ResponseWriter, r *http.Request)
 
 	// used to signal when a read error ocurred, assumed ws closed.
 	closedChan := make(chan struct{})
-	defer close(closedChan)
 
 	// keep reading from the socket until an error happens
 	go func(closedChan chan struct{}) {
+		defer close(closedChan)
 		for {
 			_, _, err := conn.ReadMessage()
 			if err != nil {

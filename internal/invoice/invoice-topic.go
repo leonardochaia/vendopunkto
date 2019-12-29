@@ -20,7 +20,7 @@ type topicImpl struct {
 	Broadcast chan<- Invoice
 
 	lock        sync.Mutex
-	connections map[string]chan<- Invoice
+	connections map[string][]chan<- Invoice
 }
 
 // NewTopic creates a new topic. Messages can be broadcast on this topic,
@@ -30,7 +30,7 @@ func NewTopic() Topic {
 	t := &topicImpl{}
 	broadcast := make(chan Invoice, 100)
 	t.Broadcast = broadcast
-	t.connections = make(map[string]chan<- Invoice)
+	t.connections = make(map[string][]chan<- Invoice)
 	go t.run(broadcast)
 	return t
 }
@@ -40,18 +40,22 @@ func (t *topicImpl) run(broadcast <-chan Invoice) {
 		func() {
 			t.lock.Lock()
 			defer t.lock.Unlock()
-			ch, ok := t.connections[invoice.ID]
+			subs, ok := t.connections[invoice.ID]
 			if ok {
-				ch <- invoice
+				for _, ch := range subs {
+					ch <- invoice
+				}
 			}
 		}()
 	}
 
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	for id, ch := range t.connections {
+	for id, subs := range t.connections {
 		delete(t.connections, id)
-		close(ch)
+		for _, ch := range subs {
+			close(ch)
+		}
 	}
 }
 
@@ -61,8 +65,16 @@ func (t *topicImpl) run(broadcast <-chan Invoice) {
 func (t *topicImpl) Register(invoiceID string) <-chan Invoice {
 	t.lock.Lock()
 	defer t.lock.Unlock()
+
 	ch := make(chan Invoice)
-	t.connections[invoiceID] = ch
+
+	subs, ok := t.connections[invoiceID]
+	if !ok {
+		subs = []chan<- Invoice{}
+	}
+
+	t.connections[invoiceID] = append(subs, ch)
+
 	return ch
 }
 
@@ -73,10 +85,12 @@ func (t *topicImpl) Unregister(invoiceID string) {
 
 	// double-close is not safe, so make sure we didn't already
 	// drop this consumer as too slow
-	ch, ok := t.connections[invoiceID]
+	subs, ok := t.connections[invoiceID]
 	if ok {
 		delete(t.connections, invoiceID)
-		close(ch)
+		for _, ch := range subs {
+			close(ch)
+		}
 	}
 }
 
