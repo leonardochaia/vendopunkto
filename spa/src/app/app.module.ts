@@ -8,8 +8,15 @@ import { AppComponent } from './app.component';
 import { CommonModule } from '@angular/common';
 import { InvoicePreviewComponent } from './invoice-preview/invoice-preview.component';
 
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatIconModule } from '@angular/material/icon';
+import { TextFieldModule } from '@angular/cdk/text-field';
+import { FlexLayoutModule } from '@angular/flex-layout';
+import { MatButtonModule, MatSnackBarModule } from '@angular/material';
+
 import { NgxKjuaModule } from 'ngx-kjua';
 import { InvoiceSearchContainerComponent } from './invoice-search-container/invoice-search-container.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -22,10 +29,18 @@ import { InvoiceSearchContainerComponent } from './invoice-search-container/invo
     HttpClientModule,
     ReactiveFormsModule,
 
+    TextFieldModule,
+    FlexLayoutModule,
+    MatToolbarModule,
+    MatIconModule,
+    MatButtonModule,
+    MatSnackBarModule,
+
     NgxKjuaModule,
 
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    BrowserAnimationsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

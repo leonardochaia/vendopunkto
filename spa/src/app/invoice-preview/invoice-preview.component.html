@@ -8,47 +8,52 @@
     </div>
 
     <ng-container *ngIf="!invoice.payments.length && paymentMethod$ | async as paymentMethod">
-        <div style="text-align:center;margin: 0 auto;">
+        <div style="text-align:center;margin: 0 auto;" *ngIf="paymentMethod.qrCode">
             <ngx-kjua [text]="paymentMethod.qrCode" cssClass="qr-code"></ngx-kjua>
         </div>
 
-        <h2 style="text-align: center; margin-top:0">
+        <h1 style="text-align: center; margin-top:0">
             {{paymentMethod.remaining.valueFormatted}} {{paymentMethod.currency | uppercase}}
-        </h2>
+        </h1>
+
+        <ng-container *ngIf="invoice.status == 1">
+            <p *ngIf="!invoice.payments.length">
+                <small>
+                    We haven't seen your payment yet.
+                    We should see it once it's on the mempool.
+                    <a href="">How does it work?</a>
+                </small>
+            </p>
+
+            <ng-container *ngIf="!webSocketSupported">
+                <p>
+                    <small>
+                        Invoice will not auto-update.
+                        Please use the button below or refresh the page
+                    </small>
+                </p>
+                <button type="button" (click)="updateInvoice()">Update Invoice</button>
+            </ng-container>
+        </ng-container>
+
         <label for="address">Address</label>
         <br>
-        <textarea name="address" style="width:100%;" readonly>{{paymentMethod.address}}</textarea>
+        <textarea name="address" cdkTextareaAutosize cdkAutosizeMaxRows="5" style="width:100%;" readonly>
+            {{paymentMethod.address}}
+        </textarea>
+
     </ng-container>
 
     <p>
         Status:
         <ng-container [ngSwitch]="invoice.status">
             <span *ngSwitchCase="1">Pending</span>
-            <span *ngSwitchCase="2">Confirmed</span>
-            <span *ngSwitchCase="3">Failed</span>
+            <b *ngSwitchCase="2" class="vp-text-primary">Confirmed</b>
+            <span *ngSwitchCase="3" class="vp-text-warn">Failed</span>
         </ng-container>
-        ({{invoice.paymentPercentage}}%)
+        <small> ({{invoice.paymentPercentage}}% confirmed)</small>
         <br>
     </p>
-
-    <ng-container *ngIf="invoice.status == 1">
-        <p *ngIf="!invoice.payments.length">
-            <small>
-                We haven't seen your payment yet.
-                We should see it once it's on the mempool.
-            </small>
-        </p>
-
-        <ng-container *ngIf="!webSocketSupported">
-            <p>
-                <small>
-                    Invoice will not auto-update.
-                    Please use the button below or refresh the page
-                </small>
-            </p>
-            <button type="button" (click)="updateInvoice()">Update Invoice</button>
-        </ng-container>
-    </ng-container>
 
     <ng-container *ngIf="invoice.payments.length">
         <h3>Payments</h3>
@@ -78,11 +83,18 @@
     && paymentMethod$ | async as paymentMethod">
         <h3>You can also pay with..</h3>
         <ng-container *ngFor="let method of invoice.paymentMethods">
-            <p *ngIf="method.currency !== paymentMethod.currency">
-                {{method.remaining.valueFormatted}} {{method.currency | uppercase}}
-                <button style="float: right;" (click)="changePaymentMethod(method.currency)">Pay with
-                    {{method.currency | uppercase}}</button>
-            </p>
+            <div *ngIf="method.currency !== paymentMethod.currency" fxLayout="row" fxLayoutAlign="start center"
+                style="margin-bottom: 8px;">
+                <div fxFlex="grow" style="white-space: nowrap;">
+                    {{method.remaining.valueFormatted}}
+                    <b>{{method.currency | uppercase}}</b>
+                </div>
+                <div fxFlex fxFill>
+                    <button mat-raised-button (click)="changePaymentMethod(method.currency)">
+                        Pay with {{method.currency | uppercase}}
+                    </button>
+                </div>
+            </div>
         </ng-container>
     </ng-container>
 </ng-container>

@@ -3,6 +3,7 @@ import { takeUntil, map, withLatestFrom, shareReplay, startWith } from 'rxjs/ope
 import { InvoiceDTO } from '../model';
 import { VendopunktoApiService } from '../vendopunkto-api.service';
 import { Subject, ReplaySubject, combineLatest } from 'rxjs';
+import { MatSnackBar } from '@angular/material';
 
 @Component({
   selector: 'app-invoice-preview',
@@ -13,6 +14,7 @@ export class InvoicePreviewComponent implements OnInit, OnDestroy {
 
   protected readonly invoiceSubject = new ReplaySubject<InvoiceDTO>(1);
   protected readonly currencySubject = new Subject<string>();
+  protected readonly tryChangeCurrencySubject = new Subject<string>();
   protected readonly destroyedSubject = new Subject();
 
   public readonly webSocketSupported = 'WebSocket' in window;
@@ -28,7 +30,9 @@ export class InvoicePreviewComponent implements OnInit, OnDestroy {
         .filter(pm => pm.currency === (currency || invoice.currency))[0])
     );
 
-  constructor(private readonly api: VendopunktoApiService) { }
+  constructor(
+    private readonly api: VendopunktoApiService,
+    private readonly snack: MatSnackBar) { }
 
   public ngOnInit() {
     this.initializeInvoice();
@@ -42,7 +46,7 @@ export class InvoicePreviewComponent implements OnInit, OnDestroy {
   }
 
   public changePaymentMethod(currency: string) {
-    this.currencySubject.next(currency);
+    this.tryChangeCurrencySubject.next(currency);
   }
 
   public ngOnDestroy() {
@@ -69,7 +73,7 @@ export class InvoicePreviewComponent implements OnInit, OnDestroy {
       this.updateInvoice();
     }
 
-    this.currencySubject.pipe(
+    this.tryChangeCurrencySubject.pipe(
       takeUntil(this.destroyedSubject),
       withLatestFrom(this.invoice$)
     )
@@ -77,7 +81,15 @@ export class InvoicePreviewComponent implements OnInit, OnDestroy {
         const method = invoice.paymentMethods.filter(p => p.currency === currency)[0];
         if (!method.address) {
           this.api.generatePaymentMethodAddress(this.invoiceId, currency)
-            .subscribe();
+            .subscribe(() => {
+              this.currencySubject.next(currency);
+            }, err => {
+              // fallback to default payment method
+              this.snack.open('An error ocurred while generating payment address',
+                'Dismiss');
+            });
+        } else {
+          this.currencySubject.next(currency);
         }
       });
   }
