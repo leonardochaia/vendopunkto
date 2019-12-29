@@ -3,7 +3,8 @@ import { takeUntil, map, withLatestFrom, shareReplay, startWith } from 'rxjs/ope
 import { InvoiceDTO } from '../model';
 import { VendopunktoApiService } from '../vendopunkto-api.service';
 import { Subject, ReplaySubject, combineLatest } from 'rxjs';
-import { MatSnackBar } from '@angular/material';
+import { MatSnackBar, MatDialog } from '@angular/material';
+import { InvoicePreviewHowToDialogComponent } from '../invoice-preview-how-to-dialog/invoice-preview-how-to-dialog.component';
 
 @Component({
   selector: 'app-invoice-preview',
@@ -32,7 +33,8 @@ export class InvoicePreviewComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly api: VendopunktoApiService,
-    private readonly snack: MatSnackBar) { }
+    private readonly snack: MatSnackBar,
+    private readonly dialog: MatDialog) { }
 
   public ngOnInit() {
     this.initializeInvoice();
@@ -47,6 +49,10 @@ export class InvoicePreviewComponent implements OnInit, OnDestroy {
 
   public changePaymentMethod(currency: string) {
     this.tryChangeCurrencySubject.next(currency);
+  }
+
+  public openHowItWorksDialog() {
+    this.dialog.open(InvoicePreviewHowToDialogComponent)
   }
 
   public ngOnDestroy() {

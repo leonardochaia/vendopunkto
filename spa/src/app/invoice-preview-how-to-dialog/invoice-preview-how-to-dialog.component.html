@@ -1,0 +1,25 @@
+<h1 mat-dialog-title>How payments works</h1>
+<div mat-dialog-content>
+
+    <mat-vertical-stepper>
+        <mat-step>
+            <ng-template matStepLabel>Choose payment method</ng-template>
+            You can choose your preferred currency to pay this invoice, perhaps
+            based on the most convenient exchange rate.
+        </mat-step>
+        <mat-step>
+            <ng-template matStepLabel>Scan QR Code</ng-template>
+            Using your preferred wallet, scan the presented QR code which should
+            fill the address and amount on your wallet.
+            Network fees are up for your choosing.
+        </mat-step>
+        <mat-step>
+            <ng-template matStepLabel>Wait few seconds</ng-template>
+            Once the payment is seen on the mempool, it will appear on the invoice's
+            screen. You don't need to refresh the page, although feel free to do so.
+        </mat-step>
+    </mat-vertical-stepper>
+</div>
+<div mat-dialog-actions>
+    <button mat-button [mat-dialog-close]="" cdkFocusInitial>Close</button>
+</div>

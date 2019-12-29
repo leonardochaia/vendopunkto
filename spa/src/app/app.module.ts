@@ -8,21 +8,28 @@ import { AppComponent } from './app.component';
 import { CommonModule } from '@angular/common';
 import { InvoicePreviewComponent } from './invoice-preview/invoice-preview.component';
 
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { FlexLayoutModule } from '@angular/flex-layout';
-import { MatButtonModule, MatSnackBarModule } from '@angular/material';
+import {
+  MatButtonModule,
+  MatSnackBarModule,
+  MatDialogModule,
+  MatToolbarModule,
+  MatIconModule,
+  MatStepperModule
+} from '@angular/material';
 
 import { NgxKjuaModule } from 'ngx-kjua';
 import { InvoiceSearchContainerComponent } from './invoice-search-container/invoice-search-container.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { InvoicePreviewHowToDialogComponent } from './invoice-preview-how-to-dialog/invoice-preview-how-to-dialog.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     InvoicePreviewComponent,
-    InvoiceSearchContainerComponent
+    InvoiceSearchContainerComponent,
+    InvoicePreviewHowToDialogComponent
   ],
   imports: [
     CommonModule,
@@ -35,6 +42,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatIconModule,
     MatButtonModule,
     MatSnackBarModule,
+    MatDialogModule,
+    MatStepperModule,
 
     NgxKjuaModule,
 
@@ -43,6 +52,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     BrowserAnimationsModule
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent, InvoicePreviewHowToDialogComponent]
 })
 export class AppModule { }

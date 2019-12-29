@@ -17,12 +17,14 @@
         </h1>
 
         <ng-container *ngIf="invoice.status == 1">
-            <p *ngIf="!invoice.payments.length">
+            <p *ngIf="!invoice.payments.length" style="text-align: center;">
                 <small>
                     We haven't seen your payment yet.
                     We should see it once it's on the mempool.
-                    <a href="">How does it work?</a>
                 </small>
+                <button mat-button color="primary" (click)="openHowItWorksDialog()">
+                    How does it work?
+                </button>
             </p>
 
             <ng-container *ngIf="!webSocketSupported">
