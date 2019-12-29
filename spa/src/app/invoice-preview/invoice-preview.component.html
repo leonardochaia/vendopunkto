@@ -1,102 +1,154 @@
 <ng-container *ngIf="invoice$ | async as invoice">
 
-    <div>
+    <!-- Header -->
+    <div class="vp-bg-accent" style="color:white; padding:4px">
         {{invoice.id}}
         <span style="float:right">
             {{invoice.createdAt | date}}
         </span>
     </div>
 
-    <ng-container *ngIf="!invoice.payments.length && paymentMethod$ | async as paymentMethod">
-        <div style="text-align:center;margin: 0 auto;" *ngIf="paymentMethod.qrCode">
-            <ngx-kjua [text]="paymentMethod.qrCode" cssClass="qr-code"></ngx-kjua>
-        </div>
+    <div style="padding:8px">
+        <ng-container *ngIf="paymentMethod$ | async as paymentMethod">
 
-        <h1 style="text-align: center; margin-top:0">
-            {{paymentMethod.remaining.valueFormatted}} {{paymentMethod.currency | uppercase}}
-        </h1>
+            <!-- QR Code -->
+            <div style="text-align:center;margin: 0 auto;" *ngIf="paymentMethod.qrCode && invoice.status == 1">
+                <ngx-kjua [text]="paymentMethod.qrCode" cssClass="qr-code"></ngx-kjua>
+            </div>
 
-        <ng-container *ngIf="invoice.status == 1">
-            <p *ngIf="!invoice.payments.length" style="text-align: center;">
-                <small>
-                    We haven't seen your payment yet.
-                    We should see it once it's on the mempool.
-                </small>
-                <button mat-button color="primary" (click)="openHowItWorksDialog()">
-                    How does it work?
-                </button>
-            </p>
+            <!-- Remaining Amount -->
+            <h1 style="text-align: center; margin:0; white-space: nowrap;"
+                *ngIf="invoice.status == 1; else payedInvoiceAmount">
+                {{paymentMethod.remaining.valueFormatted}}
+                {{paymentMethod.currency | uppercase}}
+            </h1>
 
-            <ng-container *ngIf="!webSocketSupported">
-                <p>
+            <!-- Confirmed Amount -->
+            <ng-template #payedInvoiceAmount>
+                <div class="mat-display-1" style="text-align: center; margin-bottom: 16px; white-space: nowrap;">
+                    {{invoice.total.valueFormatted}}
+                    {{invoice.currency | uppercase}}
+                </div>
+            </ng-template>
+
+            <!-- Status -->
+            <div style="text-align: center;">
+                <div [ngSwitch]="invoice.status">
+                    <span *ngSwitchCase="1">Pending</span>
+                    <b *ngSwitchCase="2" class="vp-text-primary">Confirmed</b>
+                    <span *ngSwitchCase="3" class="vp-text-warn">Failed</span>
+                </div>
+                <div *ngIf="invoice.paymentPercentage < 100 && invoice.paymentPercentage > 0">
                     <small>
-                        Invoice will not auto-update.
-                        Please use the button below or refresh the page
+                        <span class="vp-text-warn">Partially paid. </span>
+                        Total of {{invoice.total.valueFormatted}} {{invoice.currency | uppercase}}
                     </small>
-                </p>
-                <button type="button" (click)="updateInvoice()">Update Invoice</button>
-            </ng-container>
-        </ng-container>
-
-        <label for="address">Address</label>
-        <br>
-        <textarea name="address" cdkTextareaAutosize cdkAutosizeMaxRows="5" style="width:100%;" readonly>
-            {{paymentMethod.address}}
-        </textarea>
-
-    </ng-container>
-
-    <p>
-        Status:
-        <ng-container [ngSwitch]="invoice.status">
-            <span *ngSwitchCase="1">Pending</span>
-            <b *ngSwitchCase="2" class="vp-text-primary">Confirmed</b>
-            <span *ngSwitchCase="3" class="vp-text-warn">Failed</span>
-        </ng-container>
-        <small> ({{invoice.paymentPercentage}}% confirmed)</small>
-        <br>
-    </p>
-
-    <ng-container *ngIf="invoice.payments.length">
-        <h3>Payments</h3>
-        <div *ngFor="let payment of invoice.payments">
-            Amount: {{payment.amount.valueFormatted}} {{payment.currency | uppercase}}
-            <br>
-            Status:
-            <ng-container [ngSwitch]="payment.status">
-                <span *ngSwitchCase="1">In Mempool</span>
-                <span *ngSwitchCase="2">
-                    Confirmed
-                    ({{payment.confirmedAt | date:"medium"}})
-                </span>
-                <span *ngSwitchCase="3">Failed</span>
-            </ng-container>
-
-            <br>
-            Tx Hash: {{payment.txHash}}
-            <br>
-            Confirmations: {{payment.confirmations}}. Height: {{payment.blockHeight}}
-            <hr>
-        </div>
-    </ng-container>
-
-    <ng-container *ngIf="!invoice.payments.length
-    && invoice.paymentMethods.length > 1 
-    && paymentMethod$ | async as paymentMethod">
-        <h3>You can also pay with..</h3>
-        <ng-container *ngFor="let method of invoice.paymentMethods">
-            <div *ngIf="method.currency !== paymentMethod.currency" fxLayout="row" fxLayoutAlign="start center"
-                style="margin-bottom: 8px;">
-                <div fxFlex="grow" style="white-space: nowrap;">
-                    {{method.remaining.valueFormatted}}
-                    <b>{{method.currency | uppercase}}</b>
                 </div>
-                <div fxFlex fxFill>
-                    <button mat-raised-button (click)="changePaymentMethod(method.currency)">
-                        Pay with {{method.currency | uppercase}}
+
+            </div>
+
+            <ng-container *ngIf="invoice.status == 1">
+                <!-- Waiting for payment to show in mempool text -->
+                <p *ngIf="!invoice.payments.length" style="text-align: center;">
+                    <small>
+                        We haven't seen your payment yet.
+                        We should see it once it's on the mempool.
+                    </small>
+                    <button mat-button color="primary" (click)="openHowItWorksDialog()">
+                        How does it work?
                     </button>
-                </div>
+                </p>
+
+                <!-- WebSocket support text -->
+                <ng-container *ngIf="!webSocketSupported">
+                    <p>
+                        <small>
+                            Invoice will not auto-update.
+                            Please use the button below or refresh the page
+                        </small>
+                    </p>
+                    <button type="button" (click)="updateInvoice()">Update Invoice</button>
+                </ng-container>
+
+                <!-- Address -->
+                <mat-form-field style="width: 100%;">
+                    <mat-label>Address</mat-label>
+                    <textarea matInput cdkTextareaAutosize cdkAutosizeMaxRows="5" readonly
+                        [value]="paymentMethod.address"></textarea>
+                </mat-form-field>
+            </ng-container>
+
+        </ng-container>
+
+
+        <!-- Other payment methods -->
+        <ng-container *ngIf="invoice.paymentMethods.length > 1 
+        && invoice.status == 1
+        && paymentMethod$ | async as paymentMethod">
+            <div style="font-size: 14px;color:#777; margin-bottom: 6px;">
+                You can also pay with..
+            </div>
+            <div fxLayout="row" fxLayoutGap="8px">
+                <ng-container *ngFor="let method of invoice.paymentMethods">
+                    <div *ngIf="method.currency !== paymentMethod.currency">
+                        <button mat-raised-button (click)="changePaymentMethod(method.currency)">
+                            {{method.remaining.valueFormatted}}
+                            <b>{{method.currency | uppercase}}</b>
+                        </button>
+                    </div>
+                </ng-container>
             </div>
         </ng-container>
-    </ng-container>
+
+        <!-- Received payments -->
+        <ng-container *ngIf="invoice.payments.length">
+            <h2 style="margin: 6px 0;" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="6px">
+                <mat-icon inline="true" style="color:green">arrow_downward</mat-icon>
+                <span>Payments</span>
+                <small>({{invoice.paymentPercentage}}% confirmed)</small>
+            </h2>
+            <mat-card *ngFor="let payment of invoice.payments" style="margin-bottom: 8px;">
+                <mat-card-title>
+                    {{payment.amount.valueFormatted}} {{payment.currency | uppercase}}
+                </mat-card-title>
+                <mat-card-subtitle fxLayout="column" fxLayout.gt-xs="row" style="margin-bottom: 6px;">
+                    <div fxFlex="fill" style=" white-space: nowrap;">
+                        Status:
+                        <ng-container [ngSwitch]="payment.status">
+                            <span *ngSwitchCase="1">In Mempool</span>
+                            <span *ngSwitchCase="2" class="vp-text-primary">
+                                Confirmed
+                            </span>
+                            <span *ngSwitchCase="3">Failed</span>
+                        </ng-container>
+                    </div>
+
+                    <div fxFlex style="white-space: nowrap;" *ngIf="payment.status == 2">
+                        {{payment.confirmedAt | date:"medium"}}
+                    </div>
+
+                </mat-card-subtitle>
+                <mat-card-content>
+
+                    <div style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                        <small>
+                            Tx Hash: {{payment.txHash}}
+                        </small>
+                    </div>
+                    <div fxLayout="row wrap" fxLayoutGap="8px" style="white-space: nowrap;">
+                        <div>
+                            <small>
+                                Confirmations: {{payment.confirmations}}
+                            </small>
+                        </div>
+                        <div>
+                            <small>
+                                Height: {{payment.blockHeight}}
+                            </small>
+                        </div>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+        </ng-container>
+    </div>
 </ng-container>

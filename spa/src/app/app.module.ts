@@ -16,7 +16,10 @@ import {
   MatDialogModule,
   MatToolbarModule,
   MatIconModule,
-  MatStepperModule
+  MatStepperModule,
+  MatCardModule,
+  MatFormFieldModule,
+  MatInputModule,
 } from '@angular/material';
 
 import { NgxKjuaModule } from 'ngx-kjua';
@@ -44,6 +47,9 @@ import { InvoicePreviewHowToDialogComponent } from './invoice-preview-how-to-dia
     MatSnackBarModule,
     MatDialogModule,
     MatStepperModule,
+    MatCardModule,
+    MatInputModule,
+    MatFormFieldModule,
 
     NgxKjuaModule,
 
@@ -52,6 +58,7 @@ import { InvoicePreviewHowToDialogComponent } from './invoice-preview-how-to-dia
     BrowserAnimationsModule
   ],
   providers: [],
-  bootstrap: [AppComponent, InvoicePreviewHowToDialogComponent]
+  entryComponents: [InvoicePreviewHowToDialogComponent],
+  bootstrap: [AppComponent]
 })
 export class AppModule { }
