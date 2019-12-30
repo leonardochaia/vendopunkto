@@ -28,6 +28,30 @@ func NewPostgresInvoiceRepository(db *pg.DB) (invoice.InvoiceRepository, error) 
 	}, err
 }
 
+func (r postgresInvoiceRepository) Search(
+	ctx context.Context,
+	filter invoice.InvoiceFilter) ([]invoice.Invoice, error) {
+	const op errors.Op = "invoiceRepository.search"
+	tx, err := store.GetTransactionFromContextOrCreate(ctx, r.db)
+	if err != nil {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	var invoices []invoice.Invoice
+
+	err = tx.Model(&invoices).
+		Relation("PaymentMethods").
+		Relation("PaymentMethods.Payments").
+		Limit(50).
+		Order("created_at DESC").
+		Select()
+	if err != nil {
+		return nil, err
+	}
+
+	return invoices, nil
+}
+
 func (r postgresInvoiceRepository) FindByID(ctx context.Context, id string) (*invoice.Invoice, error) {
 	const op errors.Op = "invoiceRepository.findByID"
 	tx, err := store.GetTransactionFromContextOrCreate(ctx, r.db)

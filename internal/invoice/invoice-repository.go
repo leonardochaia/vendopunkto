@@ -2,8 +2,12 @@ package invoice
 
 import "context"
 
+type InvoiceFilter struct {
+}
+
 // InvoiceRepository is the abstraction for handling Invoices database
 type InvoiceRepository interface {
+	Search(ctx context.Context, filter InvoiceFilter) ([]Invoice, error)
 	FindByID(ctx context.Context, id string) (*Invoice, error)
 	FindByAddress(ctx context.Context, address string) (*Invoice, error)
 	Create(ctx context.Context, invoice *Invoice) error

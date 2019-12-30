@@ -9,6 +9,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	"github.com/leonardochaia/vendopunkto/unit"
 )
 
 // Handler exposes APIs for interacting with invoices
@@ -34,6 +35,9 @@ func (handler *Handler) Routes() chi.Router {
 func (handler *Handler) InternalRoutes() chi.Router {
 	router := chi.NewRouter()
 
+	router.Get("/{id}", errors.WrapHandler(handler.getInvoice))
+
+	router.Post("/search", errors.WrapHandler(handler.searchInvoices))
 	router.Post("/", errors.WrapHandler(handler.createInvoice))
 
 	return router
@@ -76,6 +80,22 @@ func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) error
 	return handler.renderInvoiceDto(w, r, *invoice)
 }
 
+func (handler *Handler) searchInvoices(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "api.invoice.get"
+
+	var params = new(InvoiceFilter)
+	if err := render.DecodeJSON(r.Body, &params); err != nil {
+		return errors.E(op, errors.Parameters, err)
+	}
+
+	invoices, err := handler.manager.Search(r.Context(), *params)
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	return handler.renderInvoiceListDto(w, r, invoices)
+}
+
 func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *http.Request) error {
 	const op errors.Op = "api.invoice.generatePaymentMethodAddress"
 
@@ -111,5 +131,24 @@ func (handler *Handler) renderInvoiceDto(
 	}
 
 	render.JSON(w, r, dto)
+	return nil
+}
+
+func (handler *Handler) renderInvoiceListDto(
+	w http.ResponseWriter,
+	r *http.Request,
+	invoices []Invoice) error {
+	const op errors.Op = "api.invoice.renderInvoiceListDto"
+
+	result := []dtos.InvoiceDto{}
+	for _, invoice := range invoices {
+		dto, err := convertInvoiceToDto(invoice, handler.pluginMgr)
+		if err != nil {
+			return errors.E(op, errors.Internal, err)
+		}
+		result = append(result, dto)
+	}
+
+	render.JSON(w, r, result)
 	return nil
 }

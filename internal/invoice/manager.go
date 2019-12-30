@@ -104,6 +104,21 @@ func (mgr *Manager) GetInvoice(
 	return inv, nil
 }
 
+// SearchInvoices finds invoices matching filter
+func (mgr *Manager) Search(
+	ctx context.Context,
+	filter InvoiceFilter) ([]Invoice, error) {
+
+	const op errors.Op = "invoicemgr.searchInvoices"
+	list, err := mgr.repository.Search(ctx, filter)
+
+	if err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	return list, nil
+}
+
 // GetInvoiceByAddress finds an invoice by it's the provided paymentMethod's
 // address.
 func (mgr *Manager) GetInvoiceByAddress(
