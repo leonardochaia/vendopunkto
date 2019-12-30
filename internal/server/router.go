@@ -51,6 +51,12 @@ func NewRouter(
 
 	serveSPA(router, "/", "spa/dist/vendopunkto")
 
+	// Enable profiler
+	if startupConf.Server.ProfilerEnabled && startupConf.Server.ProfilerPath != "" {
+		logger.Debug("Profiler enabled on API", "path", startupConf.Server.ProfilerPath)
+		router.Mount(startupConf.Server.ProfilerPath, middleware.Profiler())
+	}
+
 	return &router, nil
 }
 
@@ -82,11 +88,6 @@ func setupMiddlewares(
 		MaxAge:           300,
 	}).Handler)
 
-	// Enable profiler
-	if startupConf.Server.ProfilerEnabled && startupConf.Server.ProfilerPath != "" {
-		logger.Debug("Profiler enabled on API", "path", startupConf.Server.ProfilerPath)
-		router.Mount(startupConf.Server.ProfilerPath, middleware.Profiler())
-	}
 }
 func newRequestLogger(parentLogger hclog.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
