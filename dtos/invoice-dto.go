@@ -7,9 +7,9 @@ import (
 )
 
 type InvoiceCreationParams struct {
-	Total          unit.AtomicUnit `json:"total"`
-	Currency       string          `json:"currency"`
-	PaymentMethods []string        `json:"paymentMethods"`
+	Total          float64  `json:"total"`
+	Currency       string   `json:"currency"`
+	PaymentMethods []string `json:"paymentMethods"`
 }
 
 type InvoiceConfirmPaymentsParams struct {

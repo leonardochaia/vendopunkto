@@ -55,7 +55,7 @@ func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) er
 	}
 
 	invoice, err := handler.manager.CreateInvoice(r.Context(),
-		params.Total, params.Currency, params.PaymentMethods)
+		unit.NewFromFloat(params.Total), params.Currency, params.PaymentMethods)
 
 	if err != nil {
 		return errors.E(op, err)
