@@ -15,10 +15,7 @@ services:
     - db:/var/lib/postgresql/data
 
   xmr-wallet:
-    image: vp-xmr-wallet
-    build:
-      context: .
-      dockerfile: ./plugins/monero/Dockerfile
+    image: lchaia/monerod
     # restart: unless-stopped
     container_name: xmr-wallet
     entrypoint: monero-wallet-rpc
@@ -40,10 +37,8 @@ services:
         - "monero_wallet:/home/monero/wallets/"
 
   create_wallet:
+    image: lchaia/monerod
     image: vp-xmr-wallet
-    build:
-      context: .
-      dockerfile: ./plugins/monero/Dockerfile
     entrypoint: monero-wallet-cli
     command:
       - "--stagenet"
