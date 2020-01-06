@@ -32,7 +32,7 @@ import { InvoicePreviewHowToDialogComponent } from './invoice-preview-how-to-dia
     AppComponent,
     InvoicePreviewComponent,
     InvoiceSearchContainerComponent,
-    InvoicePreviewHowToDialogComponent
+    InvoicePreviewHowToDialogComponent,
   ],
   imports: [
     CommonModule,

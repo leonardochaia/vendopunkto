@@ -118,11 +118,12 @@ var (
 
 func printInvoice(invoice *dtos.InvoiceDto) {
 	fmt.Printf("  Invoice ID: %s\n", invoice.ID)
-	fmt.Printf("  Total: %s %s\n", invoice.Total.ValueFormatted, strings.ToUpper(invoice.Currency))
+	fmt.Printf("  Total: %s %s\n", invoice.Total.String(), strings.ToUpper(invoice.Currency))
 	fmt.Printf("  Status: %s %s%%\n", getInvoiceStatus(invoice.Status),
 		strconv.FormatFloat(invoice.PaymentPercentage, 'f', -1, 64))
-	if invoice.Total.Value != invoice.Remaining.Value {
-		fmt.Printf("  Remaining: %s %s\n", invoice.Remaining.ValueFormatted, strings.ToUpper(invoice.Currency))
+
+	if !invoice.Total.Equal(invoice.Remaining) {
+		fmt.Printf("  Remaining: %s %s\n", invoice.Remaining.String(), strings.ToUpper(invoice.Currency))
 	}
 
 	if invoice.PaymentPercentage < 100 {
@@ -131,7 +132,7 @@ func printInvoice(invoice *dtos.InvoiceDto) {
 		for _, method := range invoice.PaymentMethods {
 			fmt.Printf("  %s %s %s\n",
 				strings.ToUpper(method.Currency),
-				method.Remaining.ValueFormatted,
+				method.Remaining.String(),
 				method.Address)
 		}
 	}
@@ -140,7 +141,7 @@ func printInvoice(invoice *dtos.InvoiceDto) {
 		fmt.Println("Payments")
 		for _, payment := range invoice.Payments {
 			fmt.Printf("  %s %s (%s) (Conf. #%d)\n",
-				payment.Amount.ValueFormatted,
+				payment.Amount.String(),
 				strings.ToUpper(payment.Currency),
 				payment.TxHash,
 				payment.Confirmations)
@@ -176,7 +177,7 @@ func printQR(method *dtos.PaymentMethodDto) {
 
 	fmt.Printf("\nPrinting QR Code for %s\n", strings.ToUpper(method.Currency))
 	qrterminal.GenerateWithConfig(method.QRCode, qrTerminalConfig)
-	fmt.Printf("%s %s\n", strings.ToUpper(method.Currency), method.Remaining.ValueFormatted)
+	fmt.Printf("%s %s\n", strings.ToUpper(method.Currency), method.Remaining.String())
 	fmt.Printf("Address: %s\n", method.Address)
 }
 

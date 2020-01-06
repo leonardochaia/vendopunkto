@@ -1,6 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { VendopunktoApiService } from '../vendopunkto-api.service';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -8,11 +7,10 @@ import { map } from 'rxjs/operators';
   templateUrl: './invoice-search-container.component.html',
   styleUrls: ['./invoice-search-container.component.scss']
 })
-export class InvoiceSearchContainerComponent implements OnInit {
+export class InvoiceSearchContainerComponent {
 
   constructor(
     private readonly snapshot: ActivatedRoute,
-    private readonly api: VendopunktoApiService,
   ) { }
 
   public get invoiceId$() {
@@ -21,8 +19,4 @@ export class InvoiceSearchContainerComponent implements OnInit {
         map(params => params.get('invoiceID'))
       );
   }
-
-  ngOnInit() {
-  }
-
 }

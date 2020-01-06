@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { takeUntil, map, withLatestFrom, shareReplay, startWith } from 'rxjs/operators';
-import { InvoiceDTO } from '../model';
+import { InvoiceDTO } from 'shared';
 import { VendopunktoApiService } from '../vendopunkto-api.service';
 import { Subject, ReplaySubject, combineLatest } from 'rxjs';
 import { MatSnackBar, MatDialog } from '@angular/material';

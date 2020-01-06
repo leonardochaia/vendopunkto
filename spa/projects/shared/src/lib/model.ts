@@ -1,13 +1,8 @@
-export interface AtomicUnit {
-    value: number;
-    valueFormatted: string;
-}
-
 export interface InvoiceDTO {
     status: number;
     id: string;
-    total: AtomicUnit;
-    remaining: AtomicUnit;
+    total: string;
+    remaining: string;
     currency: string;
     createdAt: string;
     paymentMethods?: PaymentMethod[];
@@ -17,17 +12,17 @@ export interface InvoiceDTO {
 
 export interface PaymentMethod {
     id: number;
-    total: AtomicUnit;
+    total: string;
     currency: string;
     address: string;
-    remaining: AtomicUnit;
+    remaining: string;
     qrCode: string;
 }
 
 export interface Payment {
     status: number;
     txHash: string;
-    amount: AtomicUnit;
+    amount: string;
     confirmations: number;
     blockHeight: number;
     currency: string;
@@ -38,4 +33,9 @@ export interface Payment {
 export interface SupportedCurrency {
     name: string;
     symbol: string;
+}
+
+export interface InvoiceCreationParams {
+    total: number;
+    currency: string;
 }

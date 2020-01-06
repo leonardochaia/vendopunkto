@@ -19,14 +19,14 @@
             <!-- Remaining Amount -->
             <h1 style="text-align: center; margin:0; white-space: nowrap;"
                 *ngIf="invoice.status == 1; else payedInvoiceAmount">
-                {{paymentMethod.remaining.valueFormatted}}
+                {{paymentMethod.remaining}}
                 {{paymentMethod.currency | uppercase}}
             </h1>
 
             <!-- Confirmed Amount -->
             <ng-template #payedInvoiceAmount>
                 <div class="mat-display-1" style="text-align: center; margin-bottom: 16px; white-space: nowrap;">
-                    {{invoice.total.valueFormatted}}
+                    {{invoice.total}}
                     {{invoice.currency | uppercase}}
                 </div>
             </ng-template>
@@ -41,7 +41,7 @@
                 <div *ngIf="invoice.paymentPercentage < 100 && invoice.paymentPercentage > 0">
                     <small>
                         <span class="vp-text-warn">Partially paid. </span>
-                        Total of {{invoice.total.valueFormatted}} {{invoice.currency | uppercase}}
+                        Total of {{invoice.total}} {{invoice.currency | uppercase}}
                     </small>
                 </div>
 
@@ -92,7 +92,7 @@
                 <ng-container *ngFor="let method of invoice.paymentMethods">
                     <div *ngIf="method.currency !== paymentMethod.currency">
                         <button mat-raised-button (click)="changePaymentMethod(method.currency)">
-                            {{method.remaining.valueFormatted}}
+                            {{method.remaining}}
                             <b>{{method.currency | uppercase}}</b>
                         </button>
                     </div>
@@ -109,7 +109,7 @@
             </h2>
             <mat-card *ngFor="let payment of invoice.payments" style="margin-bottom: 8px;">
                 <mat-card-title>
-                    {{payment.amount.valueFormatted}} {{payment.currency | uppercase}}
+                    {{payment.amount}} {{payment.currency | uppercase}}
                 </mat-card-title>
                 <mat-card-subtitle fxLayout="column" fxLayout.gt-xs="row" style="margin-bottom: 6px;">
                     <div fxFlex="fill" style=" white-space: nowrap;">

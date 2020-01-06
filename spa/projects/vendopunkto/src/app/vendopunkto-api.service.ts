@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { InvoiceDTO } from './model';
+import { InvoiceDTO } from 'shared';
 import { webSocket } from 'rxjs/webSocket';
 
 const apiAddress = `/api/v1`;

@@ -240,12 +240,12 @@ func convertInvoiceToDto(invoice Invoice, pluginMgr *pluginmgr.Manager) (dtos.In
 
 	dto := &dtos.InvoiceDto{
 		ID:                invoice.ID,
-		Total:             dtos.NewAtomicUnitDTO(invoice.Total),
+		Total:             invoice.Total,
 		Currency:          invoice.Currency,
 		CreatedAt:         invoice.CreatedAt,
 		Status:            uint(invoice.Status()),
 		PaymentPercentage: invoice.CalculatePaymentPercentage(),
-		Remaining:         dtos.NewAtomicUnitDTO(invoice.CalculateRemainingAmount()),
+		Remaining:         invoice.CalculateRemainingAmount(),
 		PaymentMethods:    []*dtos.PaymentMethodDto{},
 		Payments:          []*dtos.PaymentDto{},
 	}
@@ -266,17 +266,17 @@ func convertInvoiceToDto(invoice Invoice, pluginMgr *pluginmgr.Manager) (dtos.In
 
 		methodDto := &dtos.PaymentMethodDto{
 			ID:        method.ID,
-			Total:     dtos.NewAtomicUnitDTO(method.Total),
+			Total:     method.Total,
 			Currency:  method.Currency,
 			Address:   method.Address,
-			Remaining: dtos.NewAtomicUnitDTO(invoice.CalculatePaymentMethodRemaining(*method)),
+			Remaining: invoice.CalculatePaymentMethodRemaining(*method),
 			QRCode:    qrCode,
 		}
 
 		for _, payment := range method.Payments {
 			paymentDto := &dtos.PaymentDto{
 				TxHash:        payment.TxHash,
-				Amount:        dtos.NewAtomicUnitDTO(payment.Amount),
+				Amount:        payment.Amount,
 				Confirmations: payment.Confirmations,
 				ConfirmedAt:   payment.ConfirmedAt,
 				CreatedAt:     payment.CreatedAt,
