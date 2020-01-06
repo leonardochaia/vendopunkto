@@ -36,5 +36,8 @@ func NewInternalRouter(
 		r.Mount("/invoices", invoice.InternalRoutes())
 		r.Mount("/currencies", currencies.InternalRoutes())
 	})
+
+	serveSPA(router, "/", "spa/dist/admin")
+
 	return &router, nil
 }

@@ -1,0 +1,19 @@
+<div style="margin:0 auto;">
+
+  <mat-toolbar color="primary">
+    <div style="line-height: initial;">
+      VendoPunkto <br>
+      <small>Administration Center</small>
+    </div>
+    <div fxFlex="grow"></div>
+    <div fxFlex>
+      <button mat-icon-button routerLink="invoices/new">
+        <mat-icon>add_circle</mat-icon>
+      </button>
+    </div>
+  </mat-toolbar>
+
+  <div style="padding:8px">
+    <router-outlet></router-outlet>
+  </div>
+</div>

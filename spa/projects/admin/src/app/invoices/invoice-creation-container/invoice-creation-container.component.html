@@ -1,0 +1,17 @@
+<form style="max-width: 420px; margin: 0 auto" [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field style="width: 100%;">
+        <input matInput placeholder="Total" type="number" [formControl]="totalControl">
+    </mat-form-field>
+
+    <mat-form-field style="width: 100%;">
+        <mat-select placeholder="Currency" [formControl]="currencyControl">
+            <mat-option *ngFor="let currency of currencies$|async" [value]="currency.symbol">
+                {{currency.symbol | uppercase}} - {{currency.name}}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <button type="submit" mat-raised-button color="primary" [disabled]="form.invalid">
+        Create
+    </button>
+</form>

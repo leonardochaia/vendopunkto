@@ -1,0 +1,61 @@
+@mixin expose-material-theme-classes($theme) {
+    $primary: map-get($theme, primary);
+    $accent: map-get($theme, accent);
+    $warn: map-get($theme, warn);
+    $foreground: map-get($theme, foreground);
+    $background: map-get($theme, background);
+  
+    mat-card.cursor-pointer {
+      &:hover {
+        outline: 1px solid mat-color($primary);
+      }
+    }
+  
+    .vp-bg-primary {
+      background-color: mat-color($primary) !important;
+      color: mat-color($foreground, text);
+    }
+  
+    .vp-bg-accent {
+      background-color: mat-color($accent) !important;
+      color: mat-color($foreground, text);
+    }
+  
+    .vp-bg-warn {
+      background-color: mat-color($warn) !important;
+      color: mat-color($foreground, text);
+    }
+  
+    .vp-text-title,
+    .vp-text-primary {
+      color: mat-color($primary);
+    }
+  
+    .vp-text-accent {
+      color: mat-color($accent);
+    }
+  
+    .vp-text-warn {
+      color: mat-color($warn);
+    }
+  
+    .vp-dialog-warn .mat-dialog-container {
+      background-color: mat-color($warn);
+      color: mat-color($foreground, text);
+    }
+  
+    .vp-dialog-primary .mat-dialog-container {
+      background-color: mat-color($primary);
+      color: mat-color($foreground, text);
+    }
+  
+    .vp-dialog-accent .mat-dialog-container {
+      background-color: mat-color($accent);
+      color: mat-color($foreground, text);
+    }
+  
+    .vp-body-bg {
+      background-color: mat-color($background, background);
+      color: mat-color($foreground, text);
+    }
+  }
