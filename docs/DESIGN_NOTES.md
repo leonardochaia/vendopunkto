@@ -60,3 +60,20 @@ the public API's port.
 
 The internal API must not be exposed to the public internet, ideally should not
 be exposed to LAN either. In small setups, only host level networking may be needed.
+
+
+## Payments Design
+
+Given that an Invoice's total price can be defined in any installed currency,
+certain situations may arise where not all payment methods are applicable.
+Particularly the scenario where the smallest denomination of a payment method's
+is too much to pay the total converted price of the invoice.
+
+i.e: with the current market prices, BTC is worth more than BCH, so an invoice
+priced on the smallest BCH denomination cannot be payed in BTC, since the
+smallest BTC denomination is more valuable than the smallest BCH denomination.
+It's more noticeable in currencies that don't have the same denomination as BTC
+like Monero, which has even smaller denominations.
+
+To prevent this situation affecting the payee, VendoPunkto will not create payment
+method's that cannot be payed.
