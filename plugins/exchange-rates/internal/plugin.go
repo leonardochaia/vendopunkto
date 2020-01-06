@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
+	"github.com/shopspring/decimal"
 	gecko "github.com/superoo7/go-gecko/v3"
 	"github.com/superoo7/go-gecko/v3/types"
 )
@@ -61,9 +62,9 @@ func (p geckoExchangeRatesPlugin) GetExchangeRates(
 	for _, rates := range *result {
 
 		for _, target := range currencies {
-			rate := float64(rates[target])
+			rate := decimal.NewFromFloat32(rates[target])
 			if target == currency {
-				rate = 1
+				rate = decimal.NewFromInt(1)
 			}
 
 			p.logger.Info("Obtained exchange rate",

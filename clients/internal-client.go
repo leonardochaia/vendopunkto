@@ -5,12 +5,13 @@ import (
 
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
+	"github.com/shopspring/decimal"
 )
 
 // InternalClient for the internal plugin server hosted by vendopunkto
 // Used by plugins to "talk back" to the host.
 type InternalClient interface {
-	CreateInvoice(total float64, currency string) (*dtos.InvoiceDto, error)
+	CreateInvoice(total decimal.Decimal, currency string) (*dtos.InvoiceDto, error)
 }
 
 type internalClientImpl struct {
@@ -48,7 +49,7 @@ func (c internalClientImpl) getAPIURL(suffix string) (string, error) {
 // CreateInvoice will create a new invoice with the provided total and currency
 // all payment methods will be added
 func (c internalClientImpl) CreateInvoice(
-	total float64,
+	total decimal.Decimal,
 	currency string) (*dtos.InvoiceDto, error) {
 	const op errors.Op = "internalClient.createInvoice"
 

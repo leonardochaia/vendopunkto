@@ -3,16 +3,17 @@ package development
 import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
+	"github.com/shopspring/decimal"
 )
 
 // rates is a map of crypto to USD
 var rates = make(plugin.ExchangeRatesResult)
 
 func init() {
-	rates["xmr"] = 50
-	rates["btc"] = 10000
-	rates["bch"] = 5000
-	rates["usd"] = 1
+	rates["xmr"] = decimal.NewFromInt(50)
+	rates["btc"] = decimal.NewFromInt(10000)
+	rates["bch"] = decimal.NewFromInt(5000)
+	rates["usd"] = decimal.NewFromInt(1)
 }
 
 type fakeExchangeRatesPlugin struct {
@@ -32,11 +33,11 @@ func (p fakeExchangeRatesPlugin) GetExchangeRates(
 	converted := rates[currency]
 
 	for coin, rate := range rates {
-		newRate := converted / rate
+		newRate := converted.Div(rate)
 		p.logger.Info("Obtained exchange rate",
 			"source", currency,
 			"currency", coin,
-			"rate", newRate)
+			"rate", newRate.String())
 
 		output[coin] = newRate
 	}

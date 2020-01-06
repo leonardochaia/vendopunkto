@@ -1,15 +1,15 @@
 package dtos
 
-import "github.com/leonardochaia/vendopunkto/unit"
+import "github.com/shopspring/decimal"
 
 type AtomicUnitDTO struct {
-	Value          uint64 `json:"value"`
-	ValueFormatted string `json:"valueFormatted"`
+	Value          decimal.Decimal `json:"value"`
+	ValueFormatted string          `json:"valueFormatted"`
 }
 
-func NewAtomicUnitDTO(u unit.AtomicUnit) AtomicUnitDTO {
+func NewAtomicUnitDTO(u decimal.Decimal) AtomicUnitDTO {
 	return AtomicUnitDTO{
-		Value:          uint64(u),
-		ValueFormatted: u.Formatted(),
+		Value:          u,
+		ValueFormatted: u.String(),
 	}
 }

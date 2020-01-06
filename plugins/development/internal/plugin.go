@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/leonardochaia/vendopunkto/plugin"
-	"github.com/leonardochaia/vendopunkto/unit"
 	"github.com/rs/xid"
+	"github.com/shopspring/decimal"
 )
 
 type fakeAddress struct {
@@ -72,7 +72,7 @@ func (p *fakeWalletPlugin) GetIncomingTransfers(params plugin.WalletPluginIncomi
 				TxHash:        fmt.Sprintf("%x", h),
 				Address:       addr.address,
 				BlockHeight:   height,
-				Amount:        unit.NewFromFloat(1),
+				Amount:        decimal.NewFromInt(1),
 				Confirmations: confirmations,
 			}
 

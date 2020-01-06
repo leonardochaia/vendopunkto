@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
-	"github.com/leonardochaia/vendopunkto/unit"
 	"github.com/rs/xid"
+	"github.com/shopspring/decimal"
 )
 
 // Manager contains the business logic for handling invoices
@@ -72,7 +72,7 @@ func (mgr *Manager) addPaymentMethodsToInvoice(
 			continue
 		}
 
-		if rate == 0 {
+		if rate.Equals(decimal.Zero) {
 			mgr.logger.Warn("Invalid rate for currency was provided, method ignored",
 				"coin", coin,
 				"rate", rate,
@@ -83,8 +83,8 @@ func (mgr *Manager) addPaymentMethodsToInvoice(
 
 		// we don't generate addresses ahead of time
 		address := ""
-		totalConverted := invoice.Total.Float64() * rate
-		invoice.AddPaymentMethod(coin, address, unit.NewFromFloat(totalConverted))
+		totalConverted := invoice.Total.Mul(rate)
+		invoice.AddPaymentMethod(coin, address, totalConverted)
 	}
 
 	return nil
@@ -104,7 +104,7 @@ func (mgr *Manager) GetInvoice(
 	return inv, nil
 }
 
-// SearchInvoices finds invoices matching filter
+// Search finds invoices matching filter
 func (mgr *Manager) Search(
 	ctx context.Context,
 	filter InvoiceFilter) ([]Invoice, error) {
@@ -137,7 +137,7 @@ func (mgr *Manager) GetInvoiceByAddress(
 // If no payment methods are provided, all supported currencies will be used
 func (mgr *Manager) CreateInvoice(
 	ctx context.Context,
-	total unit.AtomicUnit,
+	total decimal.Decimal,
 	currency string,
 	paymentMethods []string) (*Invoice, error) {
 	const op errors.Op = "invoicemgr.create"
@@ -195,7 +195,7 @@ func (mgr *Manager) CreateInvoice(
 
 	mgr.logger.Info("Created new invoice",
 		"id", invoice.ID,
-		"total", invoice.Total.Formatted(),
+		"total", invoice.Total.String(),
 		"currency", invoice.Currency,
 		"paymentMethods", paymentMethods)
 
@@ -261,7 +261,7 @@ func (mgr *Manager) ConfirmPayment(
 	ctx context.Context,
 	address string,
 	confirmations uint64,
-	amount unit.AtomicUnit,
+	amount decimal.Decimal,
 	txHash string,
 	blockHeight uint64) (*Invoice, error) {
 	const op errors.Op = "invoicemgr.confirmPayment"

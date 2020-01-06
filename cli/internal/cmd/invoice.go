@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/leonardochaia/vendopunkto/dtos"
-	"github.com/leonardochaia/vendopunkto/unit"
 	"github.com/mdp/qrterminal/v3"
+	"github.com/shopspring/decimal"
 	"github.com/spf13/cobra"
 )
 
@@ -45,12 +45,12 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error { // Initialize the databse
 
 			currency := args[0]
-			total, err := strconv.ParseFloat(args[1], 64)
+			total, err := decimal.NewFromString(args[1])
 			if err != nil {
 				return err
 			}
 
-			invoice, err := internalClient.CreateInvoice(unit.NewFromFloat(total), currency)
+			invoice, err := internalClient.CreateInvoice(total, currency)
 
 			if err != nil {
 				return err

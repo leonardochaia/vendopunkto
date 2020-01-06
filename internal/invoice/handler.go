@@ -9,7 +9,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
-	"github.com/leonardochaia/vendopunkto/unit"
+	"github.com/shopspring/decimal"
 )
 
 // Handler exposes APIs for interacting with invoices
@@ -50,12 +50,12 @@ func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) er
 		return errors.E(op, errors.Parameters, err)
 	}
 
-	if params.Total == 0 {
+	if params.Total == decimal.Zero {
 		return errors.E(op, errors.Parameters, errors.Str("A total parameters must be provided"))
 	}
 
 	invoice, err := handler.manager.CreateInvoice(r.Context(),
-		unit.NewFromFloat(params.Total), params.Currency, params.PaymentMethods)
+		params.Total, params.Currency, params.PaymentMethods)
 
 	if err != nil {
 		return errors.E(op, err)

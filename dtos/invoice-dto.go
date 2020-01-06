@@ -3,19 +3,19 @@ package dtos
 import (
 	"time"
 
-	"github.com/leonardochaia/vendopunkto/unit"
+	"github.com/shopspring/decimal"
 )
 
 type InvoiceCreationParams struct {
-	Total          float64  `json:"total"`
-	Currency       string   `json:"currency"`
-	PaymentMethods []string `json:"paymentMethods"`
+	Total          decimal.Decimal `json:"total"`
+	Currency       string          `json:"currency"`
+	PaymentMethods []string        `json:"paymentMethods"`
 }
 
 type InvoiceConfirmPaymentsParams struct {
 	TxHash        string          `json:"txHash"`
 	Address       string          `json:"address"`
-	Amount        unit.AtomicUnit `json:"amount"`
+	Amount        decimal.Decimal `json:"amount"`
 	Confirmations uint64          `json:"confirmations"`
 	BlockHeight   uint64          `json:"blockHeight"`
 }

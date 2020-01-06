@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"runtime"
 	"testing"
+
+	"github.com/shopspring/decimal"
 )
 
 // Assert fails the test if the condition is false.
@@ -33,6 +35,15 @@ func Equals(tb testing.TB, exp, act interface{}) {
 	if !reflect.DeepEqual(exp, act) {
 		_, file, line, _ := runtime.Caller(1)
 		fmt.Printf("\033[31m%s:%d:\n\n\texp: %#v\n\n\tgot: %#v\n\n", filepath.Base(file), line, exp, act)
+		tb.FailNow()
+	}
+}
+
+// DecimalEquals for comparing decimal.DEcimal
+func DecimalEquals(tb testing.TB, exp, act decimal.Decimal) {
+	if !exp.Equals(act) {
+		_, file, line, _ := runtime.Caller(1)
+		fmt.Printf("%s:%d:\n\n\texp: %v\n\n\tgot: %v\n\n", filepath.Base(file), line, exp.String(), act.String())
 		tb.FailNow()
 	}
 }

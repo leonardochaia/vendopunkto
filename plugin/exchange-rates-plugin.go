@@ -2,9 +2,10 @@ package plugin
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/shopspring/decimal"
 )
 
-type ExchangeRatesResult map[string]float64
+type ExchangeRatesResult map[string]decimal.Decimal
 
 // ExchangeRatesPlugin must be implemented in order to provide coin exchange
 // rates

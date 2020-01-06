@@ -3,7 +3,7 @@ package monero
 import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
-	"github.com/leonardochaia/vendopunkto/unit"
+	"github.com/shopspring/decimal"
 	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
 )
 

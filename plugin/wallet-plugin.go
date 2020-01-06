@@ -7,7 +7,7 @@ import (
 	"text/template"
 
 	"github.com/go-chi/chi"
-	"github.com/leonardochaia/vendopunkto/unit"
+	"github.com/shopspring/decimal"
 )
 
 // WalletPluginCurrency provides metadata for WalletPlugin currencies
@@ -33,7 +33,7 @@ type WalletPluginIncomingTransferResult struct {
 	Address       string          `json:"address"`
 	BlockHeight   uint64          `json:"blockHeight"`
 	Confirmations uint64          `json:"confirmations"`
-	Amount        unit.AtomicUnit `json:"amount"`
+	Amount        decimal.Decimal `json:"amount"`
 }
 
 // WalletPlugin must be implemented for a currency to be supported by VendoPunkto
@@ -91,7 +91,7 @@ const (
 // the template. If the WalletPluginInfo has no template, BIP21 will be used
 func (info WalletPluginInfo) BuildQRCode(
 	address string,
-	amount unit.AtomicUnit) (string, error) {
+	amount decimal.Decimal) (string, error) {
 
 	if info.Currency.QRCodeTemplate == "" {
 		// default to bip21
@@ -102,12 +102,12 @@ func (info WalletPluginInfo) BuildQRCode(
 
 	data := struct {
 		Address         string
-		Amount          unit.AtomicUnit
+		Amount          decimal.Decimal
 		AmountFormatted string
 	}{
 		Address:         address,
 		Amount:          amount,
-		AmountFormatted: amount.Formatted(),
+		AmountFormatted: amount.String(),
 	}
 
 	t, err := template.New("bip21").Parse(info.Currency.QRCodeTemplate)

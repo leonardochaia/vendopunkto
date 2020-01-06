@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/leonardochaia/vendopunkto/testutils"
-	"github.com/leonardochaia/vendopunkto/unit"
+	"github.com/shopspring/decimal"
 )
 
 func TestQRGeneration(t *testing.T) {
 
 	address := "xmr-fake-addr"
-	amount := unit.NewFromFloat(1)
-	expected := fmt.Sprintf("monero:%s?tx_amount=%d", address, uint64(amount))
+	amount := decimal.NewFromFloat(1)
+	expected := fmt.Sprintf("monero:%s?tx_amount=%d", address, amount)
 
 	wi := WalletPluginInfo{
 		Currency: WalletPluginCurrency{
@@ -31,8 +31,8 @@ func TestQRGeneration(t *testing.T) {
 func TestQRBIP21Generation(t *testing.T) {
 
 	address := "btc-fake-addr"
-	amount := unit.NewFromFloat(50)
-	expected := fmt.Sprintf("bitcoin:%s?amount=%s", address, amount.Formatted())
+	amount := decimal.NewFromFloat(50)
+	expected := fmt.Sprintf("bitcoin:%s?amount=%s", address, amount.String())
 
 	wi := WalletPluginInfo{
 		Currency: WalletPluginCurrency{

@@ -5,7 +5,7 @@ import (
 
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
-	"github.com/leonardochaia/vendopunkto/unit"
+	"github.com/shopspring/decimal"
 )
 
 type InvoiceStatus int
@@ -14,7 +14,7 @@ const (
 	// Pending when the invoice has been created but the wallet has not
 	// received payment yet or the payment amount is not enough
 	Pending InvoiceStatus = 1
-	// Completed when the invoice has been payid completely.
+	// Completed when the invoice has been payed completely.
 	Completed InvoiceStatus = 2
 	// Failed when the payments fails for whatever reason
 	Failed InvoiceStatus = 3
@@ -32,7 +32,7 @@ const (
 
 type Invoice struct {
 	ID             string
-	Total          unit.AtomicUnit
+	Total          decimal.Decimal
 	Currency       string
 	CreatedAt      time.Time
 	PaymentMethods []*PaymentMethod
@@ -41,7 +41,7 @@ type Invoice struct {
 type PaymentMethod struct {
 	ID        uint
 	InvoiceID string
-	Total     unit.AtomicUnit
+	Total     decimal.Decimal
 	Currency  string
 	Address   string
 	Payments  []*Payment
@@ -51,7 +51,7 @@ type Payment struct {
 	ID              uint
 	TxHash          string
 	PaymentMethodID uint
-	Amount          unit.AtomicUnit
+	Amount          decimal.Decimal
 	Confirmations   uint64
 	BlockHeight     uint64
 	ConfirmedAt     time.Time
@@ -73,22 +73,24 @@ func (invoice *Invoice) Status() InvoiceStatus {
 // what percentage of the invoice has been payed
 func (invoice *Invoice) CalculatePaymentPercentage() float64 {
 
-	payed := invoice.CalculateTotalPayedAmount().Float64()
+	h := decimal.NewFromInt(100)
+	payed := invoice.CalculateTotalPayedAmount()
 
-	return (payed * 100) / invoice.Total.Float64()
+	f, _ := payed.Mul(h).Div(invoice.Total).Float64()
+	return f
 }
 
 // CalculateTotalPayedAmount returns the total amount, of all payments
 // converted to the invoice's currency
-func (invoice *Invoice) CalculateTotalPayedAmount() unit.AtomicUnit {
-	var total unit.AtomicUnit
-	total = 0
+func (invoice *Invoice) CalculateTotalPayedAmount() decimal.Decimal {
+	total := decimal.Zero
 
 	for _, method := range invoice.PaymentMethods {
 		for _, payment := range method.Payments {
 			if payment.Status() == Confirmed {
 				// payment amount converted to invoice's currency
-				total += convertCurrencyWithTotals(method.Total, invoice.Total, payment.Amount)
+				converted := convertCurrencyWithTotals(method.Total, invoice.Total, payment.Amount)
+				total = decimal.Sum(total, converted)
 			}
 		}
 	}
@@ -98,19 +100,19 @@ func (invoice *Invoice) CalculateTotalPayedAmount() unit.AtomicUnit {
 
 // CalculateRemainingAmount returns how much is needed to fully pay this invoice
 // in the invoice's currency
-func (invoice *Invoice) CalculateRemainingAmount() unit.AtomicUnit {
+func (invoice *Invoice) CalculateRemainingAmount() decimal.Decimal {
 	totalPayed := invoice.CalculateTotalPayedAmount()
 
-	if totalPayed > invoice.Total {
-		return 0
+	if totalPayed.GreaterThan(invoice.Total) {
+		return decimal.Zero
 	}
 
-	return invoice.Total - totalPayed
+	return invoice.Total.Sub(totalPayed)
 }
 
 // CalculatePaymentMethodRemaining returns how much is remaining in the method's
 // currency to fully pay this invoice
-func (invoice Invoice) CalculatePaymentMethodRemaining(method PaymentMethod) unit.AtomicUnit {
+func (invoice Invoice) CalculatePaymentMethodRemaining(method PaymentMethod) decimal.Decimal {
 
 	remainingInInvoiceCurrency := invoice.CalculateRemainingAmount()
 
@@ -147,7 +149,7 @@ func (invoice *Invoice) FindDefaultPaymentMethod() *PaymentMethod {
 func (invoice *Invoice) AddPaymentMethod(
 	currency string,
 	address string,
-	amount unit.AtomicUnit,
+	amount decimal.Decimal,
 ) *PaymentMethod {
 
 	method := &PaymentMethod{
@@ -187,7 +189,7 @@ func (payment *Payment) Update(confirmations uint64, blockHeight uint64) bool {
 
 func (method *PaymentMethod) AddPayment(
 	txHash string,
-	amount unit.AtomicUnit,
+	amount decimal.Decimal,
 	confirmations uint64,
 	blockHeight uint64,
 ) *Payment {
@@ -221,17 +223,17 @@ func (method *PaymentMethod) FindPayment(txHash string) *Payment {
 // convertCurrencyWithTotals returns the conversion of the provided amount to the
 // invoice's currency.
 func convertCurrencyWithTotals(
-	aTotal unit.AtomicUnit,
-	bTotal unit.AtomicUnit,
-	aAmount unit.AtomicUnit) unit.AtomicUnit {
+	aTotal decimal.Decimal,
+	bTotal decimal.Decimal,
+	aAmount decimal.Decimal) decimal.Decimal {
 
 	// exchange rate of invoice's currency to method's currency
-	exchangeRate := aTotal.Float64() / bTotal.Float64()
+	exchangeRate := aTotal.Div(bTotal)
 
 	// the amount converted to invoice's currency
-	converted := aAmount.Float64() / exchangeRate
+	converted := aAmount.Div(exchangeRate)
 
-	return unit.NewFromFloat(converted)
+	return converted
 }
 
 func convertInvoiceToDto(invoice Invoice, pluginMgr *pluginmgr.Manager) (dtos.InvoiceDto, error) {
