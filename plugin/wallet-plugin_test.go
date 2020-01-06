@@ -12,13 +12,13 @@ func TestQRGeneration(t *testing.T) {
 
 	address := "xmr-fake-addr"
 	amount := decimal.NewFromFloat(1)
-	expected := fmt.Sprintf("monero:%s?tx_amount=%d", address, amount)
+	expected := fmt.Sprintf("monero:%s?tx_amount=%s", address, "1000000000000")
 
 	wi := WalletPluginInfo{
 		Currency: WalletPluginCurrency{
 			Name:           "Monero",
 			Symbol:         "XMR",
-			QRCodeTemplate: "monero:{{.Address}}?tx_amount={{.Amount}}",
+			QRCodeTemplate: "{{$t:= newDecimal 1000000000000}}monero:{{.Address}}?tx_amount={{.Amount.Mul $t}}",
 		},
 	}
 

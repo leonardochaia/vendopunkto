@@ -3,8 +3,8 @@ package monero
 import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
-	"github.com/shopspring/decimal"
 	"github.com/monero-ecosystem/go-monero-rpc-client/wallet"
+	"github.com/shopspring/decimal"
 )
 
 type moneroWalletPlugin struct {
@@ -61,7 +61,7 @@ func (p moneroWalletPlugin) GetIncomingTransfers(params plugin.WalletPluginIncom
 			Address:       addrResp.IntegratedAddress,
 			BlockHeight:   transfer.Height,
 			Confirmations: transfer.Confirmations,
-			Amount:        unit.AtomicUnit(transfer.Amount),
+			Amount:        decimal.NewFromFloat(wallet.XMRToFloat64(transfer.Amount)),
 		}
 		output = append(output, tx)
 	}
@@ -82,7 +82,7 @@ func (p moneroWalletPlugin) GetWalletInfo() (plugin.WalletPluginInfo, error) {
 		Currency: plugin.WalletPluginCurrency{
 			Name:           "Monero",
 			Symbol:         "XMR",
-			QRCodeTemplate: "monero:{{.Address}}?tx_amount={{.Amount}}",
+			QRCodeTemplate: "{{$t:= newDecimal 1000000000000}}monero:{{.Address}}?tx_amount={{.Amount.Mul $t}}",
 		},
 	}, nil
 }

@@ -110,7 +110,13 @@ func (info WalletPluginInfo) BuildQRCode(
 		AmountFormatted: amount.String(),
 	}
 
-	t, err := template.New("bip21").Parse(info.Currency.QRCodeTemplate)
+	funcMap := template.FuncMap{
+		"newDecimal": decimal.NewFromFloat,
+	}
+
+	t, err := template.New("bip21").
+		Funcs(funcMap).
+		Parse(info.Currency.QRCodeTemplate)
 	if err != nil {
 		return "", err
 	}
