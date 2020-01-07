@@ -1,12 +1,12 @@
-<h1 class="mat-display-1 vp-text-title">Invoices</h1>
+<h1 class="mat-display-1">Invoices</h1>
 
 <mat-card *ngFor="let invoice of invoices$ | async" style="margin-bottom: 8px;">
-    <mat-card-title fxLayout="row" style="white-space: nowrap;">
+    <mat-card-title fxLayout="column" fxLayout.gt-xs="row" style="white-space: nowrap;" fxLayoutGap="8px">
         <div>
             {{invoice.total}}
             {{invoice.currency | uppercase}}
         </div>
-        <div fxFlex="grow"></div>
+        <div fxFlex="grow" fxHide fxShow.gt-xs></div>
         <div>
             {{invoice.paymentPercentage | number}}% confirmed
         </div>
@@ -19,7 +19,8 @@
     </mat-card-subtitle>
 
     <mat-card-content fxLayout="column" fxLayout.gt-xs="row" style="white-space: nowrap;">
-        <div *ngIf="invoice.payments.length" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div fxFlex="grow" *ngIf="invoice.payments.length" fxLayout="row" fxLayoutAlign="start center"
+            fxLayoutGap="8px">
             <div>Payments:</div>
             <div>
                 <mat-chip-list selectable="false">
@@ -31,7 +32,6 @@
             </div>
         </div>
 
-        <div fxFlex="grow"></div>
         <div>
             <button mat-raised-button color="accent" (click)="openPayWindow(invoice.id)">
                 {{invoice.paymentPercentage < 100 ? 'Pay' : 'View'}}

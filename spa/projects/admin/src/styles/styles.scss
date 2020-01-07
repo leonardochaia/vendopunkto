@@ -35,10 +35,7 @@ $admin-theme: mat-dark-theme($admin-primary, $admin-accent, $admin-warn);
 
 html, body { 
     height: 100%;
-    background-color:#263238
-}
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
-
-.vp-text-title {
+    background-color:#263238;
     color: whitesmoke;
 }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

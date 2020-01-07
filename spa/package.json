@@ -24,6 +24,7 @@
     "@angular/router": "~8.2.14",
     "@ngrx/effects": "^8.6.0",
     "@ngrx/store": "^8.6.0",
+    "@ngrx/store-devtools": "^8.6.0",
     "hammerjs": "^2.0.8",
     "material-design-icons": "^3.0.1",
     "ngx-kjua": "^1.6.0",
