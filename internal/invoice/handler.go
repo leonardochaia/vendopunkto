@@ -9,7 +9,6 @@ import (
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
-	"github.com/shopspring/decimal"
 )
 
 // Handler exposes APIs for interacting with invoices
@@ -45,17 +44,13 @@ func (handler *Handler) InternalRoutes() chi.Router {
 
 func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) error {
 	const op errors.Op = "api.invoice.create"
+
 	var params = new(dtos.InvoiceCreationParams)
 	if err := render.DecodeJSON(r.Body, &params); err != nil {
 		return errors.E(op, errors.Parameters, err)
 	}
 
-	if params.Total == decimal.Zero {
-		return errors.E(op, errors.Parameters, errors.Str("A total parameters must be provided"))
-	}
-
-	invoice, err := handler.manager.CreateInvoice(r.Context(),
-		params.Total, params.Currency, params.PaymentMethods)
+	invoice, err := handler.manager.CreateInvoice(r.Context(), *params)
 
 	if err != nil {
 		return errors.E(op, err)

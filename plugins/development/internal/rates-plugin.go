@@ -4,6 +4,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/plugin"
 	"github.com/shopspring/decimal"
+	"strings"
 )
 
 // rates is a map of crypto to USD
@@ -26,9 +27,7 @@ func (p fakeExchangeRatesPlugin) GetExchangeRates(
 
 	output := make(plugin.ExchangeRatesResult)
 
-	if currency == "usd" {
-		return rates, nil
-	}
+	currency = strings.ToLower(currency)
 
 	converted := rates[currency]
 

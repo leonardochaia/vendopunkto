@@ -5,7 +5,18 @@ import { CommonModule } from '@angular/common';
 import { StoreModule } from '@ngrx/store';
 import * as fromInvoice from './+state/invoice.reducer';
 import { InvoiceListContainerComponent } from './invoice-list-container/invoice-list-container.component';
-import { MatCardModule, MatChipsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule } from '@angular/material';
+import {
+  MatCardModule,
+  MatChipsModule,
+  MatFormFieldModule,
+  MatInputModule,
+  MatButtonModule,
+  MatSelectModule,
+  MatStepperModule,
+  MatIconModule,
+  MatProgressSpinnerModule,
+  MatProgressBarModule
+} from '@angular/material';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { InvoiceCreationContainerComponent } from './invoice-creation-container/invoice-creation-container.component';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -24,6 +35,11 @@ import { ReactiveFormsModule } from '@angular/forms';
     MatInputModule,
     MatButtonModule,
     MatSelectModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatProgressBarModule,
+
+    MatStepperModule,
 
     StoreModule.forFeature(fromInvoice.InvoiceFeatureKey, fromInvoice.reducer),
     EffectsModule.forFeature([InvoiceEffects]),

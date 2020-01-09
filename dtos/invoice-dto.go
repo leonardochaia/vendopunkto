@@ -7,9 +7,14 @@ import (
 )
 
 type InvoiceCreationParams struct {
-	Total          decimal.Decimal `json:"total"`
-	Currency       string          `json:"currency"`
-	PaymentMethods []string        `json:"paymentMethods"`
+	Total          decimal.Decimal               `json:"total"`
+	Currency       string                        `json:"currency"`
+	PaymentMethods []PaymentMethodCreationParams `json:"paymentMethods"`
+}
+
+type PaymentMethodCreationParams struct {
+	Currency string          `json:"currency"`
+	Total    decimal.Decimal `json:"total"`
 }
 
 type InvoiceConfirmPaymentsParams struct {

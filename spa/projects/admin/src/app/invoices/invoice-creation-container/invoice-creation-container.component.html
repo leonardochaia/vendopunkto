@@ -1,19 +1,112 @@
 <h1 class="mat-display-1">New Invoice</h1>
 
-<form style="max-width: 420px; margin: 0 auto" [formGroup]="form" (ngSubmit)="submit()">
-    <mat-form-field style="width: 100%;">
-        <input matInput placeholder="Total" type="number" [formControl]="totalControl">
-    </mat-form-field>
+<ng-template #spinnerTemplate>
+    <mat-spinner style="margin:0 auto"></mat-spinner>
+</ng-template>
 
-    <mat-form-field style="width: 100%;">
-        <mat-select placeholder="Currency" [formControl]="currencyControl">
-            <mat-option *ngFor="let currency of currencies$|async" [value]="currency.symbol">
-                {{currency.symbol | uppercase}} - {{currency.name}}
-            </mat-option>
-        </mat-select>
-    </mat-form-field>
+<div fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="center start"
+    *ngIf="!(creating$ | async) && !(loadingCurrencies$ | async) &&  currencies$ | async as currencies; else spinnerTemplate">
 
-    <button type="submit" mat-raised-button color="primary" [disabled]="form.invalid">
-        Create
-    </button>
-</form>
+    <div fxFlex.gt-xs fxFlex.gt-md="50%">
+        <mat-horizontal-stepper [linear]="basicInfoForm.invalid" #stepper>
+            <mat-step [stepControl]="basicInfoForm">
+                <ng-template matStepLabel>Price</ng-template>
+                <form [formGroup]="basicInfoForm" fxLayout="column">
+                    <div fxFlex>
+                        <p>
+                            Set the price in a familiar currency, it will be converted
+                            to the payment method's currency exchange rate.
+                        </p>
+
+                        <mat-form-field style="width: 100%;">
+                            <input matInput placeholder="Total" autofocus type="number" step="0"
+                                [formControl]="totalControl">
+                        </mat-form-field>
+
+                        <mat-form-field style="width: 100%;">
+                            <mat-select placeholder="Currency" [formControl]="currencyControl">
+                                <mat-option *ngFor="let entry of currencies | keyvalue" [value]="entry.key">
+                                    {{entry.key | uppercase}} - {{entry.value.name}}
+                                </mat-option>
+                            </mat-select>
+                            <mat-hint
+                                *ngIf="currencyControl?.value && !currencies[currencyControl.value]?.supportsPayments">
+                                This currency can only be used to define the invoice's value.
+                                But it won't be used as payment method.
+                            </mat-hint>
+                        </mat-form-field>
+                    </div>
+
+                    <div fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="end center">
+                        <div fxFlex *ngIf="loadingPaymentMethods$ | async">
+                            <mat-progress-bar mode="query"></mat-progress-bar>
+                        </div>
+                        <div>
+                            <button mat-raised-button matStepperNext>
+                                Configure Payment Methods
+                            </button>
+                        </div>
+                        <div>
+                            <button mat-raised-button color="primary" (click)="confirmationStep.select()">
+                                Preview and Create
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </mat-step>
+
+            <mat-step [stepControl]="paymentMethodsArray">
+                <ng-template matStepLabel>Payment Methods</ng-template>
+                <form [formGroup]="paymentMethodsArray" *ngIf="!(loadingPaymentMethods$ | async); else spinnerTemplate">
+                    <p>
+                        The payee will be able to pay the invoice in this currencies.
+                        You can change the exchange price if you'd like.
+                    </p>
+
+                    <mat-card *ngFor="let pm of paymentMethodsArray.controls; let index = index">
+                        <mat-card-title fxLayout="row">
+                            <div fxFlex="grow">{{currencies[pm.value.currency].name | titlecase}}</div>
+                            <div>
+                                <button type="button" mat-icon-button color="warn"
+                                    (click)="paymentMethodsArray.removeAt(index)">
+                                    <mat-icon>delete</mat-icon>
+                                </button>
+                            </div>
+                        </mat-card-title>
+                        <mat-form-field style="width: 100%;">
+                            <input matInput placeholder="Total" type="number" step="0" [formControl]="pm.get('total')">
+                            <span matSuffix>{{pm.value.currency | uppercase}}&nbsp;</span>
+                        </mat-form-field>
+                    </mat-card>
+                    <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="end center">
+                        <button mat-raised-button matStepperPrevious>Back</button>
+                        <button mat-raised-button matStepperNext color="primary">Preview and Create</button>
+                    </div>
+                </form>
+            </mat-step>
+
+            <mat-step #confirmationStep>
+                <ng-template matStepLabel>Confirmation</ng-template>
+
+                <h1>
+                    Invoice Total:
+                    <b>
+                        {{basicInfoForm.value.total}}
+                        {{basicInfoForm.value.currency | uppercase}}
+                    </b>
+                </h1>
+
+                <h2>Payment methods</h2>
+                <mat-card *ngFor="let pm of paymentMethodsArray.getRawValue(); let index = index">
+                    <mat-card-title>
+                        {{pm.total}} {{pm.currency | uppercase}}
+                    </mat-card-title>
+                </mat-card>
+                <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="end center">
+                    <button mat-raised-button matStepperPrevious>Back</button>
+                    <button mat-raised-button color="primary" (click)="createInvoice()">Create Invoice</button>
+                </div>
+            </mat-step>
+        </mat-horizontal-stepper>
+    </div>
+</div>

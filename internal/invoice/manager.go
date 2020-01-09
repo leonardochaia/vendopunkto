@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/rs/xid"
@@ -51,40 +52,52 @@ func (mgr *Manager) getDefaultPaymentMethods() ([]string, error) {
 
 func (mgr *Manager) addPaymentMethodsToInvoice(
 	invoice *Invoice,
-	paymentMethods []string) error {
+	paymentMethods []dtos.PaymentMethodCreationParams) error {
 	exchange, err := mgr.pluginManager.GetConfiguredExchangeRatesPlugin()
 	if err != nil {
 		return err
 	}
 
-	rates, err := exchange.GetExchangeRates(invoice.Currency, paymentMethods)
+	currencies := []string{}
+	for _, method := range paymentMethods {
+		if method.Total.LessThanOrEqual(decimal.Zero) {
+			currencies = append(currencies, method.Currency)
+		}
+	}
+
+	rates, err := exchange.GetExchangeRates(invoice.Currency, currencies)
 	if err != nil {
 		return err
 	}
 
 	// convert the invoice's total to the paymentMethod's using the rates plugin
-	for _, coin := range paymentMethods {
-		rate, ok := rates[coin]
-		if !ok {
-			mgr.logger.Warn("Failed to find a rate currency, method ignored",
-				"coin", coin,
-				"invoiceID", invoice.ID)
-			continue
-		}
+	for _, method := range paymentMethods {
+		currency := method.Currency
+		total := method.Total
 
-		if rate.Equals(decimal.Zero) {
-			mgr.logger.Warn("Invalid rate for currency was provided, method ignored",
-				"coin", coin,
-				"rate", rate,
-				"total", invoice.Total,
-				"invoiceID", invoice.ID)
-			continue
+		if total.LessThanOrEqual(decimal.Zero) {
+			rate, ok := rates[currency]
+			if !ok {
+				mgr.logger.Warn("Failed to find a rate currency, method ignored",
+					"coin", currency,
+					"invoiceID", invoice.ID)
+				continue
+			}
+
+			if rate.LessThanOrEqual(decimal.Zero) {
+				mgr.logger.Warn("Invalid rate for currency was provided, method ignored",
+					"coin", currency,
+					"rate", rate,
+					"total", invoice.Total,
+					"invoiceID", invoice.ID)
+				continue
+			}
+			total = invoice.Total.Mul(rate)
 		}
 
 		// we don't generate addresses ahead of time
 		address := ""
-		totalConverted := invoice.Total.Mul(rate)
-		invoice.AddPaymentMethod(coin, address, totalConverted)
+		invoice.AddPaymentMethod(currency, address, total)
 	}
 
 	return nil
@@ -137,39 +150,54 @@ func (mgr *Manager) GetInvoiceByAddress(
 // If no payment methods are provided, all supported currencies will be used
 func (mgr *Manager) CreateInvoice(
 	ctx context.Context,
-	total decimal.Decimal,
-	currency string,
-	paymentMethods []string) (*Invoice, error) {
+	params dtos.InvoiceCreationParams) (*Invoice, error) {
 	const op errors.Op = "invoicemgr.create"
 
-	currency = strings.ToLower(currency)
+	if params.Total.LessThanOrEqual(decimal.Zero) {
+		return nil, errors.E(op, errors.Parameters,
+			errors.Str("Total parameters must be provided and be positive"))
+	}
 
 	invoice := &Invoice{
 		ID:        xid.New().String(),
-		Total:     total,
-		Currency:  currency,
+		Total:     params.Total,
+		Currency:  strings.ToLower(params.Currency),
 		CreatedAt: time.Now(),
 	}
 
 	path := errors.PathName("invoice/" + invoice.ID)
 
+	logger := mgr.logger.With(
+		"invoideID", invoice.ID,
+		"currency", invoice.Currency,
+		"total", invoice.Total.String(),
+		"methodCount", len(params.PaymentMethods),
+	)
+
 	// populate payment methods using all currencies if none was provided
-	if paymentMethods == nil || len(paymentMethods) == 0 {
+	if params.PaymentMethods == nil || len(params.PaymentMethods) == 0 {
+		logger.Debug("No payment methods were provided. Using defaults.")
+
 		methods, err := mgr.getDefaultPaymentMethods()
 		if err != nil {
 			return nil, errors.E(op, path, err)
 		}
-		paymentMethods = methods
+		for _, currency := range methods {
+			params.PaymentMethods = append(params.PaymentMethods, dtos.PaymentMethodCreationParams{
+				Currency: currency,
+				Total:    decimal.Zero,
+			})
+		}
 	}
 
-	err := mgr.addPaymentMethodsToInvoice(invoice, paymentMethods)
+	err := mgr.addPaymentMethodsToInvoice(invoice, params.PaymentMethods)
 	if err != nil {
 		return nil, errors.E(op, path, err)
 	}
 
 	if len(invoice.PaymentMethods) == 0 {
 		err := errors.Str("Failed to create invoice: no payment methods where created")
-		mgr.logger.Error(err.Error(), "coin", currency, "methods", paymentMethods)
+		logger.Error(err.Error())
 		return nil, errors.E(op, path, err)
 	}
 
@@ -193,11 +221,7 @@ func (mgr *Manager) CreateInvoice(
 		return nil, errors.E(op, path, err)
 	}
 
-	mgr.logger.Info("Created new invoice",
-		"id", invoice.ID,
-		"total", invoice.Total.String(),
-		"currency", invoice.Currency,
-		"paymentMethods", paymentMethods)
+	logger.Info("Created new invoice")
 
 	return invoice, nil
 }

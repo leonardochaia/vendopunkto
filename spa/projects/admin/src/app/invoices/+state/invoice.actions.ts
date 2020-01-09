@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { InvoiceDTO, SupportedCurrency, InvoiceCreationParams } from 'shared';
+import { InvoiceDTO, SupportedCurrency, InvoiceCreationParams, GetCurrencyExchangeResult } from 'shared';
 
 export const loadInvoices = createAction(
   '[Invoice] Load Invoices'
@@ -27,7 +27,7 @@ export const createInvoiceSuccess = createAction(
 
 export const createInvoiceFailure = createAction(
   '[Invoice] Create Invoice Failure',
-  props<{ error: Error }>()
+  props<{ error: string }>()
 );
 
 
@@ -37,10 +37,28 @@ export const loadCurrencies = createAction(
 
 export const loadCurrenciesSuccess = createAction(
   '[Invoice] Load Currencies Success',
-  props<{ currencies: SupportedCurrency[] }>()
+  props<{ currencies: { [symbol: string]: SupportedCurrency } }>()
 );
 
 export const loadCurrenciesFailure = createAction(
   '[Invoice] Load Currencies Failure',
-  props<{ error: Error }>()
+  props<{ error: string }>()
 );
+
+
+export const invoiceCreationFormChanged = createAction(
+  '[Invoice] Creation Form Changed',
+  props<{ form: InvoiceCreationParams }>()
+);
+
+
+export const getPaymentMethodExchangeRateSuccess = createAction(
+  '[Invoice] Get PaymentMethod Exchange Rate Success',
+  props<{ result: GetCurrencyExchangeResult }>()
+);
+
+export const getPaymentMethodExchangeRateFailure = createAction(
+  '[Invoice] Get PaymentMethod Exchange Rate Failure',
+  props<{ error: string }>()
+);
+

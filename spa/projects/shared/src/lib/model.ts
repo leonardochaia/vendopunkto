@@ -33,9 +33,35 @@ export interface Payment {
 export interface SupportedCurrency {
     name: string;
     symbol: string;
+    supportsPayments: boolean;
 }
 
 export interface InvoiceCreationParams {
     total: number;
     currency: string;
+    paymentMethods: PaymentMethodCreationParams[];
+}
+
+export interface PaymentMethodCreationParams {
+    total: number;
+    currency: string;
+}
+
+export interface GetCurrencyRatesParams {
+    fromCurrency: string;
+    toCurrencies: string[];
+}
+
+export interface GetCurrencyRatesResult {
+    [currency: string]: string;
+}
+
+export interface GetCurrencyExchangeParams {
+    fromCurrency: string;
+    toCurrencies: string[];
+    amount: string | number;
+}
+
+export interface GetCurrencyExchangeResult {
+    [currency: string]: string;
 }

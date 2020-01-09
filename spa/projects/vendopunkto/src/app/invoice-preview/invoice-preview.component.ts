@@ -28,7 +28,8 @@ export class InvoicePreviewComponent implements OnInit, OnDestroy {
   public readonly paymentMethod$ = combineLatest(this.invoice$, this.currencySubject.pipe(startWith(null)))
     .pipe(
       map(([invoice, currency]) => invoice.paymentMethods
-        .filter(pm => pm.currency === (currency || invoice.currency))[0])
+        .filter(pm => pm.currency === (currency || invoice.currency))[0]
+        || invoice.paymentMethods[0])
     );
 
   constructor(
@@ -52,7 +53,7 @@ export class InvoicePreviewComponent implements OnInit, OnDestroy {
   }
 
   public openHowItWorksDialog() {
-    this.dialog.open(InvoicePreviewHowToDialogComponent)
+    this.dialog.open(InvoicePreviewHowToDialogComponent);
   }
 
   public ngOnDestroy() {

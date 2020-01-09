@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { InvoiceDTO, InvoiceCreationParams, SupportedCurrency } from 'shared';
+import {
+  InvoiceDTO,
+  InvoiceCreationParams,
+  SupportedCurrency,
+  GetCurrencyExchangeParams,
+  GetCurrencyExchangeResult
+} from 'shared';
 
 const apiAddress = `/api/v1`;
 
@@ -21,6 +27,10 @@ export class VendopunktoApiService {
 
   public getCurrencies() {
     return this.http.get<SupportedCurrency[]>(`${apiAddress}/currencies`);
+  }
+
+  public getCurrencyExchange(params: GetCurrencyExchangeParams) {
+    return this.http.post<GetCurrencyExchangeResult>(`${apiAddress}/currencies/rates/convert`, params);
   }
 
   public createInvoice(params: InvoiceCreationParams) {
