@@ -82,6 +82,11 @@ func NewDB(
 		logger: globalLogger.Named("db"),
 	})
 
+	err = doMigrations(db)
+	if err != nil {
+		return nil, err
+	}
+
 	return db, err
 }
 

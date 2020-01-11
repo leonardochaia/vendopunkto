@@ -15,7 +15,6 @@ import (
 	"github.com/go-chi/render"
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
-	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 )
 
@@ -26,7 +25,7 @@ type VendoPunktoRouter interface {
 
 // NewRouter Creates the chi Router and configures global paths
 func NewRouter(
-	invoices *invoice.Handler,
+	invoices *InvoiceHandler,
 	globalLogger hclog.Logger,
 	txBuilder store.TransactionBuilder,
 	startupConf conf.Startup,

@@ -3,30 +3,19 @@ package invoice
 import (
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
-	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	vendopunkto "github.com/leonardochaia/vendopunkto/internal"
 )
 
-var InvoiceProviders = wire.NewSet(NewHandler, NewManager, NewTopic)
+// Providers for invoice logic
+var Providers = wire.NewSet(NewManager, NewTopic)
 
-func NewHandler(
-	manager *Manager,
-	globalLogger hclog.Logger,
-	pluginMgr *pluginmgr.Manager,
-	topic Topic) *Handler {
-	return &Handler{
-		logger:    globalLogger.Named("invoice-handler"),
-		manager:   manager,
-		pluginMgr: pluginMgr,
-		topic:     topic,
-	}
-}
-
+// NewManager creates an InvoiceManager impl
 func NewManager(
-	repository InvoiceRepository,
-	pluginManager *pluginmgr.Manager,
+	repository vendopunkto.InvoiceRepository,
+	pluginManager vendopunkto.PluginManager,
 	globalLogger hclog.Logger,
-	topic Topic) (*Manager, error) {
-	return &Manager{
+	topic vendopunkto.InvoiceTopic) (vendopunkto.InvoiceManager, error) {
+	return &invoiceManager{
 		logger:        globalLogger.Named("invoice-manager"),
 		pluginManager: pluginManager,
 		repository:    repository,

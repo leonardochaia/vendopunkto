@@ -1,4 +1,4 @@
-package invoice
+package vendopunkto
 
 import (
 	"testing"

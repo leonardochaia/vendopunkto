@@ -1,4 +1,4 @@
-package invoice
+package server
 
 import (
 	"net/http"
@@ -8,19 +8,19 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
-	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	vendopunkto "github.com/leonardochaia/vendopunkto/internal"
 )
 
-// Handler exposes APIs for interacting with invoices
-type Handler struct {
-	manager   *Manager
-	pluginMgr *pluginmgr.Manager
+// InvoiceHandler exposes APIs for interacting with invoices
+type InvoiceHandler struct {
+	manager   vendopunkto.InvoiceManager
+	pluginMgr vendopunkto.PluginManager
 	logger    hclog.Logger
-	topic     Topic
+	topic     vendopunkto.InvoiceTopic
 }
 
 // Routes are the public routes, added to the public API
-func (handler *Handler) Routes() chi.Router {
+func (handler *InvoiceHandler) Routes() chi.Router {
 	router := chi.NewRouter()
 
 	router.Post("/{id}/payment-method/address", errors.WrapHandler(handler.generatePaymentMethodAddress))
@@ -31,7 +31,7 @@ func (handler *Handler) Routes() chi.Router {
 }
 
 // InternalRoutes are the internal routes, added to the internal API
-func (handler *Handler) InternalRoutes() chi.Router {
+func (handler *InvoiceHandler) InternalRoutes() chi.Router {
 	router := chi.NewRouter()
 
 	router.Get("/{id}", errors.WrapHandler(handler.getInvoice))
@@ -42,7 +42,7 @@ func (handler *Handler) InternalRoutes() chi.Router {
 	return router
 }
 
-func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) error {
+func (handler *InvoiceHandler) createInvoice(w http.ResponseWriter, r *http.Request) error {
 	const op errors.Op = "api.invoice.create"
 
 	var params = new(dtos.InvoiceCreationParams)
@@ -59,7 +59,7 @@ func (handler *Handler) createInvoice(w http.ResponseWriter, r *http.Request) er
 	return handler.renderInvoiceDto(w, r, *invoice)
 }
 
-func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) error {
+func (handler *InvoiceHandler) getInvoice(w http.ResponseWriter, r *http.Request) error {
 	const op errors.Op = "api.invoice.get"
 
 	invoiceID := chi.URLParam(r, "id")
@@ -75,10 +75,10 @@ func (handler *Handler) getInvoice(w http.ResponseWriter, r *http.Request) error
 	return handler.renderInvoiceDto(w, r, *invoice)
 }
 
-func (handler *Handler) searchInvoices(w http.ResponseWriter, r *http.Request) error {
+func (handler *InvoiceHandler) searchInvoices(w http.ResponseWriter, r *http.Request) error {
 	const op errors.Op = "api.invoice.get"
 
-	var params = new(InvoiceFilter)
+	var params = new(vendopunkto.InvoiceFilter)
 	if err := render.DecodeJSON(r.Body, &params); err != nil {
 		return errors.E(op, errors.Parameters, err)
 	}
@@ -91,7 +91,7 @@ func (handler *Handler) searchInvoices(w http.ResponseWriter, r *http.Request) e
 	return handler.renderInvoiceListDto(w, r, invoices)
 }
 
-func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *http.Request) error {
+func (handler *InvoiceHandler) generatePaymentMethodAddress(w http.ResponseWriter, r *http.Request) error {
 	const op errors.Op = "api.invoice.generatePaymentMethodAddress"
 
 	invoiceID := chi.URLParam(r, "id")
@@ -114,10 +114,10 @@ func (handler *Handler) generatePaymentMethodAddress(w http.ResponseWriter, r *h
 	return handler.renderInvoiceDto(w, r, *invoice)
 }
 
-func (handler *Handler) renderInvoiceDto(
+func (handler *InvoiceHandler) renderInvoiceDto(
 	w http.ResponseWriter,
 	r *http.Request,
-	invoice Invoice) error {
+	invoice vendopunkto.Invoice) error {
 	const op errors.Op = "api.invoice.renderInvoiceDto"
 
 	dto, err := convertInvoiceToDto(invoice, handler.pluginMgr)
@@ -129,10 +129,10 @@ func (handler *Handler) renderInvoiceDto(
 	return nil
 }
 
-func (handler *Handler) renderInvoiceListDto(
+func (handler *InvoiceHandler) renderInvoiceListDto(
 	w http.ResponseWriter,
 	r *http.Request,
-	invoices []Invoice) error {
+	invoices []vendopunkto.Invoice) error {
 	const op errors.Op = "api.invoice.renderInvoiceListDto"
 
 	result := []dtos.InvoiceDto{}
@@ -146,4 +146,63 @@ func (handler *Handler) renderInvoiceListDto(
 
 	render.JSON(w, r, result)
 	return nil
+}
+
+func convertInvoiceToDto(
+	invoice vendopunkto.Invoice,
+	pluginMgr vendopunkto.PluginManager) (dtos.InvoiceDto, error) {
+
+	dto := &dtos.InvoiceDto{
+		ID:                invoice.ID,
+		Total:             invoice.Total,
+		Currency:          invoice.Currency,
+		CreatedAt:         invoice.CreatedAt,
+		Status:            uint(invoice.Status()),
+		PaymentPercentage: invoice.CalculatePaymentPercentage(),
+		Remaining:         invoice.CalculateRemainingAmount(),
+		PaymentMethods:    []*dtos.PaymentMethodDto{},
+		Payments:          []*dtos.PaymentDto{},
+	}
+
+	for _, method := range invoice.PaymentMethods {
+
+		var qrCode string
+		if method.Address != "" {
+			info, err := pluginMgr.GetWalletInfoForCurrency(method.Currency)
+			if err != nil {
+				return dtos.InvoiceDto{}, err
+			}
+			qrCode, err = info.BuildQRCode(method.Address, method.Total)
+			if err != nil {
+				return dtos.InvoiceDto{}, err
+			}
+		}
+
+		methodDto := &dtos.PaymentMethodDto{
+			ID:        method.ID,
+			Total:     method.Total,
+			Currency:  method.Currency,
+			Address:   method.Address,
+			Remaining: invoice.CalculatePaymentMethodRemaining(*method),
+			QRCode:    qrCode,
+		}
+
+		for _, payment := range method.Payments {
+			paymentDto := &dtos.PaymentDto{
+				TxHash:        payment.TxHash,
+				Amount:        payment.Amount,
+				Confirmations: payment.Confirmations,
+				ConfirmedAt:   payment.ConfirmedAt,
+				CreatedAt:     payment.CreatedAt,
+				Status:        uint(payment.Status()),
+				Currency:      method.Currency,
+				BlockHeight:   payment.BlockHeight,
+			}
+			dto.Payments = append(dto.Payments, paymentDto)
+		}
+
+		dto.PaymentMethods = append(dto.PaymentMethods, methodDto)
+	}
+
+	return *dto, nil
 }

@@ -10,7 +10,6 @@ import (
 
 	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
-	"github.com/leonardochaia/vendopunkto/internal/currency"
 	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
@@ -23,10 +22,9 @@ import (
 func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	wire.Build(
 		conf.Providers,
-		pluginmgr.PluginProviders,
-		invoice.InvoiceProviders,
-		server.ServerProviders,
-		currency.CurrencyProviders,
+		pluginmgr.Providers,
+		invoice.Providers,
+		server.Providers,
 		clients.Providers,
 		repositories.Providers,
 		store.Providers,

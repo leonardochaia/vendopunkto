@@ -14,8 +14,8 @@ type coinWalletClientImpl struct {
 	info   plugin.PluginInfo
 }
 
-// NewWalletClient constructs a new client implementing WalletPlugin
-func NewWalletClient(
+// newWalletClient constructs a new client implementing WalletPlugin
+func newWalletClient(
 	url url.URL,
 	info plugin.PluginInfo,
 	client clients.HTTP) plugin.WalletPlugin {

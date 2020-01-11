@@ -6,9 +6,8 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/errors"
+	vendopunkto "github.com/leonardochaia/vendopunkto/internal"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
-	"github.com/leonardochaia/vendopunkto/internal/invoice"
-	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 	"github.com/leonardochaia/vendopunkto/plugin"
 )
@@ -19,9 +18,9 @@ type WalletPoller struct {
 
 	logger      hclog.Logger
 	txBuilder   store.TransactionBuilder
-	pluginMgr   *pluginmgr.Manager
-	invoiceRepo invoice.InvoiceRepository
-	invoiceMgr  *invoice.Manager
+	pluginMgr   vendopunkto.PluginManager
+	invoiceRepo vendopunkto.InvoiceRepository
+	invoiceMgr  vendopunkto.InvoiceManager
 	running     bool
 }
 
@@ -30,9 +29,9 @@ func NewPoller(
 	logger hclog.Logger,
 	startupConf conf.Startup,
 	txBuilder store.TransactionBuilder,
-	pluginMgr *pluginmgr.Manager,
-	invoiceRepo invoice.InvoiceRepository,
-	invoiceMgr *invoice.Manager) (*WalletPoller, error) {
+	pluginMgr vendopunkto.PluginManager,
+	invoiceRepo vendopunkto.InvoiceRepository,
+	invoiceMgr vendopunkto.InvoiceManager) (*WalletPoller, error) {
 	interval, err := time.ParseDuration(startupConf.Plugins.WalletPollInterval)
 	if err != nil {
 		return nil, err
@@ -96,7 +95,7 @@ func (poller *WalletPoller) doPoll() error {
 		}
 
 		params := plugin.WalletPluginIncomingTransferParams{
-			MinBlockHeight: height,
+			MinBlockHeight: height - 10, // TODO: Settings
 		}
 
 		transfers, err := wallet.GetIncomingTransfers(params)

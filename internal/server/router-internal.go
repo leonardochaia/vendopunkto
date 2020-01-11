@@ -4,8 +4,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
-	"github.com/leonardochaia/vendopunkto/internal/currency"
-	"github.com/leonardochaia/vendopunkto/internal/invoice"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 )
 
@@ -16,9 +14,9 @@ type InternalRouter interface {
 
 // NewInternalRouter creates the router
 func NewInternalRouter(
-	invoice *invoice.Handler,
+	invoice *InvoiceHandler,
+	currencies *CurrencyHandler,
 	globalLogger hclog.Logger,
-	currencies currency.Handler,
 	txBuilder store.TransactionBuilder,
 	startupConf conf.Startup,
 ) (*InternalRouter, error) {

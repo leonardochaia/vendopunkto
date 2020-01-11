@@ -1,6 +1,7 @@
 package pluginmgr
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/clients"
 	"github.com/leonardochaia/vendopunkto/errors"
+	vendopunkto "github.com/leonardochaia/vendopunkto/internal"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/leonardochaia/vendopunkto/plugin"
 )
@@ -22,16 +24,18 @@ type exchangeRatesAndInfo struct {
 	info   plugin.PluginInfo
 }
 
-type Manager struct {
+type pluginManager struct {
 	logger      hclog.Logger
 	client      clients.HTTP
 	startupConf conf.Startup
+
+	currencyRepo vendopunkto.CurrencyRepository
 
 	wallets       map[string]walletAndInfo
 	exchangeRates map[string]exchangeRatesAndInfo
 }
 
-func (manager *Manager) LoadPlugins() {
+func (manager *pluginManager) LoadPlugins(ctx context.Context) {
 	plugins := manager.startupConf.Plugins.Enabled
 
 	manager.logger.Debug("Loading plugin from URLs",
@@ -46,7 +50,7 @@ func (manager *Manager) LoadPlugins() {
 			continue
 		}
 
-		err = manager.initializePlugin(*url)
+		err = manager.initializePlugin(ctx, *url)
 		if err != nil {
 			manager.logger.Error("Failed to communicate with plugin", "error", err, "URL", url.String())
 			continue
@@ -61,14 +65,14 @@ func (manager *Manager) LoadPlugins() {
 	}
 }
 
-func (manager *Manager) GetWallet(ID string) (plugin.WalletPlugin, error) {
+func (manager *pluginManager) GetWallet(ID string) (plugin.WalletPlugin, error) {
 	if w, ok := manager.wallets[ID]; ok {
 		return w.client, nil
 	}
 	return nil, fmt.Errorf("Could not find a wallet with ID " + ID)
 }
 
-func (manager *Manager) GetWalletForCurrency(currency string) (plugin.WalletPlugin, error) {
+func (manager *pluginManager) GetWalletForCurrency(currency string) (plugin.WalletPlugin, error) {
 	for _, wallet := range manager.wallets {
 		if wallet.info.Currency.Symbol == currency {
 			return wallet.client, nil
@@ -77,7 +81,7 @@ func (manager *Manager) GetWalletForCurrency(currency string) (plugin.WalletPlug
 	return nil, fmt.Errorf("Could not find a wallet for currency " + currency)
 }
 
-func (manager *Manager) GetWalletInfoForCurrency(currency string) (plugin.WalletPluginInfo, error) {
+func (manager *pluginManager) GetWalletInfoForCurrency(currency string) (plugin.WalletPluginInfo, error) {
 	for _, wallet := range manager.wallets {
 		if wallet.info.Currency.Symbol == currency {
 			return wallet.info, nil
@@ -86,7 +90,7 @@ func (manager *Manager) GetWalletInfoForCurrency(currency string) (plugin.Wallet
 	return plugin.WalletPluginInfo{}, fmt.Errorf("Could not find a wallet for currency " + currency)
 }
 
-func (manager *Manager) GetAllCurrencies() ([]plugin.WalletPluginCurrency, error) {
+func (manager *pluginManager) GetAllCurrencies() ([]plugin.WalletPluginCurrency, error) {
 	output := []plugin.WalletPluginCurrency{}
 	for _, v := range manager.wallets {
 		output = append(output, v.info.Currency)
@@ -95,7 +99,7 @@ func (manager *Manager) GetAllCurrencies() ([]plugin.WalletPluginCurrency, error
 	return output, nil
 }
 
-func (manager *Manager) GetExchangeRatesPlugin(ID string) (plugin.ExchangeRatesPlugin, error) {
+func (manager *pluginManager) GetExchangeRatesPlugin(ID string) (plugin.ExchangeRatesPlugin, error) {
 	const op errors.Op = "pluginmgr.create"
 	if w, ok := manager.exchangeRates[ID]; ok {
 		return w.client, nil
@@ -103,11 +107,11 @@ func (manager *Manager) GetExchangeRatesPlugin(ID string) (plugin.ExchangeRatesP
 	return nil, errors.E(op, errors.NotExist, fmt.Errorf("Could not find an exchange rates plugin with ID "+ID))
 }
 
-func (manager *Manager) GetConfiguredExchangeRatesPlugin() (plugin.ExchangeRatesPlugin, error) {
+func (manager *pluginManager) GetConfiguredExchangeRatesPlugin() (plugin.ExchangeRatesPlugin, error) {
 	return manager.GetExchangeRatesPlugin(manager.startupConf.Plugins.DefaultExchangeRates)
 }
 
-func (manager *Manager) initializePlugin(pluginURL url.URL) error {
+func (manager *pluginManager) initializePlugin(ctx context.Context, pluginURL url.URL) error {
 
 	infos, err := manager.activatePlugin(pluginURL)
 
@@ -119,7 +123,7 @@ func (manager *Manager) initializePlugin(pluginURL url.URL) error {
 
 		switch info.Type {
 		case plugin.PluginTypeWallet:
-			err = manager.initializeWalletPlugin(pluginURL, info)
+			err = manager.initializeWalletPlugin(ctx, pluginURL, info)
 		case plugin.PluginTypeExchangeRate:
 			err = manager.initializeExchangeRatesPlugin(pluginURL, info)
 		default:
@@ -140,11 +144,11 @@ func (manager *Manager) initializePlugin(pluginURL url.URL) error {
 	return nil
 }
 
-func (manager *Manager) initializeExchangeRatesPlugin(
+func (manager *pluginManager) initializeExchangeRatesPlugin(
 	pluginURL url.URL,
 	info plugin.PluginInfo) error {
 
-	ratesClient := NewExchangeRatesClient(pluginURL, info, manager.client)
+	ratesClient := newExchangeRatesClient(pluginURL, info, manager.client)
 
 	info, err := ratesClient.GetPluginInfo()
 	if err != nil {
@@ -164,8 +168,11 @@ func (manager *Manager) initializeExchangeRatesPlugin(
 	return nil
 }
 
-func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.PluginInfo) error {
-	walletClient := NewWalletClient(pluginURL, info, manager.client)
+func (manager *pluginManager) initializeWalletPlugin(
+	ctx context.Context,
+	pluginURL url.URL,
+	info plugin.PluginInfo) error {
+	walletClient := newWalletClient(pluginURL, info, manager.client)
 
 	walletInfo, err := walletClient.GetWalletInfo()
 	if err != nil {
@@ -173,6 +180,14 @@ func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.Pl
 	}
 
 	walletInfo.Currency.Symbol = strings.ToLower(walletInfo.Currency.Symbol)
+
+	_, err = manager.currencyRepo.SelectOrInsert(ctx, &vendopunkto.Currency{
+		Symbol: walletInfo.Currency.Symbol,
+		Name:   walletInfo.Currency.Name,
+	})
+	if err != nil {
+		return err
+	}
 
 	manager.wallets[info.ID] = walletAndInfo{
 		client: walletClient,
@@ -190,7 +205,7 @@ func (manager *Manager) initializeWalletPlugin(pluginURL url.URL, info plugin.Pl
 
 // activatePlugin does the initial handshake where the plugin returns its basic
 // info while the host address is provided so the plugin can reach back
-func (manager *Manager) activatePlugin(apiURL url.URL) ([]plugin.PluginInfo, error) {
+func (manager *pluginManager) activatePlugin(apiURL url.URL) ([]plugin.PluginInfo, error) {
 	u, err := url.Parse(plugin.ActivatePluginEndpoint)
 	if err != nil {
 		return nil, err

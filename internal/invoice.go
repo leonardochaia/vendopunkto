@@ -1,13 +1,14 @@
-package invoice
+package vendopunkto
 
 import (
+	"context"
 	"time"
 
 	"github.com/leonardochaia/vendopunkto/dtos"
-	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/shopspring/decimal"
 )
 
+// InvoiceStatus determines the current status for the invoice
 type InvoiceStatus int
 
 const (
@@ -20,6 +21,7 @@ const (
 	Failed InvoiceStatus = 3
 )
 
+// PaymentStatus of the payment
 type PaymentStatus int
 
 const (
@@ -31,31 +33,31 @@ const (
 )
 
 type Invoice struct {
-	ID             string
-	Total          decimal.Decimal
-	Currency       string
-	CreatedAt      time.Time
+	ID             string          `sql:",pk"`
+	Total          decimal.Decimal `sql:",notnull"`
+	Currency       string          `sql:",notnull"`
+	CreatedAt      time.Time       `sql:",notnull"`
 	PaymentMethods []*PaymentMethod
 }
 
 type PaymentMethod struct {
-	ID        uint
-	InvoiceID string
-	Total     decimal.Decimal
-	Currency  string
-	Address   string
+	ID        uint            `sql:",pk"`
+	InvoiceID string          `sql:",notnull"`
+	Total     decimal.Decimal `sql:",notnull"`
+	Currency  string          `sql:",notnull"`
+	Address   string          `sql:",notnull"`
 	Payments  []*Payment
 }
 
 type Payment struct {
-	ID              uint
-	TxHash          string
-	PaymentMethodID uint
-	Amount          decimal.Decimal
+	ID              uint            `sql:",pk"`
+	TxHash          string          `sql:",notnull"`
+	PaymentMethodID uint            `sql:",notnull"`
+	Amount          decimal.Decimal `sql:",notnull"`
 	Confirmations   uint64
 	BlockHeight     uint64
 	ConfirmedAt     time.Time
-	CreatedAt       time.Time
+	CreatedAt       time.Time `sql:",notnull"`
 }
 
 func (invoice *Invoice) Status() InvoiceStatus {
@@ -236,59 +238,43 @@ func convertCurrencyWithTotals(
 	return converted
 }
 
-func convertInvoiceToDto(invoice Invoice, pluginMgr *pluginmgr.Manager) (dtos.InvoiceDto, error) {
+type InvoiceFilter struct {
+}
 
-	dto := &dtos.InvoiceDto{
-		ID:                invoice.ID,
-		Total:             invoice.Total,
-		Currency:          invoice.Currency,
-		CreatedAt:         invoice.CreatedAt,
-		Status:            uint(invoice.Status()),
-		PaymentPercentage: invoice.CalculatePaymentPercentage(),
-		Remaining:         invoice.CalculateRemainingAmount(),
-		PaymentMethods:    []*dtos.PaymentMethodDto{},
-		Payments:          []*dtos.PaymentDto{},
-	}
+// InvoiceManager is the logic abstraction
+type InvoiceManager interface {
+	GetInvoice(ctx context.Context, id string) (*Invoice, error)
+	Search(ctx context.Context, filter InvoiceFilter) ([]Invoice, error)
+	GetInvoiceByAddress(ctx context.Context, address string) (*Invoice, error)
+	CreateInvoice(ctx context.Context, params dtos.InvoiceCreationParams) (*Invoice, error)
+	CreateAddressForPaymentMethod(ctx context.Context, invoiceID string,
+		currency string) (*Invoice, error)
+	ConfirmPayment(ctx context.Context, address string, confirmations uint64,
+		amount decimal.Decimal, txHash string, blockHeight uint64) (*Invoice, error)
+}
 
-	for _, method := range invoice.PaymentMethods {
+// InvoiceRepository is the abstraction for handling Invoices database
+type InvoiceRepository interface {
+	Search(ctx context.Context, filter InvoiceFilter) ([]Invoice, error)
+	FindByID(ctx context.Context, id string) (*Invoice, error)
+	FindByAddress(ctx context.Context, address string) (*Invoice, error)
+	Create(ctx context.Context, invoice *Invoice) error
+	UpdatePaymentMethod(ctx context.Context, method *PaymentMethod) error
+	CreatePayment(ctx context.Context, payment *Payment) error
+	UpdatePayment(ctx context.Context, payment *Payment) error
 
-		var qrCode string
-		if method.Address != "" {
-			info, err := pluginMgr.GetWalletInfoForCurrency(method.Currency)
-			if err != nil {
-				return dtos.InvoiceDto{}, err
-			}
-			qrCode, err = info.BuildQRCode(method.Address, method.Total)
-			if err != nil {
-				return dtos.InvoiceDto{}, err
-			}
-		}
+	// GetMaxBlockHeightForCurrencies returns a map of currencies and the last
+	// known block height. It must return all currencies that are awaiting
+	// payment, even if they don't have a known last block height.
+	GetMaxBlockHeightForCurrencies(ctx context.Context) (map[string]uint64, error)
+}
 
-		methodDto := &dtos.PaymentMethodDto{
-			ID:        method.ID,
-			Total:     method.Total,
-			Currency:  method.Currency,
-			Address:   method.Address,
-			Remaining: invoice.CalculatePaymentMethodRemaining(*method),
-			QRCode:    qrCode,
-		}
-
-		for _, payment := range method.Payments {
-			paymentDto := &dtos.PaymentDto{
-				TxHash:        payment.TxHash,
-				Amount:        payment.Amount,
-				Confirmations: payment.Confirmations,
-				ConfirmedAt:   payment.ConfirmedAt,
-				CreatedAt:     payment.CreatedAt,
-				Status:        uint(payment.Status()),
-				Currency:      method.Currency,
-				BlockHeight:   payment.BlockHeight,
-			}
-			dto.Payments = append(dto.Payments, paymentDto)
-		}
-
-		dto.PaymentMethods = append(dto.PaymentMethods, methodDto)
-	}
-
-	return *dto, nil
+// InvoiceTopic is a pub-sub mechanism where consumers can Register to
+// receive messages sent to using Send.
+// credits to https://github.com/tv42/topic/blob/master/topic.go
+type InvoiceTopic interface {
+	Register(invoiceID string) <-chan Invoice
+	Unregister(invoiceID string)
+	Send(msg Invoice)
+	Close()
 }

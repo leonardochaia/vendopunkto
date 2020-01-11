@@ -14,7 +14,7 @@ type exchangeRatesClientImpl struct {
 	info   plugin.PluginInfo
 }
 
-func NewExchangeRatesClient(
+func newExchangeRatesClient(
 	url url.URL,
 	info plugin.PluginInfo,
 	client clients.HTTP) plugin.ExchangeRatesPlugin {

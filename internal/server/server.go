@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -8,10 +9,10 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/hashicorp/go-hclog"
+	vendopunkto "github.com/leonardochaia/vendopunkto/internal"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
-	"github.com/leonardochaia/vendopunkto/internal/invoice"
-	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
+	"github.com/leonardochaia/vendopunkto/internal/store"
 )
 
 // Server is the API web server
@@ -21,9 +22,10 @@ type Server struct {
 	internalRouter *InternalRouter
 	server         *http.Server
 	db             *pg.DB
-	pluginManager  *pluginmgr.Manager
+	txBuilder      store.TransactionBuilder
+	pluginManager  vendopunkto.PluginManager
 	walletPoller   *pluginwallet.WalletPoller
-	invoiceTopic   invoice.Topic
+	invoiceTopic   vendopunkto.InvoiceTopic
 	startupConf    conf.Startup
 }
 
@@ -58,10 +60,16 @@ func (s *Server) startInternalServer() error {
 
 // ListenAndServe will listen for requests
 func (s *Server) ListenAndServe() error {
+	ctx, tx, err := s.txBuilder.BuildLazyTransactionContext(context.TODO())
+	if err != nil {
+		return err
+	}
 
-	s.pluginManager.LoadPlugins()
+	s.pluginManager.LoadPlugins(ctx)
 
-	err := s.startInternalServer()
+	tx.CommitIfNeeded()
+
+	err = s.startInternalServer()
 	if err != nil {
 		return err
 	}

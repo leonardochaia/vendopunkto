@@ -8,20 +8,21 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
-	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
+	vendopunkto "github.com/leonardochaia/vendopunkto/internal"
 	"github.com/rs/xid"
 	"github.com/shopspring/decimal"
 )
 
-// Manager contains the business logic for handling invoices
-type Manager struct {
-	repository    InvoiceRepository
+// invoiceManager contains the business logic for handling invoices
+type invoiceManager struct {
+	repository    vendopunkto.InvoiceRepository
 	logger        hclog.Logger
-	pluginManager *pluginmgr.Manager
-	topic         Topic
+	pluginManager vendopunkto.PluginManager
+	
+	topic         vendopunkto.InvoiceTopic
 }
 
-func (mgr *Manager) createAddressForInvoice(invoiceID string, currency string) (string, error) {
+func (mgr *invoiceManager) createAddressForInvoice(invoiceID string, currency string) (string, error) {
 	wallet, err := mgr.pluginManager.GetWalletForCurrency(currency)
 
 	if err != nil {
@@ -36,7 +37,7 @@ func (mgr *Manager) createAddressForInvoice(invoiceID string, currency string) (
 	return address, nil
 }
 
-func (mgr *Manager) getDefaultPaymentMethods() ([]string, error) {
+func (mgr *invoiceManager) getDefaultPaymentMethods() ([]string, error) {
 	wallets, err := mgr.pluginManager.GetAllCurrencies()
 	if err != nil {
 		return nil, err
@@ -50,8 +51,8 @@ func (mgr *Manager) getDefaultPaymentMethods() ([]string, error) {
 	return output, nil
 }
 
-func (mgr *Manager) addPaymentMethodsToInvoice(
-	invoice *Invoice,
+func (mgr *invoiceManager) addPaymentMethodsToInvoice(
+	invoice *vendopunkto.Invoice,
 	paymentMethods []dtos.PaymentMethodCreationParams) error {
 	exchange, err := mgr.pluginManager.GetConfiguredExchangeRatesPlugin()
 	if err != nil {
@@ -104,9 +105,9 @@ func (mgr *Manager) addPaymentMethodsToInvoice(
 }
 
 // GetInvoice finds an invoice by it's ID
-func (mgr *Manager) GetInvoice(
+func (mgr *invoiceManager) GetInvoice(
 	ctx context.Context,
-	id string) (*Invoice, error) {
+	id string) (*vendopunkto.Invoice, error) {
 	const op errors.Op = "invoicemgr.getInvoice"
 	inv, err := mgr.repository.FindByID(ctx, id)
 
@@ -118,9 +119,9 @@ func (mgr *Manager) GetInvoice(
 }
 
 // Search finds invoices matching filter
-func (mgr *Manager) Search(
+func (mgr *invoiceManager) Search(
 	ctx context.Context,
-	filter InvoiceFilter) ([]Invoice, error) {
+	filter vendopunkto.InvoiceFilter) ([]vendopunkto.Invoice, error) {
 
 	const op errors.Op = "invoicemgr.searchInvoices"
 	list, err := mgr.repository.Search(ctx, filter)
@@ -134,9 +135,9 @@ func (mgr *Manager) Search(
 
 // GetInvoiceByAddress finds an invoice by it's the provided paymentMethod's
 // address.
-func (mgr *Manager) GetInvoiceByAddress(
+func (mgr *invoiceManager) GetInvoiceByAddress(
 	ctx context.Context,
-	address string) (*Invoice, error) {
+	address string) (*vendopunkto.Invoice, error) {
 	const op errors.Op = "invoicemgr.getInvoiceByAddress"
 	inv, err := mgr.repository.FindByAddress(ctx, address)
 	if err != nil {
@@ -148,9 +149,9 @@ func (mgr *Manager) GetInvoiceByAddress(
 
 // CreateInvoice creates an invoice with the provided total and currency.
 // If no payment methods are provided, all supported currencies will be used
-func (mgr *Manager) CreateInvoice(
+func (mgr *invoiceManager) CreateInvoice(
 	ctx context.Context,
-	params dtos.InvoiceCreationParams) (*Invoice, error) {
+	params dtos.InvoiceCreationParams) (*vendopunkto.Invoice, error) {
 	const op errors.Op = "invoicemgr.create"
 
 	if params.Total.LessThanOrEqual(decimal.Zero) {
@@ -158,7 +159,7 @@ func (mgr *Manager) CreateInvoice(
 			errors.Str("Total parameters must be provided and be positive"))
 	}
 
-	invoice := &Invoice{
+	invoice := &vendopunkto.Invoice{
 		ID:        xid.New().String(),
 		Total:     params.Total,
 		Currency:  strings.ToLower(params.Currency),
@@ -228,10 +229,10 @@ func (mgr *Manager) CreateInvoice(
 
 // CreateAddressForPaymentMethod will use the currency wallet to create a unique
 // address to receive payments.
-func (mgr *Manager) CreateAddressForPaymentMethod(
+func (mgr *invoiceManager) CreateAddressForPaymentMethod(
 	ctx context.Context,
 	invoiceID string,
-	currency string) (*Invoice, error) {
+	currency string) (*vendopunkto.Invoice, error) {
 	const op errors.Op = "invoicemgr.createAddressForPaymentMethod"
 	path := errors.PathName("invoice/" + invoiceID + "/" + currency)
 
@@ -281,13 +282,13 @@ func (mgr *Manager) CreateAddressForPaymentMethod(
 }
 
 // ConfirmPayment either creates or updates a payment.
-func (mgr *Manager) ConfirmPayment(
+func (mgr *invoiceManager) ConfirmPayment(
 	ctx context.Context,
 	address string,
 	confirmations uint64,
 	amount decimal.Decimal,
 	txHash string,
-	blockHeight uint64) (*Invoice, error) {
+	blockHeight uint64) (*vendopunkto.Invoice, error) {
 	const op errors.Op = "invoicemgr.confirmPayment"
 	path := errors.PathName("address/" + address)
 

@@ -4,30 +4,38 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
+	vendopunkto "github.com/leonardochaia/vendopunkto/internal"
 	"github.com/leonardochaia/vendopunkto/internal/conf"
-	"github.com/leonardochaia/vendopunkto/internal/invoice"
-	"github.com/leonardochaia/vendopunkto/internal/pluginmgr"
 	"github.com/leonardochaia/vendopunkto/internal/pluginwallet"
+	"github.com/leonardochaia/vendopunkto/internal/store"
 )
 
-// ServerProviders wire providers for the server package
-var ServerProviders = wire.NewSet(NewServer, NewRouter, NewInternalRouter)
+// Providers wire providers for the server package
+var Providers = wire.NewSet(
+	NewServer,
+	NewRouter,
+	NewInternalRouter,
+	NewInvoiceHandler,
+	NewCurrencyHandler,
+)
 
 // NewServer creates the server
 func NewServer(
 	router *VendoPunktoRouter,
 	internalRouter *InternalRouter,
 	db *pg.DB,
+	txBuilder store.TransactionBuilder,
 	globalLogger hclog.Logger,
-	pluginManager *pluginmgr.Manager,
+	pluginManager vendopunkto.PluginManager,
 	walletPoller *pluginwallet.WalletPoller,
-	invoiceTopic invoice.Topic,
+	invoiceTopic vendopunkto.InvoiceTopic,
 	startupConf conf.Startup) (*Server, error) {
 
 	server := &Server{
 		logger:         globalLogger.Named("server"),
 		router:         router,
 		db:             db,
+		txBuilder:      txBuilder,
 		pluginManager:  pluginManager,
 		internalRouter: internalRouter,
 		startupConf:    startupConf,
@@ -36,4 +44,29 @@ func NewServer(
 	}
 
 	return server, nil
+}
+
+// NewInvoiceHandler the handler for invoices
+func NewInvoiceHandler(
+	manager vendopunkto.InvoiceManager,
+	globalLogger hclog.Logger,
+	pluginMgr vendopunkto.PluginManager,
+	topic vendopunkto.InvoiceTopic) *InvoiceHandler {
+	return &InvoiceHandler{
+		logger:    globalLogger.Named("invoice-handler"),
+		manager:   manager,
+		pluginMgr: pluginMgr,
+		topic:     topic,
+	}
+}
+
+// NewCurrencyHandler creates the currency handler
+func NewCurrencyHandler(manager vendopunkto.PluginManager,
+	currencyRepo vendopunkto.CurrencyRepository,
+	globalLogger hclog.Logger) (*CurrencyHandler, error) {
+	return &CurrencyHandler{
+		logger:       globalLogger.Named("currency-handler"),
+		plugins:      manager,
+		currencyRepo: currencyRepo,
+	}, nil
 }

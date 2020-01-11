@@ -2,4 +2,8 @@ package repositories
 
 import "github.com/google/wire"
 
-var Providers = wire.NewSet(NewPostgresInvoiceRepository)
+// Providers for Postgres
+var Providers = wire.NewSet(
+	NewPostgresInvoiceRepository,
+	NewPostgresCurrencyRepository,
+)

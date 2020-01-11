@@ -1,4 +1,4 @@
-package invoice
+package server
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 	"github.com/leonardochaia/vendopunkto/errors"
+	vendopunkto "github.com/leonardochaia/vendopunkto/internal"
 	"github.com/leonardochaia/vendopunkto/internal/store"
 )
 
@@ -14,7 +15,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func (handler *Handler) invoiceWebSocket(w http.ResponseWriter, r *http.Request) error {
+func (handler *InvoiceHandler) invoiceWebSocket(w http.ResponseWriter, r *http.Request) error {
 	const op errors.Op = "api.invoice.websocket"
 
 	invoiceID := chi.URLParam(r, "id")
@@ -89,7 +90,7 @@ func (handler *Handler) invoiceWebSocket(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (handler *Handler) writeInvoiceToWs(invoice Invoice, conn *websocket.Conn) error {
+func (handler *InvoiceHandler) writeInvoiceToWs(invoice vendopunkto.Invoice, conn *websocket.Conn) error {
 	const op errors.Op = "api.invoice.writeInvoiceToWs"
 	dto, err := convertInvoiceToDto(invoice, handler.pluginMgr)
 	if err != nil {
