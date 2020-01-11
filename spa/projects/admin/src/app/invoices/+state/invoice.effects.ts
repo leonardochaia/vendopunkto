@@ -57,18 +57,15 @@ export class InvoiceEffects implements OnInitEffects {
     return this.actions$.pipe(
 
       ofType(InvoiceActions.invoiceCreationFormChanged),
-      withLatestFrom(this.facade.creationBasicInfo$, this.facade.paymentCurrencies$),
-      concatMap(([action, prevInfo, currencies]) => {
-        let info = action.form;
-        if (!info.paymentMethods || info.paymentMethods.length === 0) {
-          info = {
-            ...info,
-            paymentMethods: currencies.map(c => ({
-              currency: c.symbol,
-              total: null,
-            } as PaymentMethodCreationParams))
-          };
-        }
+      withLatestFrom(this.facade.paymentCurrencies$),
+      concatMap(([action, currencies]) => {
+        const info = {
+          ...action.form,
+          paymentMethods: currencies.map(c => ({
+            currency: c.symbol,
+            total: null,
+          } as PaymentMethodCreationParams))
+        };
         return this.api.getCurrencyExchange({
           amount: info.total,
           fromCurrency: info.currency,
@@ -76,7 +73,7 @@ export class InvoiceEffects implements OnInitEffects {
         }).pipe(
           map(result => InvoiceActions.getPaymentMethodExchangeRateSuccess({ result })),
           catchError(error => of(InvoiceActions.getPaymentMethodExchangeRateFailure({ error: error.message })))
-        )
+        );
       })
     );
   });
