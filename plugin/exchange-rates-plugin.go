@@ -27,7 +27,7 @@ func BuildExchangeRatesPlugin(impl ExchangeRatesPlugin) ServerPlugin {
 }
 
 func (serverPlugin *exchangeRatesServerPlugin) initializeRouter(router *chi.Mux) error {
-	handler := NewHandler(serverPlugin.Impl, serverPlugin)
+	handler := NewExchangeRatesHandler(serverPlugin.Impl, serverPlugin)
 
 	router.Mount(ExchangeRatesMainEndpoint, handler)
 	return nil

@@ -15,6 +15,7 @@ import (
 func NewContainer(globalLogger hclog.Logger) (*Container, error) {
 	server := plugin.NewServer(globalLogger)
 	exchangeRatesPlugin := newFakeExchangeRatesPlugin(globalLogger)
-	container := newContainer(server, exchangeRatesPlugin)
+	currencyMetadataPlugin := newFakeCurrencyMetadataPlugin(globalLogger)
+	container := newContainer(server, exchangeRatesPlugin, currencyMetadataPlugin)
 	return container, nil
 }

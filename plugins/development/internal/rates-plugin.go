@@ -15,6 +15,7 @@ func init() {
 	rates["btc"] = decimal.NewFromInt(10000)
 	rates["bch"] = decimal.NewFromInt(5000)
 	rates["usd"] = decimal.NewFromInt(1)
+	rates["ars"] = decimal.NewFromFloat(0.2)
 }
 
 type fakeExchangeRatesPlugin struct {

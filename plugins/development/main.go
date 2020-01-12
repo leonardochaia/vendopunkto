@@ -49,6 +49,8 @@ func run(logger hclog.Logger) error {
 
 	container.Server.AddPlugin(plugin.BuildExchangeRatesPlugin(container.FakeExchangeRatesPlugin))
 
+	container.Server.AddPlugin(plugin.BuildCurrencyMetadataPlugin(container.FakeCurrencyMetadataPlugion))
+
 	addr := net.JoinHostPort(
 		viper.GetString("plugin.server.host"),
 		viper.GetString("plugin.server.port"))

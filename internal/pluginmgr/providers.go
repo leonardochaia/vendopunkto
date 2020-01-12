@@ -18,11 +18,12 @@ func NewPluginManager(
 	currencyRepo vendopunkto.CurrencyRepository,
 	startupConf conf.Startup) vendopunkto.PluginManager {
 	return &pluginManager{
-		logger:        logger.Named("plugin-manager"),
-		wallets:       make(map[string]walletAndInfo),
-		exchangeRates: make(map[string]exchangeRatesAndInfo),
-		client:        client,
-		currencyRepo:  currencyRepo,
-		startupConf:   startupConf,
+		logger:           logger.Named("plugin-manager"),
+		wallets:          make(map[string]walletAndInfo),
+		exchangeRates:    make(map[string]exchangeRatesAndInfo),
+		currencyMetadata: make(map[string]currencyMetadataAndInfo),
+		client:           client,
+		currencyRepo:     currencyRepo,
+		startupConf:      startupConf,
 	}
 }

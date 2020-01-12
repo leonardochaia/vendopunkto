@@ -24,6 +24,11 @@ type exchangeRatesAndInfo struct {
 	info   plugin.PluginInfo
 }
 
+type currencyMetadataAndInfo struct {
+	client plugin.CurrencyMetadataPlugin
+	info   plugin.PluginInfo
+}
+
 type pluginManager struct {
 	logger      hclog.Logger
 	client      clients.HTTP
@@ -31,8 +36,9 @@ type pluginManager struct {
 
 	currencyRepo vendopunkto.CurrencyRepository
 
-	wallets       map[string]walletAndInfo
-	exchangeRates map[string]exchangeRatesAndInfo
+	wallets          map[string]walletAndInfo
+	exchangeRates    map[string]exchangeRatesAndInfo
+	currencyMetadata map[string]currencyMetadataAndInfo
 }
 
 func (manager *pluginManager) LoadPlugins(ctx context.Context) {
@@ -119,6 +125,8 @@ func (manager *pluginManager) initializePlugin(ctx context.Context, pluginURL ur
 		return err
 	}
 
+	currencyMetadatas := []plugin.PluginInfo{}
+
 	for _, info := range infos {
 
 		switch info.Type {
@@ -126,10 +134,26 @@ func (manager *pluginManager) initializePlugin(ctx context.Context, pluginURL ur
 			err = manager.initializeWalletPlugin(ctx, pluginURL, info)
 		case plugin.PluginTypeExchangeRate:
 			err = manager.initializeExchangeRatesPlugin(pluginURL, info)
+		case plugin.PluginTypeCurrencyMetadata:
+			currencyMetadatas = append(currencyMetadatas, info)
 		default:
 			err = fmt.Errorf("Plugin type is not supported %s", info.Type)
 		}
 
+		if err != nil {
+			manager.logger.Error("Failed to initialize plugin",
+				"id", info.ID,
+				"name", info.Name,
+				"type", info.Type,
+				"address", pluginURL.String(),
+				"error", err)
+			continue
+		}
+	}
+
+	// currency metadata need to be initialized after wallets
+	for _, info := range currencyMetadatas {
+		err = manager.initializeCurrencyMetadataPlugin(ctx, pluginURL, info)
 		if err != nil {
 			manager.logger.Error("Failed to initialize plugin",
 				"id", info.ID,
@@ -203,8 +227,67 @@ func (manager *pluginManager) initializeWalletPlugin(
 	return nil
 }
 
-// activatePlugin does the initial handshake where the plugin returns its basic
-// info while the host address is provided so the plugin can reach back
+func (manager *pluginManager) initializeCurrencyMetadataPlugin(
+	ctx context.Context,
+	pluginURL url.URL,
+	info plugin.PluginInfo) error {
+
+	client := newCurrencyMetadataClient(pluginURL, info, manager.client)
+
+	info, err := client.GetPluginInfo()
+	if err != nil {
+		return err
+	}
+
+	// TODO: Config
+	config := []string{
+		"usd",
+		"ars",
+	}
+
+	wallets, err := manager.GetAllCurrencies()
+	if err != nil {
+		return err
+	}
+
+	for _, w := range wallets {
+		config = append(config, w.Symbol)
+	}
+
+	logger := manager.logger.With("id", info.ID,
+		"name", info.Name,
+		"address", pluginURL.String()+info.GetAddress(),
+	)
+
+	currencies, err := client.GetCurrencies(config)
+
+	if len(currencies) == 0 {
+		logger.Warn("Plugin returned no currencies. Skipping")
+		return nil
+	}
+
+	for _, currency := range currencies {
+		logger.Info("Loading currency", "currency", currency.Symbol)
+		_, err := manager.currencyRepo.AddOrUpdate(ctx, &vendopunkto.Currency{
+			Symbol:       currency.Symbol,
+			Name:         currency.Name,
+			LogoImageURL: currency.LogoImageURL,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	manager.currencyMetadata[info.ID] = currencyMetadataAndInfo{
+		client: client,
+		info:   info,
+	}
+
+	logger.Info("Initialized Currency Metadata")
+
+	return nil
+}
+
 func (manager *pluginManager) activatePlugin(apiURL url.URL) ([]plugin.PluginInfo, error) {
 	u, err := url.Parse(plugin.ActivatePluginEndpoint)
 	if err != nil {

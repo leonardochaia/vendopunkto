@@ -5,8 +5,9 @@ type PluginType string
 const ActivatePluginEndpoint = "/activate"
 
 const (
-	PluginTypeWallet       PluginType = "wallet"
-	PluginTypeExchangeRate PluginType = "exchange-rate"
+	PluginTypeWallet           PluginType = "wallet"
+	PluginTypeExchangeRate     PluginType = "exchange-rate"
+	PluginTypeCurrencyMetadata PluginType = "currency-metadata"
 )
 
 type PluginInfo struct {

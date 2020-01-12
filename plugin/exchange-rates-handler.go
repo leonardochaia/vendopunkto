@@ -8,11 +8,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/errors"
 )
 
-// ExchangeRatesHandler is the Wallet Plugin HTTP API implementation
-// which runs on the plugin server and will be called
-// by vendopunkto
-// It exposes the wallet interface provided by the
-// plugin developer into HTTP endpoints
+// ExchangeRatesHandler exposes the plugin through HTTP
 type ExchangeRatesHandler struct {
 	plugin       ExchangeRatesPlugin
 	serverPlugin ServerPlugin
@@ -23,7 +19,7 @@ type GetExchangeRatesParams struct {
 	Currencies []string `json:"currencies"`
 }
 
-func NewHandler(plugin ExchangeRatesPlugin, serverPlugin ServerPlugin) *chi.Mux {
+func NewExchangeRatesHandler(plugin ExchangeRatesPlugin, serverPlugin ServerPlugin) *chi.Mux {
 	router := chi.NewRouter()
 
 	handler := &ExchangeRatesHandler{

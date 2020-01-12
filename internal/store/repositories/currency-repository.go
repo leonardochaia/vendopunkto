@@ -87,3 +87,26 @@ func (r postgresCurrencyRepository) SelectOrInsert(
 
 	return c, nil
 }
+
+func (r postgresCurrencyRepository) AddOrUpdate(
+	ctx context.Context,
+	c *vendopunkto.Currency) (*vendopunkto.Currency, error) {
+
+	const op errors.Op = "currencyRepository.addOrUpdate"
+	tx, err := store.GetTransactionFromContextOrCreate(ctx, r.db)
+
+	if err != nil {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	_, err = tx.Model(c).
+		OnConflict("(symbol) DO UPDATE").
+		Set("logo_image_url = EXCLUDED.logo_image_url").
+		Insert()
+
+	if err != nil {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	return c, nil
+}

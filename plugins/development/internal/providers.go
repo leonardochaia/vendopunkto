@@ -7,28 +7,32 @@ import (
 )
 
 type Container struct {
-	FakeBitcoinWallet       plugin.WalletPlugin
-	FakeMoneroWallet        plugin.WalletPlugin
-	FakeBitcoinCashWallet   plugin.WalletPlugin
-	FakeExchangeRatesPlugin plugin.ExchangeRatesPlugin
-	Server                  *plugin.Server
+	FakeBitcoinWallet           plugin.WalletPlugin
+	FakeMoneroWallet            plugin.WalletPlugin
+	FakeBitcoinCashWallet       plugin.WalletPlugin
+	FakeExchangeRatesPlugin     plugin.ExchangeRatesPlugin
+	FakeCurrencyMetadataPlugion plugin.CurrencyMetadataPlugin
+	Server                      *plugin.Server
 }
 
 var Providers = wire.NewSet(
 	plugin.NewServer,
 	newFakeExchangeRatesPlugin,
+	newFakeCurrencyMetadataPlugin,
 	newContainer)
 
 func newContainer(
 	server *plugin.Server,
 	exchangeRates plugin.ExchangeRatesPlugin,
+	currencyMetadata plugin.CurrencyMetadataPlugin,
 ) *Container {
 	return &Container{
-		FakeMoneroWallet:        newFakeMoneroWalletPlugin(),
-		FakeBitcoinWallet:       newFakeBitcoinWalletPlugin(),
-		FakeBitcoinCashWallet:   newFakeBitcoinCashWalletPlugin(),
-		Server:                  server,
-		FakeExchangeRatesPlugin: exchangeRates,
+		FakeMoneroWallet:            newFakeMoneroWalletPlugin(),
+		FakeBitcoinWallet:           newFakeBitcoinWalletPlugin(),
+		FakeBitcoinCashWallet:       newFakeBitcoinCashWalletPlugin(),
+		FakeCurrencyMetadataPlugion: currencyMetadata,
+		Server:                      server,
+		FakeExchangeRatesPlugin:     exchangeRates,
 	}
 }
 
@@ -56,6 +60,12 @@ func newFakeBitcoinCashWalletPlugin() plugin.WalletPlugin {
 
 func newFakeExchangeRatesPlugin(logger hclog.Logger) plugin.ExchangeRatesPlugin {
 	return fakeExchangeRatesPlugin{
+		logger: logger,
+	}
+}
+
+func newFakeCurrencyMetadataPlugin(logger hclog.Logger) plugin.CurrencyMetadataPlugin {
+	return fakeCurrencyMetadata{
 		logger: logger,
 	}
 }
