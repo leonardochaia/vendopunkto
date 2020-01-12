@@ -50,7 +50,6 @@ export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
         this.currencyControl.setValue(info.currency);
         this.totalControl.setValue(info.total);
         this.paymentMethodsArray.clear();
-
         for (const pm of info.paymentMethods) {
           const group = this.fb.group({
             currency: [pm.currency, Validators.required],

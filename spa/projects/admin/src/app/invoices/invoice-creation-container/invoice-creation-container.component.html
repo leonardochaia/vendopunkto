@@ -64,7 +64,10 @@
                     </p>
 
                     <mat-card *ngFor="let pm of paymentMethodsArray.controls; let index = index">
-                        <mat-card-title fxLayout="row">
+                        <mat-card-title fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+                            <div>
+                                <img [src]="currencies[pm.value.currency].logoImageUrl" style="height:48px" />
+                            </div>
                             <div fxFlex="grow">{{currencies[pm.value.currency].name | titlecase}}</div>
                             <div>
                                 <button type="button" mat-icon-button color="warn"
@@ -98,8 +101,14 @@
 
                 <h2>Payment methods</h2>
                 <mat-card *ngFor="let pm of paymentMethodsArray.getRawValue(); let index = index">
-                    <mat-card-title>
-                        {{pm.total}} {{pm.currency | uppercase}}
+
+                    <mat-card-title fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+                        <div>
+                            <img [src]="currencies[pm.currency].logoImageUrl" style="height:48px" />
+                        </div>
+                        <div>
+                            {{pm.total}} {{pm.currency | uppercase}}
+                        </div>
                     </mat-card-title>
                 </mat-card>
                 <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="end center">
