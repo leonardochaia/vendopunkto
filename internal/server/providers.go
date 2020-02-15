@@ -17,6 +17,8 @@ var Providers = wire.NewSet(
 	NewInternalRouter,
 	NewInvoiceHandler,
 	NewCurrencyHandler,
+	NewConfigHandler,
+	NewPluginHandler,
 )
 
 // NewServer creates the server
@@ -63,10 +65,30 @@ func NewInvoiceHandler(
 // NewCurrencyHandler creates the currency handler
 func NewCurrencyHandler(manager vendopunkto.PluginManager,
 	currencyRepo vendopunkto.CurrencyRepository,
+	runtime *conf.Runtime,
 	globalLogger hclog.Logger) (*CurrencyHandler, error) {
 	return &CurrencyHandler{
 		logger:       globalLogger.Named("currency-handler"),
 		plugins:      manager,
 		currencyRepo: currencyRepo,
+		runtimeConf:  runtime,
+	}, nil
+}
+
+// NewConfigHandler creates the config handler
+func NewConfigHandler(runtime *conf.Runtime,
+	globalLogger hclog.Logger) (*ConfigHandler, error) {
+	return &ConfigHandler{
+		logger:  globalLogger.Named("currency-handler"),
+		runtime: runtime,
+	}, nil
+}
+
+// NewPluginHandler creates the plugin handler
+func NewPluginHandler(plugins vendopunkto.PluginManager,
+	globalLogger hclog.Logger) (*PluginHandler, error) {
+	return &PluginHandler{
+		logger:  globalLogger.Named("currency-handler"),
+		plugins: plugins,
 	}, nil
 }

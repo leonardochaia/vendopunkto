@@ -27,15 +27,14 @@ type WalletPoller struct {
 // NewPoller creates a new WalletPoller
 func NewPoller(
 	logger hclog.Logger,
-	startupConf conf.Startup,
+	runtimeConf *conf.Runtime,
 	txBuilder store.TransactionBuilder,
 	pluginMgr vendopunkto.PluginManager,
 	invoiceRepo vendopunkto.InvoiceRepository,
 	invoiceMgr vendopunkto.InvoiceManager) (*WalletPoller, error) {
-	interval, err := time.ParseDuration(startupConf.Plugins.WalletPollInterval)
-	if err != nil {
-		return nil, err
-	}
+
+	interval := runtimeConf.GetWalletPollingInterval()
+
 	poller := &WalletPoller{
 		ticker:      time.NewTicker(interval),
 		txBuilder:   txBuilder,

@@ -9,6 +9,7 @@ import (
 	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
 	vendopunkto "github.com/leonardochaia/vendopunkto/internal"
+	"github.com/leonardochaia/vendopunkto/internal/conf"
 	"github.com/shopspring/decimal"
 )
 
@@ -17,26 +18,35 @@ type CurrencyHandler struct {
 	plugins      vendopunkto.PluginManager
 	currencyRepo vendopunkto.CurrencyRepository
 	logger       hclog.Logger
+	runtimeConf  *conf.Runtime
 }
 
 // InternalRoutes creates a router for the internal API
 func (handler *CurrencyHandler) InternalRoutes() chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/", errors.WrapHandler(handler.getAllCurrencies))
+	router.Get("/pricing", errors.WrapHandler(handler.getPricingCurrencies))
+	router.Get("/payment-methods", errors.WrapHandler(handler.getPaymentMethodCurrencies))
 	router.Post("/rates/convert", errors.WrapHandler(handler.getExchange))
 
 	return router
 }
 
-func (handler *CurrencyHandler) getAllCurrencies(w http.ResponseWriter, r *http.Request) error {
-	const op errors.Op = "api.currencies.getAllCurrencies"
-	currencies, err := handler.currencyRepo.Search(r.Context())
+func (handler *CurrencyHandler) getPricingCurrencies(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "api.currencies.getPricingCurrencies"
+
+	pricingCurrencies := handler.runtimeConf.GetPricingCurrencies()
+	result := []dtos.CurrencyDto{}
+	if len(pricingCurrencies) == 0 {
+		render.JSON(w, r, result)
+		return nil
+	}
+
+	currencies, err := handler.currencyRepo.FindBySymbols(r.Context(), pricingCurrencies)
+
 	if err != nil {
 		return errors.E(op, errors.Internal, err)
 	}
-
-	result := []dtos.CurrencyDto{}
 
 	for _, currency := range currencies {
 		_, err := handler.plugins.GetWalletInfoForCurrency(currency.Symbol)
@@ -45,6 +55,34 @@ func (handler *CurrencyHandler) getAllCurrencies(w http.ResponseWriter, r *http.
 			Symbol:           currency.Symbol,
 			LogoImageURL:     currency.LogoImageURL,
 			SupportsPayments: err == nil,
+		})
+	}
+
+	render.JSON(w, r, result)
+	return nil
+}
+
+func (handler *CurrencyHandler) getPaymentMethodCurrencies(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "api.currencies.getPaymentMethodCurrencies"
+
+	paymentMethods := handler.runtimeConf.GetPaymentMethods()
+	result := []dtos.CurrencyDto{}
+	if len(paymentMethods) == 0 {
+		render.JSON(w, r, result)
+		return nil
+	}
+
+	currencies, err := handler.currencyRepo.FindBySymbols(r.Context(), paymentMethods)
+
+	if err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	for _, currency := range currencies {
+		result = append(result, dtos.CurrencyDto{
+			Name:         currency.Name,
+			Symbol:       currency.Symbol,
+			LogoImageURL: currency.LogoImageURL,
 		})
 	}
 

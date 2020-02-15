@@ -65,6 +65,28 @@ func (r postgresCurrencyRepository) FindBySymbol(ctx context.Context, symbol str
 	return c, nil
 }
 
+func (r postgresCurrencyRepository) FindBySymbols(ctx context.Context, symbols []string) ([]*vendopunkto.Currency, error) {
+	const op errors.Op = "currencyRepository.findBySymbols"
+	tx, err := store.GetTransactionFromContextOrCreate(ctx, r.db)
+	if err != nil {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	c := []*vendopunkto.Currency{}
+	err = tx.Model(&c).
+		WhereIn("symbol in (?)", symbols).
+		Select()
+
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, errors.E(op, errors.NotExist, err)
+		}
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	return c, nil
+}
+
 func (r postgresCurrencyRepository) SelectOrInsert(
 	ctx context.Context,
 	c *vendopunkto.Currency) (*vendopunkto.Currency, error) {

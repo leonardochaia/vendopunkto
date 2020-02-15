@@ -16,7 +16,8 @@ func NewPluginManager(
 	logger hclog.Logger,
 	client clients.HTTP,
 	currencyRepo vendopunkto.CurrencyRepository,
-	startupConf conf.Startup) vendopunkto.PluginManager {
+	runtimeConf *conf.Runtime,
+) vendopunkto.PluginManager {
 	return &pluginManager{
 		logger:           logger.Named("plugin-manager"),
 		wallets:          make(map[string]walletAndInfo),
@@ -24,6 +25,6 @@ func NewPluginManager(
 		currencyMetadata: make(map[string]currencyMetadataAndInfo),
 		client:           client,
 		currencyRepo:     currencyRepo,
-		startupConf:      startupConf,
+		runtimeConf:      runtimeConf,
 	}
 }

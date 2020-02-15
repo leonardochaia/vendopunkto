@@ -13,6 +13,7 @@ type Currency struct {
 type CurrencyRepository interface {
 	Search(ctx context.Context) ([]Currency, error)
 	FindBySymbol(ctx context.Context, symbol string) (*Currency, error)
+	FindBySymbols(ctx context.Context, symbols []string) ([]*Currency, error)
 	SelectOrInsert(ctx context.Context, currency *Currency) (*Currency, error)
 	AddOrUpdate(ctx context.Context, currency *Currency) (*Currency, error)
 }

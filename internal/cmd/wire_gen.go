@@ -35,7 +35,8 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	invoiceRepository := repositories.NewPostgresInvoiceRepository(db)
 	http := clients.NewHTTPClient()
 	currencyRepository := repositories.NewPostgresCurrencyRepository(db)
-	pluginManager := pluginmgr.NewPluginManager(globalLogger, http, currencyRepository, startup)
+	runtime := conf.NewRuntimeConfig()
+	pluginManager := pluginmgr.NewPluginManager(globalLogger, http, currencyRepository, runtime)
 	invoiceTopic := invoice.NewTopic()
 	invoiceManager, err := invoice.NewManager(invoiceRepository, pluginManager, globalLogger, invoiceTopic)
 	if err != nil {
@@ -47,15 +48,23 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	currencyHandler, err := server.NewCurrencyHandler(pluginManager, currencyRepository, globalLogger)
+	currencyHandler, err := server.NewCurrencyHandler(pluginManager, currencyRepository, runtime, globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	internalRouter, err := server.NewInternalRouter(invoiceHandler, currencyHandler, globalLogger, transactionBuilder, startup)
+	configHandler, err := server.NewConfigHandler(runtime, globalLogger)
 	if err != nil {
 		return nil, err
 	}
-	walletPoller, err := pluginwallet.NewPoller(globalLogger, startup, transactionBuilder, pluginManager, invoiceRepository, invoiceManager)
+	pluginHandler, err := server.NewPluginHandler(pluginManager, globalLogger)
+	if err != nil {
+		return nil, err
+	}
+	internalRouter, err := server.NewInternalRouter(invoiceHandler, currencyHandler, configHandler, pluginHandler, globalLogger, transactionBuilder, startup)
+	if err != nil {
+		return nil, err
+	}
+	walletPoller, err := pluginwallet.NewPoller(globalLogger, runtime, transactionBuilder, pluginManager, invoiceRepository, invoiceManager)
 	if err != nil {
 		return nil, err
 	}

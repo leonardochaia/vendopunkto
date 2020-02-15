@@ -3,15 +3,8 @@ package conf
 type Startup struct {
 	Logger  StartupLogger  `mapstructure:"logger"`
 	PIDFile string         `mapstructure:"pidfile"`
-	Plugins StartupPlugins `mapstructure:"plugins"`
 	Server  StartupServer  `mapstructure:"server"`
 	Storage StartupStorage `mapstructure:"storage"`
-}
-
-type StartupPlugins struct {
-	DefaultExchangeRates string   `mapstructure:"default_exchange_rates"`
-	WalletPollInterval   string   `mapstructure:"wallet_poll_interval"`
-	Enabled              []string `mapstructure:"enabled"`
 }
 
 type StartupLogger struct {

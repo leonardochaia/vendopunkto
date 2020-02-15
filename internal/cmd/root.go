@@ -65,7 +65,6 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-
 	// Sets up the config file, environment etc
 	viper.SetTypeByDefaultValue(true)                      // If a default value is []string{"a"} an environment variable of "a b" will end up []string{"a","b"}
 	viper.AutomaticEnv()                                   // Automatically use environment variables where available

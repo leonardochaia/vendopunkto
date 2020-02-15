@@ -2,7 +2,6 @@ package pluginmgr
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -15,8 +14,9 @@ import (
 )
 
 type walletAndInfo struct {
-	client plugin.WalletPlugin
-	info   plugin.WalletPluginInfo
+	client     plugin.WalletPlugin
+	pluginInfo plugin.PluginInfo
+	info       plugin.WalletPluginInfo
 }
 
 type exchangeRatesAndInfo struct {
@@ -32,7 +32,7 @@ type currencyMetadataAndInfo struct {
 type pluginManager struct {
 	logger      hclog.Logger
 	client      clients.HTTP
-	startupConf conf.Startup
+	runtimeConf *conf.Runtime
 
 	currencyRepo vendopunkto.CurrencyRepository
 
@@ -42,11 +42,12 @@ type pluginManager struct {
 }
 
 func (manager *pluginManager) LoadPlugins(ctx context.Context) {
-	plugins := manager.startupConf.Plugins.Enabled
+	hosts := manager.runtimeConf.GetPluginHosts()
 
 	manager.logger.Debug("Loading plugin from URLs",
-		"urlAmount", len(plugins))
-	for _, addr := range plugins {
+		"urlAmount", len(hosts))
+
+	for _, addr := range hosts {
 
 		url, err := url.Parse(addr)
 
@@ -66,16 +67,41 @@ func (manager *pluginManager) LoadPlugins(ctx context.Context) {
 	_, err := manager.GetConfiguredExchangeRatesPlugin()
 	if err != nil {
 		manager.logger.Error("Failed to find default exchange plugins. Invoices will fail creation",
-			"defaultExchangeRates", manager.startupConf.Plugins.DefaultExchangeRates,
+			conf.ExchangeRatesPluginKey, manager.runtimeConf.GetExchangeRatesPlugin(),
 			"error", err)
 	}
+
+	err = manager.updateCurrenciesMetadata(ctx)
+	if err != nil {
+		manager.logger.Error("Failed when updating currencies metadata",
+			conf.CurrencyMetadataPluginKey, manager.runtimeConf.GetCurrencyMetadataPlugin(),
+			"error", err)
+	}
+}
+
+func (manager *pluginManager) GetAllPlugins() ([]plugin.PluginInfo, error) {
+	output := []plugin.PluginInfo{}
+
+	for _, w := range manager.wallets {
+		output = append(output, w.pluginInfo)
+	}
+
+	for _, w := range manager.exchangeRates {
+		output = append(output, w.info)
+	}
+
+	for _, w := range manager.currencyMetadata {
+		output = append(output, w.info)
+	}
+
+	return output, nil
 }
 
 func (manager *pluginManager) GetWallet(ID string) (plugin.WalletPlugin, error) {
 	if w, ok := manager.wallets[ID]; ok {
 		return w.client, nil
 	}
-	return nil, fmt.Errorf("Could not find a wallet with ID " + ID)
+	return nil, errors.Str("Could not find a wallet with ID " + ID)
 }
 
 func (manager *pluginManager) GetWalletForCurrency(currency string) (plugin.WalletPlugin, error) {
@@ -84,7 +110,7 @@ func (manager *pluginManager) GetWalletForCurrency(currency string) (plugin.Wall
 			return wallet.client, nil
 		}
 	}
-	return nil, fmt.Errorf("Could not find a wallet for currency " + currency)
+	return nil, errors.Str("Could not find a wallet for currency " + currency)
 }
 
 func (manager *pluginManager) GetWalletInfoForCurrency(currency string) (plugin.WalletPluginInfo, error) {
@@ -93,7 +119,7 @@ func (manager *pluginManager) GetWalletInfoForCurrency(currency string) (plugin.
 			return wallet.info, nil
 		}
 	}
-	return plugin.WalletPluginInfo{}, fmt.Errorf("Could not find a wallet for currency " + currency)
+	return plugin.WalletPluginInfo{}, errors.Str("Could not find a wallet for currency " + currency)
 }
 
 func (manager *pluginManager) GetAllCurrencies() ([]plugin.WalletPluginCurrency, error) {
@@ -106,15 +132,27 @@ func (manager *pluginManager) GetAllCurrencies() ([]plugin.WalletPluginCurrency,
 }
 
 func (manager *pluginManager) GetExchangeRatesPlugin(ID string) (plugin.ExchangeRatesPlugin, error) {
-	const op errors.Op = "pluginmgr.create"
+	const op errors.Op = "pluginmgr.getExchangeRatesPlugin"
 	if w, ok := manager.exchangeRates[ID]; ok {
 		return w.client, nil
 	}
-	return nil, errors.E(op, errors.NotExist, fmt.Errorf("Could not find an exchange rates plugin with ID "+ID))
+	return nil, errors.E(op, errors.NotExist, errors.Str("Could not find an exchange rates plugin with ID "+ID))
 }
 
 func (manager *pluginManager) GetConfiguredExchangeRatesPlugin() (plugin.ExchangeRatesPlugin, error) {
-	return manager.GetExchangeRatesPlugin(manager.startupConf.Plugins.DefaultExchangeRates)
+	return manager.GetExchangeRatesPlugin(manager.runtimeConf.GetExchangeRatesPlugin())
+}
+
+func (manager *pluginManager) GetConfiguredCurrencyMetadataPlugin() (plugin.CurrencyMetadataPlugin, error) {
+	return manager.GetCurrencyMetadataPlugin(manager.runtimeConf.GetCurrencyMetadataPlugin())
+}
+
+func (manager *pluginManager) GetCurrencyMetadataPlugin(ID string) (plugin.CurrencyMetadataPlugin, error) {
+	const op errors.Op = "pluginmgr.getCurrencyMetadataPlugin"
+	if w, ok := manager.currencyMetadata[ID]; ok {
+		return w.client, nil
+	}
+	return nil, errors.E(op, errors.NotExist, errors.Str("Could not find a plugin with ID "+ID))
 }
 
 func (manager *pluginManager) initializePlugin(ctx context.Context, pluginURL url.URL) error {
@@ -125,8 +163,6 @@ func (manager *pluginManager) initializePlugin(ctx context.Context, pluginURL ur
 		return err
 	}
 
-	currencyMetadatas := []plugin.PluginInfo{}
-
 	for _, info := range infos {
 
 		switch info.Type {
@@ -135,9 +171,9 @@ func (manager *pluginManager) initializePlugin(ctx context.Context, pluginURL ur
 		case plugin.PluginTypeExchangeRate:
 			err = manager.initializeExchangeRatesPlugin(pluginURL, info)
 		case plugin.PluginTypeCurrencyMetadata:
-			currencyMetadatas = append(currencyMetadatas, info)
+			err = manager.initializeCurrencyMetadataPlugin(ctx, pluginURL, info)
 		default:
-			err = fmt.Errorf("Plugin type is not supported %s", info.Type)
+			err = errors.Errorf("Plugin type is not supported %s", info.Type)
 		}
 
 		if err != nil {
@@ -150,21 +186,6 @@ func (manager *pluginManager) initializePlugin(ctx context.Context, pluginURL ur
 			continue
 		}
 	}
-
-	// currency metadata need to be initialized after wallets
-	for _, info := range currencyMetadatas {
-		err = manager.initializeCurrencyMetadataPlugin(ctx, pluginURL, info)
-		if err != nil {
-			manager.logger.Error("Failed to initialize plugin",
-				"id", info.ID,
-				"name", info.Name,
-				"type", info.Type,
-				"address", pluginURL.String(),
-				"error", err)
-			continue
-		}
-	}
-
 	return nil
 }
 
@@ -214,8 +235,9 @@ func (manager *pluginManager) initializeWalletPlugin(
 	}
 
 	manager.wallets[info.ID] = walletAndInfo{
-		client: walletClient,
-		info:   walletInfo,
+		client:     walletClient,
+		info:       walletInfo,
+		pluginInfo: info,
 	}
 
 	manager.logger.Info("Initialized Wallet Plugin",
@@ -239,27 +261,49 @@ func (manager *pluginManager) initializeCurrencyMetadataPlugin(
 		return err
 	}
 
-	// TODO: Config
-	config := []string{
-		"usd",
-		"ars",
+	manager.currencyMetadata[info.ID] = currencyMetadataAndInfo{
+		client: client,
+		info:   info,
 	}
+
+	manager.logger.Info("Initialized Currency Metadata",
+		"id", info.ID,
+		"name", info.Name,
+		"address", pluginURL.String()+info.GetAddress(),
+	)
+
+	return nil
+}
+
+func (manager *pluginManager) updateCurrenciesMetadata(ctx context.Context) error {
+
+	plugin, err := manager.GetConfiguredCurrencyMetadataPlugin()
+	if err != nil {
+		return err
+	}
+
+	info, err := plugin.GetPluginInfo()
+	if err != nil {
+		return err
+	}
+
+	logger := manager.logger.With("id", info.ID,
+		"name", info.Name,
+	)
+
+	toQuery := manager.runtimeConf.GetPricingCurrencies()
 
 	wallets, err := manager.GetAllCurrencies()
 	if err != nil {
 		return err
 	}
 
+	// combine configured currencies with installed wallet plugin currencies
 	for _, w := range wallets {
-		config = append(config, w.Symbol)
+		toQuery = append(toQuery, w.Symbol)
 	}
 
-	logger := manager.logger.With("id", info.ID,
-		"name", info.Name,
-		"address", pluginURL.String()+info.GetAddress(),
-	)
-
-	currencies, err := client.GetCurrencies(config)
+	currencies, err := plugin.GetCurrencies(toQuery)
 
 	if len(currencies) == 0 {
 		logger.Warn("Plugin returned no currencies. Skipping")
@@ -267,7 +311,7 @@ func (manager *pluginManager) initializeCurrencyMetadataPlugin(
 	}
 
 	for _, currency := range currencies {
-		logger.Info("Loading currency", "currency", currency.Symbol)
+		logger.Info("Updating currency metadata", "currency", currency.Symbol)
 		_, err := manager.currencyRepo.AddOrUpdate(ctx, &vendopunkto.Currency{
 			Symbol:       currency.Symbol,
 			Name:         currency.Name,
@@ -277,13 +321,6 @@ func (manager *pluginManager) initializeCurrencyMetadataPlugin(
 			return err
 		}
 	}
-
-	manager.currencyMetadata[info.ID] = currencyMetadataAndInfo{
-		client: client,
-		info:   info,
-	}
-
-	logger.Info("Initialized Currency Metadata")
 
 	return nil
 }

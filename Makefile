@@ -48,15 +48,16 @@ dbclean:
 
 run:
 	STORAGE_HOST=localhost \
-	PLUGINS_ENABLED="http://localhost:4000" \
-	PLUGINS_DEFAULT_EXCHANGE_RATES=fake-exchange-rates \
+	PLUGIN_HOSTS="http://localhost:4000" \
+	EXCHANGE_RATES_PLUGIN=fake-exchange-rates \
+	CURRENCY_METADATA_PLUGIN=fake-currency-metadata \
 	LOGGER_LEVEL=debug \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
 
 run-vp-monero:
 	STORAGE_HOST=localhost \
-	PLUGINS_ENABLED="http://localhost:4200 http://localhost:4201" \
-	PLUGINS_DEFAULT_EXCHANGE_RATES=gecko-exchange-rates \
+	PLUGIN_HOSTS="http://localhost:4200 http://localhost:4201" \
+	EXCHANGE_RATES_PLUGIN=gecko-exchange-rates \
 	LOGGER_LEVEL=debug \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
 

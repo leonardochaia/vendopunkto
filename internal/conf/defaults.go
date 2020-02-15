@@ -31,16 +31,4 @@ func init() {
 	viper.SetDefault("storage.port", 5432)
 	viper.SetDefault("storage.database", "vendopunkto")
 	viper.SetDefault("storage.sslmode", "disable")
-
-	// Plugins
-	// string separated list of plugin URLs to activate on startup
-	viper.SetDefault("plugins.enabled", []string{})
-
-	// this is the address that VendoPunkto will provide to plugins
-	// for them to reach back
-	viper.SetDefault("plugins.default_exchange_rates", "")
-
-	// How often to poll wallets for new transfers
-	viper.SetDefault("plugins.wallet_poll_interval", "10s")
-
 }

@@ -16,6 +16,8 @@ type InternalRouter interface {
 func NewInternalRouter(
 	invoice *InvoiceHandler,
 	currencies *CurrencyHandler,
+	config *ConfigHandler,
+	plugin *PluginHandler,
 	globalLogger hclog.Logger,
 	txBuilder store.TransactionBuilder,
 	startupConf conf.Startup,
@@ -33,6 +35,8 @@ func NewInternalRouter(
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/invoices", invoice.InternalRoutes())
 		r.Mount("/currencies", currencies.InternalRoutes())
+		r.Mount("/config", config.InternalRoutes())
+		r.Mount("/plugins", plugin.InternalRoutes())
 	})
 
 	serveSPA(router, "/", "spa/dist/admin")

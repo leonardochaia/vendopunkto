@@ -9,6 +9,7 @@ import (
 // PluginManager is the first line of control for plugins
 type PluginManager interface {
 	LoadPlugins(ctx context.Context)
+	GetAllPlugins() ([]plugin.PluginInfo, error)
 	GetWallet(ID string) (plugin.WalletPlugin, error)
 	GetWalletForCurrency(currency string) (plugin.WalletPlugin, error)
 	GetWalletInfoForCurrency(currency string) (plugin.WalletPluginInfo, error)
