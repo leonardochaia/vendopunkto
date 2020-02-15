@@ -29,8 +29,10 @@ var (
 				Color:  hclog.AutoColor,
 			})
 
+			runtimeConf := conf.NewRuntimeConfig(logger, runtimeConfigPath)
+
 			// Create the server (uses wire DI)
-			s, err := NewServer(logger)
+			s, err := NewServer(logger, runtimeConf)
 			if err != nil {
 				logger.Error("Could not create server",
 					"error", err,

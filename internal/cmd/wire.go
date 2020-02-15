@@ -19,7 +19,7 @@ import (
 )
 
 // Create a new server
-func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
+func NewServer(globalLogger hclog.Logger, runtime *conf.Runtime) (*server.Server, error) {
 	wire.Build(
 		conf.Providers,
 		pluginmgr.Providers,

@@ -1,9 +1,11 @@
 package conf
 
 import (
+	"os"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/viper"
 )
 
@@ -23,6 +25,13 @@ const (
 	PaymentMethodsKey         = "payment_methods"
 )
 
+// Runtime is the config that is used on runtime and can be changed after
+// the application has started
+type Runtime struct {
+	*viper.Viper
+	logger hclog.Logger
+}
+
 func setRuntimeDefaults(r *Runtime) {
 	r.SetTypeByDefaultValue(true)                      // If a default value is []string{"a"} an environment variable of "a b" will end up []string{"a","b"}
 	r.AutomaticEnv()                                   // Automatically use environment variables where available
@@ -38,12 +47,6 @@ func setRuntimeDefaults(r *Runtime) {
 	r.SetDefault(DefaultPricingCurrencyKey, "usd")
 
 	r.SetDefault(PaymentMethodsKey, []string{"btc", "xmr"})
-}
-
-// Runtime is the config that is used on runtime and can be changed after
-// the application has started
-type Runtime struct {
-	*viper.Viper
 }
 
 func (r *Runtime) GetPluginHosts() []string {
@@ -72,4 +75,34 @@ func (r *Runtime) GetPaymentMethods() []string {
 
 func (r *Runtime) GetDefaultPricingCurrency() string {
 	return r.GetString(DefaultPricingCurrencyKey)
+}
+
+// InitializeConfigFile will read a file from the provided path
+// if it's found, it will read the config with viper.
+// If not, it will create and initialize the file with defaults
+func (r *Runtime) InitializeConfigFile(path string) (bool, error) {
+	r.SetConfigFile(path)
+
+	logger := r.logger.With("path", path)
+
+	if _, e := os.Stat(path); os.IsNotExist(e) {
+
+		logger.Info("Could not find runtime config. Creating file with defaults.")
+
+		// create the file
+		emptyFile, err := os.Create(path)
+		if err != nil {
+			return false, err
+		}
+
+		defer emptyFile.Close()
+
+		err = r.WriteConfig()
+		return true, err
+	}
+
+	logger.Info("Reading runtime config file")
+
+	err := r.ReadInConfig()
+	return false, err
 }

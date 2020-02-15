@@ -23,7 +23,7 @@ import (
 
 // Injectors from wire.go:
 
-func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
+func NewServer(globalLogger hclog.Logger, runtime *conf.Runtime) (*server.Server, error) {
 	startup, err := conf.LoadStartupConfig()
 	if err != nil {
 		return nil, err
@@ -35,7 +35,6 @@ func NewServer(globalLogger hclog.Logger) (*server.Server, error) {
 	invoiceRepository := repositories.NewPostgresInvoiceRepository(db)
 	http := clients.NewHTTPClient()
 	currencyRepository := repositories.NewPostgresCurrencyRepository(db)
-	runtime := conf.NewRuntimeConfig()
 	pluginManager := pluginmgr.NewPluginManager(globalLogger, http, currencyRepository, runtime)
 	invoiceTopic := invoice.NewTopic()
 	invoiceManager, err := invoice.NewManager(invoiceRepository, pluginManager, globalLogger, invoiceTopic)

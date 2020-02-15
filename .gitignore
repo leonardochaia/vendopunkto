@@ -6,3 +6,4 @@ vendopunkto-cli
 mocks
 server.crt
 server.key
+vp-runtime.yml

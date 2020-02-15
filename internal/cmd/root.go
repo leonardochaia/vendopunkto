@@ -16,8 +16,9 @@ import (
 var (
 
 	// Config and global logger
-	configFile string
-	pidFile    string
+	startupConfigPath string
+	runtimeConfigPath string
+	pidFile           string
 
 	// The Root Cli Handler
 	rootCmd = &cobra.Command{
@@ -60,7 +61,8 @@ func Execute() {
 func init() {
 	// Initialize configuration
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Config file")
+	rootCmd.PersistentFlags().StringVarP(&startupConfigPath, "startup-config", "", "", "Startup config file path")
+	rootCmd.PersistentFlags().StringVarP(&runtimeConfigPath, "runtime-config", "", "vp-runtime.yml", "Runtime config file path")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -71,15 +73,15 @@ func initConfig() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // Environement variables use underscores instead of periods
 
 	// If a config file is found, initialize it
-	if configFile != "" {
-		created, err := conf.InitializeConfigFile(configFile)
+	if startupConfigPath != "" {
+		created, err := conf.InitializeConfigFile(startupConfigPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error ocurred while initializing config: %s ERROR: %s\n", configFile, err.Error())
+			fmt.Fprintf(os.Stderr, "Error ocurred while initializing config: %s ERROR: %s\n", startupConfigPath, err.Error())
 			os.Exit(1)
 		}
 
 		if created {
-			fmt.Fprintf(os.Stdout, "New config file created at: %s\n", configFile)
+			fmt.Fprintf(os.Stdout, "New config file created at: %s\n", startupConfigPath)
 			os.Exit(0)
 		}
 	}
