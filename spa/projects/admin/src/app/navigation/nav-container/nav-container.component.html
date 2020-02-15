@@ -27,6 +27,10 @@
                     <mat-icon mat-list-icon>folder</mat-icon>
                     Invoices
                 </a>
+                <a mat-list-item routerLink="config" (click)="isMobile ? snav.close() : true">
+                    <mat-icon mat-list-icon>settings_input_component</mat-icon>
+                    Configuration
+                </a>
             </mat-nav-list>
         </mat-sidenav>
 

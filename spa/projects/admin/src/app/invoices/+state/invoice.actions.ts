@@ -30,22 +30,6 @@ export const createInvoiceFailure = createAction(
   props<{ error: string }>()
 );
 
-
-export const loadCurrencies = createAction(
-  '[Invoice] Load Currencies'
-);
-
-export const loadCurrenciesSuccess = createAction(
-  '[Invoice] Load Currencies Success',
-  props<{ currencies: { [symbol: string]: SupportedCurrency } }>()
-);
-
-export const loadCurrenciesFailure = createAction(
-  '[Invoice] Load Currencies Failure',
-  props<{ error: string }>()
-);
-
-
 export const invoiceCreationFormChanged = createAction(
   '[Invoice] Creation Form Changed',
   props<{ form: InvoiceCreationParams }>()

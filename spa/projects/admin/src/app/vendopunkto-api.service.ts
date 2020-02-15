@@ -5,7 +5,9 @@ import {
   InvoiceCreationParams,
   SupportedCurrency,
   GetCurrencyExchangeParams,
-  GetCurrencyExchangeResult
+  GetCurrencyExchangeResult,
+  GetConfigResult,
+  GetPluginResult
 } from 'shared';
 
 const apiAddress = `/api/v1`;
@@ -25,8 +27,12 @@ export class VendopunktoApiService {
     return this.http.post<InvoiceDTO[]>(`${apiAddress}/invoices/search`, filter);
   }
 
-  public getCurrencies() {
-    return this.http.get<SupportedCurrency[]>(`${apiAddress}/currencies`);
+  public getPricingCurrencies() {
+    return this.http.get<SupportedCurrency[]>(`${apiAddress}/currencies/pricing`);
+  }
+
+  public getPaymentCurrencies() {
+    return this.http.get<SupportedCurrency[]>(`${apiAddress}/currencies/payment-methods`);
   }
 
   public getCurrencyExchange(params: GetCurrencyExchangeParams) {
@@ -35,5 +41,13 @@ export class VendopunktoApiService {
 
   public createInvoice(params: InvoiceCreationParams) {
     return this.http.post<InvoiceDTO>(`${apiAddress}/invoices`, params);
+  }
+
+  public getConfig() {
+    return this.http.get<GetConfigResult>(`${apiAddress}/config`);
+  }
+
+  public getPlugins() {
+    return this.http.get<GetPluginResult[]>(`${apiAddress}/plugins`);
   }
 }

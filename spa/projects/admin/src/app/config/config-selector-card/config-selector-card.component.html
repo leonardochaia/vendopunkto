@@ -1,0 +1,25 @@
+<mat-card>
+    <mat-card-title>
+        {{title}}
+    </mat-card-title>
+    <mat-card-content>
+        <p *ngIf="description">
+            {{description}}
+        </p>
+
+        <mat-form-field style="width: 100%;">
+            <mat-select [placeholder]="title" [formControl]="control">
+                <mat-option *ngFor="let item of items" [value]="item[itemIdProp]">
+                    <ng-container
+                                  *ngTemplateOutlet="itemNameTemplate || defaultTemplate; context: { $implicit: item  }">
+                    </ng-container>
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </mat-card-content>
+
+</mat-card>
+
+<ng-template #defaultTemplate let-item>
+    {{item['name']}}
+</ng-template>

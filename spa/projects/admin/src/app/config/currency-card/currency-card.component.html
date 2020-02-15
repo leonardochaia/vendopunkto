@@ -1,0 +1,19 @@
+<mat-card>
+
+    <mat-card-title fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div>
+            <img [src]="currency.logoImageUrl" style="height:48px" />
+        </div>
+        <div fxFlex="grow" style="white-space: nowrap;">
+            {{currency.name}}
+            ({{currency.symbol | uppercase}})
+        </div>
+    </mat-card-title>
+    <mat-card-content *ngIf="actionTemplate">
+        <div fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
+            <ng-container *ngTemplateOutlet="actionTemplate; context: { $implicit: currency  }">
+            </ng-container>
+        </div>
+    </mat-card-content>
+
+</mat-card>

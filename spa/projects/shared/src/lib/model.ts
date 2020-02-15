@@ -33,7 +33,9 @@ export interface Payment {
 export interface SupportedCurrency {
     name: string;
     symbol: string;
+    logoImageUrl: string;
     supportsPayments: boolean;
+    supportsPricing: boolean;
 }
 
 export interface InvoiceCreationParams {
@@ -64,4 +66,20 @@ export interface GetCurrencyExchangeParams {
 
 export interface GetCurrencyExchangeResult {
     [currency: string]: string;
+}
+
+export interface GetConfigResult {
+    currency_metadata_plugin: string;
+    default_invoice_currency: string;
+    exchange_rates_plugin: string;
+    invoice_currencies: string[];
+    plugin_hosts: string[];
+    wallet_poller_interval: string;
+    [k: string]: unknown;
+}
+
+export interface GetPluginResult {
+    name: string;
+    id: string;
+    pluginType: string;
 }

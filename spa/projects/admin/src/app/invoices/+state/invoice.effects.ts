@@ -1,17 +1,16 @@
 import { Injectable } from '@angular/core';
-import { Actions, createEffect, ofType, OnInitEffects } from '@ngrx/effects';
+import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, concatMap, tap, withLatestFrom } from 'rxjs/operators';
-import { EMPTY, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import * as InvoiceActions from './invoice.actions';
 import { VendopunktoApiService } from '../../vendopunkto-api.service';
-import { Action } from '@ngrx/store';
 import { Router } from '@angular/router';
-import { InvoiceFacade } from './invoice.facade';
 import { PaymentMethodCreationParams } from 'shared/shared';
+import { CurrenciesFacade } from '../../currencies/+state/currencies.facade';
 
 @Injectable()
-export class InvoiceEffects implements OnInitEffects {
+export class InvoiceEffects {
 
 
   loadInvoices$ = createEffect(() => {
@@ -22,20 +21,6 @@ export class InvoiceEffects implements OnInitEffects {
         this.api.searchInvoices({}).pipe(
           map(data => InvoiceActions.loadInvoicesSuccess({ invoices: data })),
           catchError(error => of(InvoiceActions.loadInvoicesFailure({ error: error.message }))))
-      )
-    );
-  });
-
-  loadCurrencies$ = createEffect(() => {
-    return this.actions$.pipe(
-
-      ofType(InvoiceActions.loadCurrencies),
-      concatMap(() =>
-        this.api.getCurrencies().pipe(
-          map(data => InvoiceActions.loadCurrenciesSuccess({
-            currencies: data.reduce((a, b) => (a[b.symbol] = b, a), {})
-          })),
-          catchError(error => of(InvoiceActions.loadCurrenciesFailure({ error: error.message }))))
       )
     );
   });
@@ -57,14 +42,18 @@ export class InvoiceEffects implements OnInitEffects {
     return this.actions$.pipe(
 
       ofType(InvoiceActions.invoiceCreationFormChanged),
-      withLatestFrom(this.facade.paymentCurrencies$),
-      concatMap(([action, currencies]) => {
+      withLatestFrom(this.currenciesFacade.paymentCurrencies$),
+      concatMap(([action, paymentCurrencies]) => {
         const info = {
           ...action.form,
-          paymentMethods: currencies.map(c => ({
-            currency: c.symbol,
-            total: null,
-          } as PaymentMethodCreationParams))
+          paymentMethods: Object.keys(paymentCurrencies)
+            .map(k => {
+              const c = paymentCurrencies[k];
+              return {
+                currency: c.symbol,
+                total: null,
+              } as PaymentMethodCreationParams;
+            })
         };
         return this.api.getCurrencyExchange({
           amount: info.total,
@@ -78,14 +67,9 @@ export class InvoiceEffects implements OnInitEffects {
     );
   });
 
-
-  ngrxOnInitEffects(): Action {
-    return InvoiceActions.loadCurrencies();
-  }
-
   constructor(
     private readonly actions$: Actions,
-    private readonly facade: InvoiceFacade,
+    private readonly currenciesFacade: CurrenciesFacade,
     private readonly api: VendopunktoApiService,
     private readonly router: Router) { }
 

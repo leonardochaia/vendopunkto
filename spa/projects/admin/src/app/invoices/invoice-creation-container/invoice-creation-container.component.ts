@@ -5,6 +5,7 @@ import { startCreateInvoice, invoiceCreationFormChanged } from '../+state/invoic
 import { map, takeUntil, filter, debounceTime, distinctUntilChanged, tap, startWith } from 'rxjs/operators';
 import { InvoiceCreationParams, PaymentMethodCreationParams } from 'shared';
 import { Subject, combineLatest } from 'rxjs';
+import { CurrenciesFacade } from '../../currencies/+state/currencies.facade';
 
 @Component({
   selector: 'adm-invoice-creation-container',
@@ -24,9 +25,11 @@ export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
     paymentMethods: this.paymentMethodsArray
   });
 
-  public readonly currencies$ = this.facade.currencies$;
+  public readonly pricingCurrencies$ = this.currenciesFacade.pricingCurrencies$;
+  public readonly paymentCurrencies$ = this.currenciesFacade.paymentCurrencies$;
 
-  public readonly loadingCurrencies$ = this.facade.loadingCurrencies$;
+  public readonly loadingPricingCurrencies$ = this.currenciesFacade.loadingPricingCurrencies$;
+  public readonly loadingPaymentCurrencies$ = this.currenciesFacade.loadingPaymentCurrencies$;
   public readonly loadingPaymentMethods$ = this.facade.loadingPaymentMethods$
     .pipe(
       debounceTime(250),
@@ -38,6 +41,7 @@ export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly facade: InvoiceFacade,
+    private readonly currenciesFacade: CurrenciesFacade,
     private readonly fb: FormBuilder) { }
 
   ngOnInit() {
@@ -97,7 +101,7 @@ export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
 
   public createInvoice() {
 
-    const params: InvoiceCreationParams = this.basicInfoForm.getRawValue()
+    const params: InvoiceCreationParams = this.basicInfoForm.getRawValue();
 
     params.paymentMethods = this.paymentMethodsArray.getRawValue()
       .map(c => ({ currency: c.currency, total: c.total } as PaymentMethodCreationParams));

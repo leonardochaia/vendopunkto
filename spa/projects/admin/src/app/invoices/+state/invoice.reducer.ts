@@ -1,6 +1,12 @@
 import { Action, createReducer, on } from '@ngrx/store';
 import * as InvoiceActions from './invoice.actions';
-import { InvoiceDTO, SupportedCurrency, InvoiceCreationParams, PaymentMethodCreationParams } from 'shared';
+import * as CurrenciesActions from '../../currencies/+state/currencies.actions';
+import * as ConfigActions from '../../config/+state/config.actions';
+import {
+  InvoiceDTO,
+  InvoiceCreationParams,
+  PaymentMethodCreationParams
+} from 'shared';
 
 export const InvoiceFeatureKey = 'vpInvoice';
 
@@ -9,9 +15,6 @@ export interface InvoiceState {
 
   invoices: InvoiceDTO[];
   loadingInvoices: boolean;
-
-  currencies: { [symbol: string]: SupportedCurrency };
-  loadingCurrencies: boolean;
 
   creation: {
     basic: InvoiceCreationParams;
@@ -22,7 +25,6 @@ export interface InvoiceState {
 
 export const initialState: InvoiceState = {
   invoices: [],
-  currencies: {},
   loadingInvoices: false,
 
   creation: {
@@ -35,7 +37,6 @@ export const initialState: InvoiceState = {
     loadingPaymentMethods: false
   },
   error: null,
-  loadingCurrencies: false,
 };
 
 const InvoiceReducer = createReducer(
@@ -55,28 +56,15 @@ const InvoiceReducer = createReducer(
     loadingInvoices: false
   })),
 
-
-  on(InvoiceActions.loadCurrencies, (state, action) => ({
+  on(ConfigActions.loadConfigSuccess, (state, action) => ({
     ...state,
-    loadingCurrencies: true
-  })),
-
-  on(InvoiceActions.loadCurrenciesSuccess, (state, action) => ({
-    ...state,
-    currencies: action.currencies,
     creation: {
       ...state.creation,
       basic: {
         ...state.creation.basic,
-        currency: state.creation.basic.currency || Object.keys(action.currencies)[0]
+        currency: action.config.default_pricing_currency
       }
     },
-    loadingCurrencies: false
-  })),
-
-  on(InvoiceActions.loadCurrenciesFailure, (state, action) => ({
-    ...state,
-    error: action.error,
     loadingCurrencies: false
   })),
 

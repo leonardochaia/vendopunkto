@@ -5,7 +5,7 @@
 </ng-template>
 
 <div fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="center start"
-    *ngIf="!(creating$ | async) && !(loadingCurrencies$ | async) &&  currencies$ | async as currencies; else spinnerTemplate">
+     *ngIf="!(creating$ | async) && !(loadingPricingCurrencies$ | async)&& !(loadingPaymentCurrencies$ | async) ; else spinnerTemplate">
 
     <div fxFlex.gt-xs fxFlex.gt-md="50%">
         <mat-horizontal-stepper [linear]="basicInfoForm.invalid" #stepper>
@@ -20,17 +20,17 @@
 
                         <mat-form-field style="width: 100%;">
                             <input matInput placeholder="Total" autofocus type="number" step="0"
-                                [formControl]="totalControl">
+                                   [formControl]="totalControl">
                         </mat-form-field>
 
-                        <mat-form-field style="width: 100%;">
+                        <mat-form-field style="width: 100%;" *ngIf="pricingCurrencies$ | async as pricingCurrencies;">
                             <mat-select placeholder="Currency" [formControl]="currencyControl">
-                                <mat-option *ngFor="let entry of currencies | keyvalue" [value]="entry.key">
+                                <mat-option *ngFor="let entry of pricingCurrencies | keyvalue" [value]="entry.key">
                                     {{entry.key | uppercase}} - {{entry.value.name}}
                                 </mat-option>
                             </mat-select>
-                            <mat-hint
-                                *ngIf="currencyControl?.value && !currencies[currencyControl.value]?.supportsPayments">
+                            <mat-hint *ngIf="currencyControl?.value 
+                                      && !pricingCurrencies[currencyControl.value]?.supportsPayments">
                                 This currency can only be used to define the invoice's value.
                                 But it won't be used as payment method.
                             </mat-hint>
@@ -57,21 +57,23 @@
 
             <mat-step [stepControl]="paymentMethodsArray">
                 <ng-template matStepLabel>Payment Methods</ng-template>
-                <form [formGroup]="paymentMethodsArray" *ngIf="!(loadingPaymentMethods$ | async); else spinnerTemplate">
+                <form [formGroup]="paymentMethodsArray" *ngIf="!(loadingPaymentMethods$ | async) 
+                      && !(loadingPaymentCurrencies$ | async) 
+                      && paymentCurrencies$ | async as paymentCurrencies; else spinnerTemplate">
                     <p>
                         The payee will be able to pay the invoice in this currencies.
                         You can change the exchange price if you'd like.
                     </p>
 
-                    <mat-card *ngFor="let pm of paymentMethodsArray.controls; let index = index">
+                    <mat-card *ngFor="let pm of paymentMethodsArray.controls; let index = index;">
                         <mat-card-title fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
                             <div>
-                                <img [src]="currencies[pm.value.currency].logoImageUrl" style="height:48px" />
+                                <img [src]="paymentCurrencies[pm.value.currency].logoImageUrl" style="height:48px" />
                             </div>
-                            <div fxFlex="grow">{{currencies[pm.value.currency].name | titlecase}}</div>
+                            <div fxFlex="grow">{{paymentCurrencies[pm.value.currency].name | titlecase}}</div>
                             <div>
                                 <button type="button" mat-icon-button color="warn"
-                                    (click)="paymentMethodsArray.removeAt(index)">
+                                        (click)="paymentMethodsArray.removeAt(index)">
                                     <mat-icon>delete</mat-icon>
                                 </button>
                             </div>
@@ -88,7 +90,7 @@
                 </form>
             </mat-step>
 
-            <mat-step #confirmationStep>
+            <mat-step #confirmationStep *ngIf="paymentCurrencies$ | async as paymentCurrencies;">
                 <ng-template matStepLabel>Confirmation</ng-template>
 
                 <h1>
@@ -100,11 +102,11 @@
                 </h1>
 
                 <h2>Payment methods</h2>
-                <mat-card *ngFor="let pm of paymentMethodsArray.getRawValue(); let index = index">
+                <mat-card *ngFor="let pm of paymentMethodsArray.getRawValue(); let index = index;">
 
                     <mat-card-title fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
                         <div>
-                            <img [src]="currencies[pm.currency].logoImageUrl" style="height:48px" />
+                            <img [src]="paymentCurrencies[pm.currency].logoImageUrl" style="height:48px" />
                         </div>
                         <div>
                             {{pm.total}} {{pm.currency | uppercase}}
