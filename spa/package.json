@@ -25,12 +25,14 @@
     "@ngrx/effects": "^8.6.0",
     "@ngrx/store": "^8.6.0",
     "@ngrx/store-devtools": "^8.6.0",
+    "@types/uuid": "^3.4.7",
     "hammerjs": "^2.0.8",
     "material-design-icons": "^3.0.1",
     "ngx-kjua": "^1.6.0",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
     "typeface-roboto": "0.0.75",
+    "uuid": "^3.4.0",
     "zone.js": "~0.9.1"
   },
   "devDependencies": {

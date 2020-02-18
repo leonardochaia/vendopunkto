@@ -32,14 +32,21 @@ $admin-theme: mat-dark-theme($admin-primary, $admin-accent, $admin-warn);
 
 /* You can add global styles to this file, and also import other style files */
 
+html, body, .app-background {
+    background-color:#303030;
+}
 
 html, body { 
     height: 100%;
-    background-color:#263238;
     color: whitesmoke;
 }
+
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 mat-form-field.mat-form-field {
     font-size: 18px;
+}
+
+.vp-text-success {
+    color: #02a105
 }

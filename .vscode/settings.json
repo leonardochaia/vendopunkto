@@ -19,5 +19,5 @@
         "punkto",
         "vendo"
     ],
-    "html.format.wrapAttributes": "aligned-multiple"
+    "html.format.wrapAttributes": "force-aligned"
 }

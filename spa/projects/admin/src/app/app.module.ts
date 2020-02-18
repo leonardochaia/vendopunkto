@@ -15,6 +15,8 @@ import { environment } from '../environments/environment';
 import { ConfigModule } from './config/config.module';
 import { PluginsModule } from './plugins/plugins.module';
 import { CurrenciesModule } from './currencies/currencies.module';
+import { ShellNotificationsModule } from './shell-notifications/shell-notifications.module';
+import { ShellOperationsModule } from './shell-operations/shell-operations.module';
 
 @NgModule({
   declarations: [
@@ -44,6 +46,8 @@ import { CurrenciesModule } from './currencies/currencies.module';
     PluginsModule,
     CurrenciesModule,
     ConfigModule,
+    ShellOperationsModule,
+    ShellNotificationsModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
