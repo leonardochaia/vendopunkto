@@ -20,19 +20,32 @@
         <small style="float: right;">
             <button type="button"
                     mat-button
-                    (click)="snav.close()">Close
+                    (click)="snav.close()">CLOSE
             </button>
         </small>
     </h2>
 
     <ng-container *ngIf="operations$ | async as operations;">
 
-        <ng-container *ngFor="let notification of notifications$ | async;"
-                      [ngTemplateOutlet]="notificationTemplate"
-                      [ngTemplateOutletContext]="{
+        <ng-container *ngIf="notifications$ | async as notifications;">
+
+            <div *ngIf="!notifications.length"
+                 style="text-align: center;"
+                 class="vp-text-primary">
+                Nothing to see here (:
+            </div>
+
+            <div [@slideOut]="notifications.length">
+
+                <ng-container *ngFor="let notification of notifications"
+                              [ngTemplateOutlet]="notificationTemplate"
+                              [ngTemplateOutletContext]="{
                                            $implicit: notification,
                                            operations: operations$ | async
                                         }">
+                </ng-container>
+            </div>
+
         </ng-container>
     </ng-container>
 </mat-sidenav>
@@ -47,6 +60,15 @@
             </b>
         </mat-card-title>
         <mat-card-content style="margin-bottom: 0;">
+
+            <div fxLayout="row"
+                 fxLayoutGap="8px"
+                 style="font-size: 10px;">
+                <div fxFlex
+                     fxFill>{{notification.id | slice:0:8}}</div>
+                <div>{{notification.date | date:'medium'}}</div>
+            </div>
+
             <div *ngIf="notification.message">{{notification.message}}</div>
 
             <ng-container [ngSwitch]="notification.type">
@@ -66,6 +88,7 @@
                           fxLayoutGap="16px"
                           fxLayoutAlign="end center"
                           style="font-size:12px">
+
             <div fxFlex
                  fxFill
                  *ngIf="notification.type === 'operation'">
@@ -75,17 +98,17 @@
                     </div>
                     <div *ngSwitchCase="'success'"
                          class="vp-text-success">
-                        Operation Succeeded
+                        SUCCESS
                     </div>
                     <div *ngSwitchCase="'failure'"
                          class="vp-text-warn">
-                        Operation Failure.
+                        FAILURE
                     </div>
                 </ng-container>
             </div>
-
             <div>
-                {{notification.date | date:'medium'}}
+                <button mat-button
+                        (click)="dismiss(notification.id)">DISMISS</button>
             </div>
         </mat-card-actions>
     </mat-card>

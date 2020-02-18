@@ -14,6 +14,7 @@ import {
   MatButtonModule
 } from '@angular/material';
 import { RouterModule } from '@angular/router';
+import { ShellNotificationsModule } from '../shell-notifications/shell-notifications.module';
 
 @NgModule({
   imports: [
@@ -30,6 +31,8 @@ import { RouterModule } from '@angular/router';
 
     StoreModule.forFeature(fromNavigation.NavigationFeatureKey, fromNavigation.reducer),
     EffectsModule.forFeature([NavigationEffects]),
+
+    ShellNotificationsModule,
   ],
   declarations: [
     NavContainerComponent

@@ -1,5 +1,5 @@
 import { Action } from '@ngrx/store';
-import * as uuid from 'uuid/v4';
+import { generateUniqueId } from 'shared';
 
 export interface ShellOperation {
     opKey: string;
@@ -21,10 +21,8 @@ export interface ShellOperationInstance<TOperation extends ShellOperation = Shel
 }
 
 export function createOperationInstance<T extends ShellOperation>(op: T): ShellOperationInstance<T> {
-    const opId = uuid();
-
     return {
-        id: opId,
+        id: generateUniqueId(),
         operation: op,
         status: 'pending'
     };

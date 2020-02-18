@@ -9,3 +9,8 @@ export const notificationAdded = createAction(
 export const notificationPopoverCleared = createAction(
   '[Notifications] Notification Popover Cleared'
 );
+
+export const dismissNotification = createAction(
+  '[Notifications] Dismiss Notification',
+  props<{ id: string }>(),
+);

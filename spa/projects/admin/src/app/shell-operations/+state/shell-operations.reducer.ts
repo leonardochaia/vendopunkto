@@ -10,42 +10,7 @@ export interface ShellOperationsState {
 }
 
 export const initialState: ShellOperationsState = {
-  operations: {
-    '42962d8f-56fa-4b3e-9fed-9b57cbc067a5': {
-      id: '42962d8f-56fa-4b3e-9fed-9b57cbc067a5',
-      operation: {
-        opKey: 'config-update',
-        title: 'Update Configuration',
-        description: 'Changes in configuration values',
-        successAction: '[Config] Update config success',
-        failureAction: '[Config] Update config failure'
-      },
-      status: 'pending'
-    },
-    'ok-56fa-4b3e-9fed-9b57cbc067a5': {
-      id: 'ok-56fa-4b3e-9fed-9b57cbc067a5',
-      operation: {
-        opKey: 'config-update',
-        title: 'Update Configuration',
-        description: 'Changes in configuration values',
-        successAction: '[Config] Update config success',
-        failureAction: '[Config] Update config failure'
-      },
-      status: 'success'
-    },
-    'fail-56fa-4b3e-9fed-9b57cbc067a5': {
-      id: 'fail-56fa-4b3e-9fed-9b57cbc067a5',
-      operation: {
-        opKey: 'config-update',
-        title: 'Update Configuration',
-        description: 'Changes in configuration values',
-        successAction: '[Config] Update config success',
-        failureAction: '[Config] Update config failure'
-      },
-      status: 'failure',
-      error: 'algo salio muy malche'
-    },
-  },
+  operations: {},
   error: null
 };
 

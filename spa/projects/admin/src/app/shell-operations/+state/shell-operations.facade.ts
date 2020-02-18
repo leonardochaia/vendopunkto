@@ -3,7 +3,7 @@ import { Store, Action } from '@ngrx/store';
 import { selectOperations } from './shell-operations.selectors';
 import { ShellOperationsState } from './shell-operations.reducer';
 import { ShellOperation, createOperationInstance, ShellOperationInstance, VPOperationAction } from '../model';
-import { OperationStartShellNotification } from '../../shell-notifications/model';
+import { OperationStartShellNotification, createNotification } from '../../shell-notifications/model';
 import { notificationAdded } from '../../shell-notifications/+state/shell-notifications.actions';
 
 @Injectable({
@@ -22,21 +22,19 @@ export class ShellOperationsFacade {
   public dispatchOperation(
     action: Action,
     instance: ShellOperationInstance,
-    notification: Partial<OperationStartShellNotification> = null) {
+    notify = false) {
 
     (action as VPOperationAction).vpDispatchOperationInstance = instance;
     this.store.dispatch(action);
 
-    if (notification) {
-      const notif: OperationStartShellNotification = {
-        ...notification,
+    if (notify) {
+      const notification: OperationStartShellNotification = {
+        ...createNotification('operation'),
         opId: instance.id,
-        type: 'operation',
-        title: notification.title || instance.title || instance.operation.title,
-        date: Date.now(),
+        title: instance.title || instance.operation.title,
       };
 
-      this.store.dispatch(notificationAdded({ notification: notif }));
+      this.store.dispatch(notificationAdded({ notification }));
     }
 
     return instance;

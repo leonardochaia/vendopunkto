@@ -78,6 +78,10 @@ export interface GetConfigResult {
     [k: string]: unknown;
 }
 
+export interface UpdateConfigParams {
+    [k: string]: unknown;
+}
+
 export interface GetPluginResult {
     name: string;
     id: string;

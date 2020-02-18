@@ -11,38 +11,8 @@ export interface ShellNotificationsState {
 }
 
 export const initialState: ShellNotificationsState = {
-  popoverNotification: {
-    opId: '42962d8f-56fa-4b3e-9fed-9b57cbc067a5',
-    type: 'operation',
-    title: 'Update configuration',
-    message: 'Changed "Default Invoice Currency" to "BTC"',
-    date: 1581988334610
-  } as any,
-  notifications: [
-    {
-      opId: '42962d8f-56fa-4b3e-9fed-9b57cbc067a5',
-      type: 'operation',
-      title: 'Update configuration',
-      message: 'Changed "Default Invoice Currency" to "BTC"',
-      date: 1581988334610
-    } as any,
-    {
-      opId: 'ok-56fa-4b3e-9fed-9b57cbc067a5',
-      type: 'operation',
-      title: 'Update configuration',
-      message: 'Changed "Default Invoice Currency" to "BTC"',
-      date: 1281988324210
-    },
-    {
-      opId: 'fail-56fa-4b3e-9fed-9b57cbc067a5',
-      type: 'operation',
-      title: 'Update configuration',
-      message: 'Changed "Default Invoice Currency" to "BTC"',
-      date: 1581988334410
-    },
-  ],
-  // popoverNotification: null,
-  // notifications: [],
+  popoverNotification: null,
+  notifications: [],
   error: null
 };
 
@@ -59,6 +29,13 @@ const ShellNotificationsReducer = createReducer(
     ...state,
     popoverNotification: undefined
   })),
+
+  on(ShellNotificationsActions.dismissNotification, (state, action) => ({
+    ...state,
+    notifications: state.notifications.filter(n => n.id !== action.id),
+    popoverNotification: state.popoverNotification
+      && state.popoverNotification.id === action.id ? null : state.popoverNotification
+  }))
 );
 
 export function reducer(state: ShellNotificationsState | undefined, action: Action) {

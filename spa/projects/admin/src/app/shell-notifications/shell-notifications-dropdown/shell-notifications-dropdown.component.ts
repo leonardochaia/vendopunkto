@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ShellNotificationsFacade } from '../+state/shell-notifications.facade';
 import { ShellOperationsFacade } from '../../shell-operations/+state/shell-operations.facade';
-import { trigger, transition, style, animate } from '@angular/animations';
+import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import { dismissNotification } from '../+state/shell-notifications.actions';
 
 @Component({
   selector: 'adm-shell-notifications-dropdown',
@@ -15,6 +16,16 @@ import { trigger, transition, style, animate } from '@angular/animations';
       ]),
       transition(':leave', [
         animate('200ms ease-in', style({ transform: 'translateX(100%)' }))
+      ])
+    ]),
+    trigger('slideOut', [
+      transition('* => *', [
+        query(':leave', [
+          stagger(100, [
+            animate('250ms ease-in', style({ transform: 'translateX(100%)' })),
+            animate('250ms ease-in', style({ height: '0' }))
+          ])
+        ], { optional: true }),
       ])
     ])
   ]
@@ -32,6 +43,10 @@ export class ShellNotificationsDropdownComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+  }
+
+  public dismiss(id: string) {
+    this.notificationsFacade.dispatch(dismissNotification({ id }));
   }
 
 }
