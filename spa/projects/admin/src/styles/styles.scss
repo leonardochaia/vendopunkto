@@ -52,7 +52,7 @@ mat-form-field.mat-form-field {
 }
 
 .shell-dialog-panel{
-    height: 100%;
+    height: calc(100% - 64px);
     min-width: 316px;
     .mat-dialog-container {
         border-radius: 0;

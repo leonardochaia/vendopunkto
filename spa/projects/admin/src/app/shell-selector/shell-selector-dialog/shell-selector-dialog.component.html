@@ -1,0 +1,66 @@
+<div fxLayout="column"
+     style="height: 100%;">
+    <div>
+        <input type="text"
+               matInput
+               #searchInput
+               [formControl]="searchFormControl"
+               placeholder="Type to search.." />
+        <hr style="margin-bottom: 16px;">
+    </div>
+
+    <div *ngIf="items$ | async as items; else spinnerTemplate;"
+         fxFlex
+         fxFill>
+
+        <div *ngIf="!items.length"
+             style="text-align: center;"
+             class="vp-text-primary">
+            Hmm.. There's nothing here (:
+        </div>
+
+        <mat-card *ngFor="let item of items"
+                  class="mat-elevation-z4"
+                  [class.vp-bg-primary]="item.selected"
+                  (click)="toggleItemSelection(item)">
+            <mat-card-content fxLayout="row"
+                              fxLayoutAlign="start center"
+                              fxLayoutGap="8px">
+
+                <div style="height: 32px;">
+                    <adm-shell-avatar [name]="item.name"
+                                      [initials]="item.initials"
+                                      [imageURL]="item.imageURL">
+                    </adm-shell-avatar>
+                </div>
+
+                <div fxFlex
+                     fxFill
+                     style="white-space: nowrap;">
+                    <div>
+                        <b>{{item.name}}</b>
+                    </div>
+                    <div *ngIf="item.description">{{item.description}}</div>
+                </div>
+            </mat-card-content>
+        </mat-card>
+    </div>
+    <div>
+        <button type="button"
+                mat-raised-button
+                color="primary"
+                style="margin-right: 8px;"
+                (click)="confirm()">
+            CONFIRM
+        </button>
+        <button type="button"
+                mat-raised-button
+                (click)="discard()">
+            DISCARD
+        </button>
+    </div>
+</div>
+
+<ng-template #spinnerTemplate>
+    <mat-spinner style="margin:0 auto"></mat-spinner>
+</ng-template>

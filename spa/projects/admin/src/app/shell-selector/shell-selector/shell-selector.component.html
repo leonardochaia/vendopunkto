@@ -1,0 +1,48 @@
+<div fxLayout="column"
+     fxLayoutGap="8px"
+     fxLayout.gt-xs="row wrap"
+     fxLayoutGap.gt-xs="8px grid"
+     fxLayoutAlign.gt-xs="start center">
+    <div *ngFor="let item of selectedItems"
+         style="margin-bottom: 8px;">
+        <mat-card>
+            <mat-card-content fxLayout="row"
+                              fxLayoutAlign="start center"
+                              fxLayoutGap="8px">
+
+                <div style="height: 32px;">
+                    <adm-shell-avatar [name]="item.name"
+                                      [initials]="item.initials"
+                                      [imageURL]="item.imageURL">
+                    </adm-shell-avatar>
+                </div>
+
+                <div fxFlex
+                     fxFill
+                     style="white-space: nowrap;">
+                    <div>
+                        <b>{{item.name}}</b>
+                    </div>
+                    <div *ngIf="item.description">{{item.description}}</div>
+                </div>
+                <div *ngIf="!isDisabled">
+                    <button mat-icon-button
+                            (click)="removeItem(item)"
+                            class="vp-text-warn">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </div>
+            </mat-card-content>
+        </mat-card>
+    </div>
+
+    <div>
+        <button mat-raised-button
+                [disabled]="isDisabled"
+                (click)="addItems()"
+                color="primary">
+            ADD {{title | uppercase}}
+        </button>
+    </div>
+
+</div>
