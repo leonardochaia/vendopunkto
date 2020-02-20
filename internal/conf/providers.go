@@ -34,7 +34,7 @@ func NewRuntimeConfig(
 	if configPath != "" {
 		_, err := r.InitializeConfigFile(configPath)
 		if err != nil {
-			errors.Errorf("Error ocurred while initializing runtime config", "path", configPath, "error", err)
+			errors.Errorf("Error ocurred while initializing runtime config at %s: %s", configPath, err.Error())
 			os.Exit(1)
 		}
 	}
