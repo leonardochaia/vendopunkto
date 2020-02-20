@@ -1,0 +1,11 @@
+<ng-template #noImage>
+    <div class="initials vp-bg-accent">
+        {{(initials || getInitials(name)) | uppercase}}
+    </div>
+</ng-template>
+
+<div>
+    <img *ngIf="imageURL; else noImage"
+         [src]="imageURL"
+         style="height:32px; width:32px;" />
+</div>
