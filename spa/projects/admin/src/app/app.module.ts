@@ -17,10 +17,11 @@ import { PluginsModule } from './plugins/plugins.module';
 import { CurrenciesModule } from './currencies/currencies.module';
 import { ShellNotificationsModule } from './shell-notifications/shell-notifications.module';
 import { ShellOperationsModule } from './shell-operations/shell-operations.module';
+import { ShellDialogModule } from './shell-dialog/shell-dialog.module';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
   ],
   imports: [
     BrowserModule,
@@ -48,6 +49,7 @@ import { ShellOperationsModule } from './shell-operations/shell-operations.modul
     ConfigModule,
     ShellOperationsModule,
     ShellNotificationsModule,
+    ShellDialogModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -1,127 +1,17 @@
 <button mat-icon-button
         [ngStyle]="{'color': ( hasPending$ | async) ? '#ed8a22': ''}"
-        (click)="snav.toggle()">
+        (click)="openNotifications()">
     <mat-icon>
         {{ (hasPending$ | async) ? 'notifications_active' : 'notifications'}}
     </mat-icon>
 </button>
 
-<mat-sidenav opened="false"
-             #snav
-             mode="over"
-             fixedInViewport="true"
-             position="end"
-             fixedTopGap="64"
-             class="app-background"
-             style="min-width: 360px; padding:16px">
-
-    <h2 style="margin-bottom: 8px;">
-        Notifications
-        <small style="float: right;">
-            <button type="button"
-                    mat-button
-                    (click)="snav.close()">CLOSE
-            </button>
-        </small>
-    </h2>
-
-    <ng-container *ngIf="operations$ | async as operations;">
-
-        <ng-container *ngIf="notifications$ | async as notifications;">
-
-            <div *ngIf="!notifications.length"
-                 style="text-align: center;"
-                 class="vp-text-primary">
-                Nothing to see here (:
-            </div>
-
-            <div [@slideOut]="notifications.length">
-
-                <ng-container *ngFor="let notification of notifications"
-                              [ngTemplateOutlet]="notificationTemplate"
-                              [ngTemplateOutletContext]="{
-                                           $implicit: notification,
-                                           operations: operations$ | async
-                                        }">
-                </ng-container>
-            </div>
-
-        </ng-container>
-    </ng-container>
-</mat-sidenav>
-
-<ng-template #notificationTemplate
-             let-notification
-             let-operations="operations">
-    <mat-card style="margin-bottom: 8px; padding-top:8px; line-height: 24px;">
-        <mat-card-title style="margin: 0 -8px; border-bottom: 1px solid#ddd; margin-bottom: 4px;">
-            <b style="font-size: 16px;">
-                {{notification.title}}
-            </b>
-        </mat-card-title>
-        <mat-card-content style="margin-bottom: 0;">
-
-            <div fxLayout="row"
-                 fxLayoutGap="8px"
-                 style="font-size: 10px;">
-                <div fxFlex
-                     fxFill>{{notification.id | slice:0:8}}</div>
-                <div>{{notification.date | date:'medium'}}</div>
-            </div>
-
-            <div *ngIf="notification.message">{{notification.message}}</div>
-
-            <ng-container [ngSwitch]="notification.type">
-
-                <div *ngSwitchCase="'operation'">
-                    <small>Operation: {{operations[notification['opId']].id}}</small>
-                    <div *ngIf="operations[notification['opId']].description">
-                        {{operations[notification['opId']].description}}
-                    </div>
-                    <pre *ngIf="operations[notification['opId']].error">{{operations[notification['opId']].error}}</pre>
-                </div>
-
-                <pre *ngSwitchDefault>{{notification | json}}</pre>
-            </ng-container>
-        </mat-card-content>
-        <mat-card-actions fxLayout="row"
-                          fxLayoutGap="16px"
-                          fxLayoutAlign="end center"
-                          style="font-size:12px">
-
-            <div fxFlex
-                 fxFill
-                 *ngIf="notification.type === 'operation'">
-                <ng-container [ngSwitch]="operations[notification['opId']].status">
-                    <div *ngSwitchCase="'pending'">
-                        <mat-progress-bar mode="query"></mat-progress-bar>
-                    </div>
-                    <div *ngSwitchCase="'success'"
-                         class="vp-text-success">
-                        SUCCESS
-                    </div>
-                    <div *ngSwitchCase="'failure'"
-                         class="vp-text-warn">
-                        FAILURE
-                    </div>
-                </ng-container>
-            </div>
-            <div>
-                <button mat-button
-                        (click)="dismiss(notification.id)">DISMISS</button>
-            </div>
-        </mat-card-actions>
-    </mat-card>
-</ng-template>
 
 <div style="position: fixed; top:74px; right:16px; z-index: 1000;"
-     *ngIf="!snav.opened && popoverNotification$ | async as notification;"
+     *ngIf="popoverNotification$ | async as notification;"
      [@slideInOut]>
-    <ng-container [ngTemplateOutlet]="notificationTemplate"
-                  [ngTemplateOutletContext]="{
-                         $implicit: notification,
-                         operations: operations$ | async
-                      }">
-    </ng-container>
+    <adm-shell-notification-card [notification]="notification"
+                                 (dismissed)="dismiss($event.id)">
+    </adm-shell-notification-card>
 
 </div>

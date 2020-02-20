@@ -1,0 +1,19 @@
+<ng-container *ngIf="notifications$ | async as notifications;">
+
+    <div *ngIf="!notifications.length"
+         style="text-align: center;"
+         class="vp-text-primary">
+        Nothing to see here (:
+    </div>
+
+    <!-- <div [@slideOut]="notifications.length"> -->
+
+    <adm-shell-notification-card *ngFor="let notification of notifications"
+                                 [notification]="notification"
+                                 (dismissed)="dismiss($event.id)"
+                                 style="display: block;">
+    </adm-shell-notification-card>
+
+    <!-- </div> -->
+
+</ng-container>

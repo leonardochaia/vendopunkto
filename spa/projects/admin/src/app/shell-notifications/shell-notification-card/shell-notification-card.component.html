@@ -1,0 +1,59 @@
+<mat-card style="margin-bottom: 8px; padding-top:8px; line-height: 24px;">
+    <mat-card-title style="margin: 0 -8px; border-bottom: 1px solid#ddd; margin-bottom: 4px;">
+        <b style="font-size: 16px;">
+            {{notification.title}}
+        </b>
+    </mat-card-title>
+    <mat-card-content style="margin-bottom: 0;">
+
+        <div fxLayout="row"
+             fxLayoutGap="8px"
+             style="font-size: 10px;">
+            <div fxFlex
+                 fxFill>{{notification.id | slice:0:8}}</div>
+            <div>{{notification.date | date:'medium'}}</div>
+        </div>
+
+        <div *ngIf="notification.message">{{notification.message}}</div>
+
+        <ng-container [ngSwitch]="notification.type">
+
+            <div *ngSwitchCase="'operation'">
+                <small>Operation: {{operation.id}}</small>
+                <div *ngIf="operation.description">
+                    {{operation.description}}
+                </div>
+                <pre *ngIf="operation.error">{{operation.error}}</pre>
+            </div>
+
+            <pre *ngSwitchDefault>{{notification | json}}</pre>
+        </ng-container>
+    </mat-card-content>
+    <mat-card-actions fxLayout="row"
+                      fxLayoutGap="16px"
+                      fxLayoutAlign="end center"
+                      style="font-size:12px">
+
+        <div fxFlex
+             fxFill
+             *ngIf="notification.type === 'operation'">
+            <ng-container [ngSwitch]="operation.status">
+                <div *ngSwitchCase="'pending'">
+                    <mat-progress-bar mode="query"></mat-progress-bar>
+                </div>
+                <div *ngSwitchCase="'success'"
+                     class="vp-text-success">
+                    SUCCESS
+                </div>
+                <div *ngSwitchCase="'failure'"
+                     class="vp-text-warn">
+                    FAILURE
+                </div>
+            </ng-container>
+        </div>
+        <div>
+            <button mat-button
+                    (click)="dismiss()">DISMISS</button>
+        </div>
+    </mat-card-actions>
+</mat-card>

@@ -50,3 +50,17 @@ mat-form-field.mat-form-field {
 .vp-text-success {
     color: #02a105
 }
+
+.shell-dialog-panel{
+    height: 100%;
+    min-width: 316px;
+    .mat-dialog-container {
+        border-radius: 0;
+        padding: 16px;
+    }
+}
+
+/* Fix to center mat-icons with text */
+.mat-icon {
+    vertical-align: middle;
+}

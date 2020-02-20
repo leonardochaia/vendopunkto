@@ -1,4 +1,5 @@
 import { generateUniqueId } from 'shared';
+import { ShellOperationInstance } from '../shell-operations/model';
 
 export type ShellNotificationType = 'message' | 'operation';
 
@@ -13,6 +14,7 @@ export interface ShellNotification {
 export interface OperationStartShellNotification extends ShellNotification {
     opId: string;
     type: 'operation';
+    operation?: ShellOperationInstance;
 }
 
 export function isOperationNotification(n: ShellNotification): n is OperationStartShellNotification {

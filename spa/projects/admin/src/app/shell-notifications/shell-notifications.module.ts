@@ -8,6 +8,8 @@ import { ShellNotificationsEffects } from './+state/shell-notifications.effects'
 import { ShellNotificationsDropdownComponent } from './shell-notifications-dropdown/shell-notifications-dropdown.component';
 import { MatButtonModule, MatIconModule, MatMenuModule, MatSidenavModule, MatCardModule, MatProgressBarModule } from '@angular/material';
 import { FlexLayoutModule } from '@angular/flex-layout';
+import { ShellNotificationCardComponent } from './shell-notification-card/shell-notification-card.component';
+import { ShellNotificationListContainerComponent } from './shell-notification-list-container/shell-notification-list-container.component';
 
 @NgModule({
   imports: [
@@ -28,10 +30,15 @@ import { FlexLayoutModule } from '@angular/flex-layout';
     EffectsModule.forFeature([ShellNotificationsEffects]),
   ],
   declarations: [
-    ShellNotificationsDropdownComponent
+    ShellNotificationsDropdownComponent,
+    ShellNotificationCardComponent,
+    ShellNotificationListContainerComponent
   ],
   exports: [
     ShellNotificationsDropdownComponent
   ],
+  entryComponents: [
+    ShellNotificationListContainerComponent,
+  ]
 })
 export class ShellNotificationsModule { }
