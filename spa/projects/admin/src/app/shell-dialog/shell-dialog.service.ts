@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Subject, Observable } from 'rxjs';
 import { MatDialog } from '@angular/material';
 import { ShellDialogComponent } from './shell-dialog/shell-dialog.component';
 import { ShellDialogConfig } from './models';
@@ -9,13 +8,7 @@ import { ShellDialogConfig } from './models';
 })
 export class ShellDialogService {
 
-  public readonly opened: Observable<ShellDialogConfig>;
-
-  private readonly subject = new Subject<ShellDialogConfig>();
-
-  constructor(private readonly matDialog: MatDialog) {
-    this.opened = this.subject.asObservable();
-  }
+  constructor(private readonly matDialog: MatDialog) { }
 
   public open(config: ShellDialogConfig) {
     this.matDialog.open(ShellDialogComponent, {
@@ -27,8 +20,6 @@ export class ShellDialogService {
       data: config,
       autoFocus: false,
     });
-
-    // this.subject.next(config);
   }
 
 }
