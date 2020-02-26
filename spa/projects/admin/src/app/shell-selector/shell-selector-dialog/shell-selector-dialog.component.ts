@@ -39,7 +39,7 @@ export class ShellSelectorDialogComponent implements AfterViewInit {
   @ViewChild('searchInput', { static: true })
   searchInputElm: ElementRef;
 
-  protected selectedItems: ViewSelectorItem[] = [];
+  public selectedItems: ViewSelectorItem[] = [];
 
   constructor(
     private readonly shellDialog: ShellDialogComponent,

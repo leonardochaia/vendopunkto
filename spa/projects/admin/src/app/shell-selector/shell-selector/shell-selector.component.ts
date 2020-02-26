@@ -1,12 +1,13 @@
-import { Component, OnInit, Input, Self } from '@angular/core';
+import { Component, OnInit, Input, Self, Output, EventEmitter } from '@angular/core';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import {
   ShellSelectorItem, ShellSelectorDialogComponent,
   ShellSelectorDialogData
 } from '../shell-selector-dialog/shell-selector-dialog.component';
-import { isObject, isArray, isString, isNumber } from 'util';
+import { isArray, isString, isNumber } from 'util';
 import { ShellDialogService } from '../../shell-dialog/shell-dialog.service';
-import { of } from 'rxjs';
+import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'adm-shell-selector',
@@ -15,19 +16,23 @@ import { of } from 'rxjs';
 })
 export class ShellSelectorComponent implements OnInit, ControlValueAccessor {
 
+  /** This is the list of all available items. */
   @Input()
-  public items: ShellSelectorItem[];
+  public items$: Observable<ShellSelectorItem[]>;
 
+  /** The title for the shell-dialog */
   @Input()
   public title: string;
 
-  public currentItemIds: (string | number)[] = [];
+  /** When the dialog is opened this event is fired */
+  @Output()
+  public dialogOpened = new EventEmitter<void>();
 
-  public get selectedItems() {
-    return this.items.filter(i => this.currentItemIds.indexOf(i.id) >= 0);
-  }
+  public selectedItems$: Observable<ShellSelectorItem[]>;
 
   public isDisabled = false;
+
+  protected currentItemsSubject = new BehaviorSubject<(string | number)[]>([]);
 
   protected onChanged: (items: (string | number)[]) => void;
 
@@ -36,26 +41,48 @@ export class ShellSelectorComponent implements OnInit, ControlValueAccessor {
     private readonly ngControl: NgControl,
     private readonly shellDialog: ShellDialogService
   ) {
+    // instead of providing the CVA through DI, we're inverting the operations
+    // and injecting the ngControl and setting the CVA manually.
+    // this allows us to get the AbstractController currently in use. 
     ngControl.valueAccessor = this;
   }
 
+  public ngOnInit() {
+    // the selector model's is the list of IDs
+    // whenever the model or the items$ change, keep the view up to date
+    this.selectedItems$ = combineLatest(this.currentItemsSubject, this.items$)
+      .pipe(
+        map(([ids, items]) => {
+          const r: ShellSelectorItem[] = [];
+          for (const id of ids) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+              r.push(item);
+            }
+          }
+          return r;
+        })
+      );
+  }
+
   public addItems() {
+    this.dialogOpened.emit();
     this.shellDialog.open({
       component: ShellSelectorDialogComponent,
       title: this.title,
       extra: {
         formControl: this.ngControl.control,
-        items$: of(this.items)
+        items$: this.items$,
       } as ShellSelectorDialogData
     });
   }
 
   public removeItem(item: ShellSelectorItem) {
-    this.currentItemIds.splice(this.currentItemIds.indexOf(item.id), 1);
-    this.onChanged(this.currentItemIds);
-  }
-
-  public ngOnInit() {
+    const n = [...this.currentItemsSubject.value];
+    n.splice(
+      this.currentItemsSubject.value.indexOf(item.id), 1);
+    this.currentItemsSubject.next(n);
+    this.onChanged(this.currentItemsSubject.value);
   }
 
   public registerOnTouched(fn: () => void): void {
@@ -68,12 +95,12 @@ export class ShellSelectorComponent implements OnInit, ControlValueAccessor {
   public writeValue(items: (string | number)[]): void {
     if (isArray(items)) {
       if (!items.length) {
-        this.currentItemIds = [];
+        this.currentItemsSubject.next([]);
         return;
       }
 
       if (isString(items[0]) || isNumber(items[0])) {
-        this.currentItemIds = items as string[];
+        this.currentItemsSubject.next(items);
       } else {
         throw new Error('Expected items to be an string | number array');
       }

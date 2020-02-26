@@ -3,8 +3,7 @@
      fxLayout.gt-xs="row wrap"
      fxLayoutGap.gt-xs="8px grid"
      fxLayoutAlign.gt-xs="start center">
-    <div *ngFor="let item of selectedItems"
-         style="margin-bottom: 8px;">
+    <div *ngFor="let item of selectedItems$ | async">
         <mat-card>
             <mat-card-content fxLayout="row"
                               fxLayoutAlign="start center"
@@ -27,6 +26,7 @@
                 </div>
                 <div *ngIf="!isDisabled">
                     <button mat-icon-button
+                            type="button"
                             (click)="removeItem(item)"
                             class="vp-text-warn">
                         <mat-icon>close</mat-icon>

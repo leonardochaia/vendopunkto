@@ -6,6 +6,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { ShellAvatarModule } from '../shell-avatar/shell-avatar.module';
 import { ShellSelectorComponent } from './shell-selector/shell-selector.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 @NgModule({
   imports: [
@@ -19,6 +20,8 @@ import { ShellSelectorComponent } from './shell-selector/shell-selector.componen
     MatIconModule,
     MatCardModule,
     MatProgressSpinnerModule,
+
+    ScrollingModule,
 
     ShellAvatarModule,
   ],

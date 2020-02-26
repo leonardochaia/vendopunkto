@@ -19,37 +19,41 @@
             Hmm.. There's nothing here (:
         </div>
 
-        <mat-card *ngFor="let item of items"
-                  class="mat-elevation-z4"
-                  [class.vp-bg-primary]="item.selected"
-                  (click)="toggleItemSelection(item)">
-            <mat-card-content fxLayout="row"
-                              fxLayoutAlign="start center"
-                              fxLayoutGap="8px">
+        <cdk-virtual-scroll-viewport itemSize="56"
+                                     style="height: 100%;">
+            <mat-card *cdkVirtualFor="let item of items"
+                      class="mat-elevation-z4"
+                      [class.vp-bg-primary]="item.selected"
+                      (click)="toggleItemSelection(item)">
+                <mat-card-content fxLayout="row"
+                                  fxLayoutAlign="start center"
+                                  fxLayoutGap="8px">
 
-                <div style="height: 32px;">
-                    <adm-shell-avatar [name]="item.name"
-                                      [initials]="item.initials"
-                                      [imageURL]="item.imageURL">
-                    </adm-shell-avatar>
-                </div>
-
-                <div fxFlex
-                     fxFill
-                     style="white-space: nowrap;">
-                    <div>
-                        <b>{{item.name}}</b>
+                    <div style="height: 32px;">
+                        <adm-shell-avatar [name]="item.name"
+                                          [initials]="item.initials"
+                                          [imageURL]="item.imageURL">
+                        </adm-shell-avatar>
                     </div>
-                    <div *ngIf="item.description">{{item.description}}</div>
-                </div>
-            </mat-card-content>
-        </mat-card>
+
+                    <div fxFlex
+                         fxFill
+                         style="white-space: nowrap;">
+                        <div>
+                            <b>{{item.name}}</b>
+                        </div>
+                        <div *ngIf="item.description">{{item.description}}</div>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+        </cdk-virtual-scroll-viewport>
     </div>
     <div>
         <button type="button"
                 mat-raised-button
                 color="primary"
                 style="margin-right: 8px;"
+                [disabled]="!selectedItems.length"
                 (click)="confirm()">
             CONFIRM
         </button>
