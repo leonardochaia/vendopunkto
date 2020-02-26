@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/shopspring/decimal"
 )
 
@@ -11,6 +12,7 @@ type ExchangeRatesResult map[string]decimal.Decimal
 // rates
 type ExchangeRatesPlugin interface {
 	VendoPunktoPlugin
+	SearchSupportedCurrencies(term string) ([]dtos.BasicCurrencyDto, error)
 	GetExchangeRates(base string, currencies []string) (ExchangeRatesResult, error)
 }
 
@@ -38,5 +40,6 @@ func (serverPlugin *exchangeRatesServerPlugin) GetPluginImpl() (VendoPunktoPlugi
 }
 
 const (
-	ExchangeRatesMainEndpoint = "/vp/exchange-rates"
+	ExchangeRatesMainEndpoint        = "/vp/exchange-rates"
+	ExchangeRatesSupportedCurrencies = "/supported-currencies"
 )

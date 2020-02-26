@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -26,6 +27,7 @@ func (handler *CurrencyHandler) InternalRoutes() chi.Router {
 	router := chi.NewRouter()
 
 	router.Get("/pricing", errors.WrapHandler(handler.getPricingCurrencies))
+	router.Post("/pricing/supported", errors.WrapHandler(handler.getSupportedPricingCurrencies))
 	router.Get("/payment-methods", errors.WrapHandler(handler.getPaymentMethodCurrencies))
 	router.Post("/rates/convert", errors.WrapHandler(handler.getExchange))
 
@@ -36,9 +38,8 @@ func (handler *CurrencyHandler) getPricingCurrencies(w http.ResponseWriter, r *h
 	const op errors.Op = "api.currencies.getPricingCurrencies"
 
 	pricingCurrencies := handler.runtimeConf.GetPricingCurrencies()
-	result := []dtos.CurrencyDto{}
 	if len(pricingCurrencies) == 0 {
-		render.JSON(w, r, result)
+		render.JSON(w, r, []dtos.CurrencyDto{})
 		return nil
 	}
 
@@ -48,16 +49,50 @@ func (handler *CurrencyHandler) getPricingCurrencies(w http.ResponseWriter, r *h
 		return errors.E(op, errors.Internal, err)
 	}
 
-	for _, currency := range currencies {
-		_, err := handler.plugins.GetWalletInfoForCurrency(currency.Symbol)
-		result = append(result, dtos.CurrencyDto{
-			Name:             currency.Name,
-			Symbol:           currency.Symbol,
-			LogoImageURL:     currency.LogoImageURL,
-			SupportsPayments: err == nil,
-		})
+	result := handler.convertToCurrencyDto(pricingCurrencies, currencies)
+
+	render.JSON(w, r, result)
+	return nil
+}
+
+func (handler *CurrencyHandler) getSupportedPricingCurrencies(w http.ResponseWriter, r *http.Request) error {
+	const op errors.Op = "api.currencies.getSupportedPricingCurrencies"
+
+	var params = new(dtos.SearchSupportedCurrenciesParams)
+
+	if err := render.DecodeJSON(r.Body, &params); err != nil {
+		return errors.E(op, errors.Parameters, err)
 	}
 
+	exchangeRatesPlugin, err := handler.plugins.GetConfiguredExchangeRatesPlugin()
+	if err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	supportedCurrencies, err := exchangeRatesPlugin.SearchSupportedCurrencies(params.Term)
+	if err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	if len(supportedCurrencies) == 0 {
+		render.JSON(w, r, []dtos.CurrencyDto{})
+		return nil
+	}
+
+	symbols := make([]string, len(supportedCurrencies))
+	i := 0
+	for _, c := range supportedCurrencies {
+		symbols[i] = c.Symbol
+		i++
+	}
+
+	currencies, err := handler.currencyRepo.FindBySymbols(r.Context(), symbols)
+
+	if err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	result := handler.basicConvertToCurrencyDto(supportedCurrencies, currencies)
 	render.JSON(w, r, result)
 	return nil
 }
@@ -122,4 +157,71 @@ func (handler *CurrencyHandler) getExchange(w http.ResponseWriter, r *http.Reque
 
 	render.JSON(w, r, result)
 	return nil
+}
+
+func (handler *CurrencyHandler) convertToCurrencyDto(
+	symbols []string,
+	currencies []*vendopunkto.Currency) []dtos.CurrencyDto {
+	result := []dtos.CurrencyDto{}
+	for _, symbol := range symbols {
+		var currency *vendopunkto.Currency
+		for _, c := range currencies {
+			if strings.ToLower(c.Symbol) == strings.ToLower(symbol) {
+				currency = c
+				break
+			}
+		}
+		_, err := handler.plugins.GetWalletInfoForCurrency(symbol)
+		if currency != nil {
+			result = append(result, dtos.CurrencyDto{
+				Name:             currency.Name,
+				Symbol:           currency.Symbol,
+				LogoImageURL:     currency.LogoImageURL,
+				SupportsPayments: err != nil,
+			})
+		} else {
+			result = append(result, dtos.CurrencyDto{
+				Name:             strings.ToUpper(symbol),
+				Symbol:           symbol,
+				SupportsPayments: err != nil,
+			})
+		}
+	}
+	return result
+}
+
+func (handler *CurrencyHandler) basicConvertToCurrencyDto(
+	basics []dtos.BasicCurrencyDto,
+	currencies []*vendopunkto.Currency) []dtos.CurrencyDto {
+	result := []dtos.CurrencyDto{}
+	for _, basic := range basics {
+		var currency *vendopunkto.Currency
+		for _, c := range currencies {
+			if strings.ToLower(c.Symbol) == strings.ToLower(basic.Symbol) {
+				currency = c
+				break
+			}
+		}
+		_, err := handler.plugins.GetWalletInfoForCurrency(basic.Symbol)
+		if currency != nil {
+			result = append(result, dtos.CurrencyDto{
+				Name:             currency.Name,
+				Symbol:           currency.Symbol,
+				LogoImageURL:     currency.LogoImageURL,
+				SupportsPayments: err != nil,
+			})
+		} else {
+			name := basic.Name
+			if name == "" {
+				name = strings.ToUpper(basic.Symbol)
+			}
+			result = append(result, dtos.CurrencyDto{
+				Name:             name,
+				Symbol:           basic.Symbol,
+				LogoImageURL:     basic.LogoImageURL,
+				SupportsPayments: err != nil,
+			})
+		}
+	}
+	return result
 }

@@ -4,6 +4,7 @@ import (
 	"net/url"
 
 	"github.com/leonardochaia/vendopunkto/clients"
+	"github.com/leonardochaia/vendopunkto/dtos"
 	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/leonardochaia/vendopunkto/plugin"
 )
@@ -51,6 +52,30 @@ func (c exchangeRatesClientImpl) GetExchangeRates(
 	}
 
 	var result plugin.ExchangeRatesResult
+	_, err = c.client.PostJSON(final, params, &result)
+
+	if err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	return result, nil
+}
+
+func (c exchangeRatesClientImpl) SearchSupportedCurrencies(term string) ([]dtos.BasicCurrencyDto, error) {
+	const op errors.Op = "exchangeRatesClient.searchSupportedCurrencies"
+
+	u, err := c.getBaseURL(plugin.ExchangeRatesSupportedCurrencies)
+	if err != nil {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	final := c.apiURL.ResolveReference(u).String()
+
+	params := &dtos.SearchSupportedCurrenciesParams{
+		Term: term,
+	}
+
+	var result []dtos.BasicCurrencyDto
 	_, err = c.client.PostJSON(final, params, &result)
 
 	if err != nil {
