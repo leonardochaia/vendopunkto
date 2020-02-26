@@ -36,6 +36,19 @@ export class CurrenciesEffects {
         ))
     ));
 
+  onLoadSupportedPricingCurrencies$ = createEffect(() => this.actions$
+    .pipe(
+      ofType(currenciesActions.loadSupportedPricingCurrencies),
+
+      concatMap(() => this.api.searchSupportedPricingCurrencies()
+        .pipe(
+          map(data => currenciesActions.loadSupportedPricingCurrenciesSuccess({
+            currencies: data,
+          })),
+          catchError(e => of(currenciesActions.loadSupportedPricingCurrenciesFailure({ error: e.message })))
+        ))
+    ));
+
   onInit$ = createEffect(() => this.actions$
     .pipe(
       ofType(currenciesActions.currenciesInit),

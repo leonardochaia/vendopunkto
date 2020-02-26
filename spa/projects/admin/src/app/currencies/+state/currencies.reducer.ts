@@ -11,6 +11,9 @@ export interface CurrenciesState {
   paymentCurrencies: { [symbol: string]: SupportedCurrency };
   loadingPaymentCurrencies: boolean;
 
+  supportedPricingCurrencies: SupportedCurrency[];
+  loadingSupportedPricingCurrencies: boolean;
+
   error: string;
 }
 
@@ -19,6 +22,8 @@ export const initialState: CurrenciesState = {
   loadingPricingCurrencies: false,
   paymentCurrencies: undefined,
   loadingPaymentCurrencies: false,
+  supportedPricingCurrencies: [],
+  loadingSupportedPricingCurrencies: false,
   error: null
 };
 
@@ -56,6 +61,23 @@ const CurrenciesReducer = createReducer(
   on(currenciesActions.loadPaymentCurrenciesFailure, (state, action) => ({
     ...state,
     loadingPaymentCurrencies: false,
+    error: action.error
+  })),
+
+  on(currenciesActions.loadSupportedPricingCurrencies, (state) => ({
+    ...state,
+    loadingSupportedPricingCurrencies: true
+  })),
+
+  on(currenciesActions.loadSupportedPricingCurrenciesSuccess, (state, action) => ({
+    ...state,
+    loadingSupportedPricingCurrencies: false,
+    supportedPricingCurrencies: action.currencies
+  })),
+
+  on(currenciesActions.loadSupportedPricingCurrenciesFailure, (state, action) => ({
+    ...state,
+    loadingSupportedPricingCurrencies: false,
     error: action.error
   })),
 );

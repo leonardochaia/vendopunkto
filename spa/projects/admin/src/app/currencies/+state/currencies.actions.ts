@@ -11,7 +11,7 @@ export const loadPricingCurrenciesSuccess = createAction(
 );
 
 export const loadPricingCurrenciesFailure = createAction(
-  '[Currencies] Load Pricing Currencies',
+  '[Currencies] Load Pricing Currencies Failure',
   props<{ error: string }>()
 );
 
@@ -25,10 +25,24 @@ export const loadPaymentCurrenciesSuccess = createAction(
 );
 
 export const loadPaymentCurrenciesFailure = createAction(
-  '[Currencies] Load Payment Currencies',
+  '[Currencies] Load Payment Currencies Failure',
   props<{ error: string }>()
 );
 
 export const currenciesInit = createAction(
   '[Currencies] Initialization'
+);
+
+export const loadSupportedPricingCurrencies = createAction(
+  '[Currencies] Load Supported Pricing Currencies'
+);
+
+export const loadSupportedPricingCurrenciesSuccess = createAction(
+  '[Currencies] Load Supported Pricing Currencies Success',
+  props<{ currencies: SupportedCurrency[] }>()
+);
+
+export const loadSupportedPricingCurrenciesFailure = createAction(
+  '[Currencies] Load Supported Pricing Currencies Failure',
+  props<{ error: string }>()
 );

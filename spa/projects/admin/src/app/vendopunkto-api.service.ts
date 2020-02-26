@@ -31,6 +31,10 @@ export class VendopunktoApiService {
     return this.http.get<SupportedCurrency[]>(`${apiAddress}/currencies/pricing`);
   }
 
+  public searchSupportedPricingCurrencies(term?: string) {
+    return this.http.post<SupportedCurrency[]>(`${apiAddress}/currencies/pricing/supported`, { term });
+  }
+
   public getPaymentCurrencies() {
     return this.http.get<SupportedCurrency[]>(`${apiAddress}/currencies/payment-methods`);
   }

@@ -16,3 +16,9 @@ export const selectPaymentCurrencies = createSelector(selectCurrenciesState,
 
 export const selectLoadingPaymentCurrencies = createSelector(selectCurrenciesState,
   s => s.loadingPaymentCurrencies);
+
+export const selectSupportedPricingCurrenciesCurrencies = createSelector(selectCurrenciesState,
+  s => s.supportedPricingCurrencies);
+
+export const selectLoadingSupportedPricingCurrencies = createSelector(selectCurrenciesState,
+  s => s.loadingSupportedPricingCurrencies);
