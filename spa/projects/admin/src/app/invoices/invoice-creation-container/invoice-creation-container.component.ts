@@ -3,9 +3,10 @@ import { InvoiceFacade } from '../+state/invoice.facade';
 import { FormBuilder, Validators } from '@angular/forms';
 import { startCreateInvoice, invoiceCreationFormChanged } from '../+state/invoice.actions';
 import { map, takeUntil, filter, debounceTime, distinctUntilChanged, tap, startWith } from 'rxjs/operators';
-import { InvoiceCreationParams, PaymentMethodCreationParams } from 'shared';
+import { InvoiceCreationParams, PaymentMethodCreationParams, SupportedCurrency } from 'shared';
 import { Subject, combineLatest } from 'rxjs';
 import { CurrenciesFacade } from '../../currencies/+state/currencies.facade';
+import { MatSelectChange } from '@angular/material';
 
 @Component({
   selector: 'adm-invoice-creation-container',
@@ -13,7 +14,6 @@ import { CurrenciesFacade } from '../../currencies/+state/currencies.facade';
   styleUrls: ['./invoice-creation-container.component.scss']
 })
 export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
-
 
   public readonly totalControl = this.fb.control(null, Validators.required);
   public readonly currencyControl = this.fb.control(null, Validators.required);
@@ -36,6 +36,17 @@ export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
     );
   public readonly creating$ = this.facade.creating$;
+
+  public readonly currentPricingCurrency$ = combineLatest(this.currencyControl.valueChanges
+    .pipe(
+      distinctUntilChanged(),
+      map(v => v as string),
+      startWith(null),
+    ), this.pricingCurrencies$)
+    .pipe(
+      map(([symbol, pricingCurrencies]) => pricingCurrencies.find(c => c.symbol === symbol)),
+    );
+
 
   private readonly destroyedSubject = new Subject();
 
@@ -109,6 +120,10 @@ export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
     this.facade.dispatch(startCreateInvoice({
       invoice: params
     }));
+  }
+
+  public pricingCurrencyChanged($event: MatSelectChange) {
+
   }
 
 }

@@ -5,7 +5,7 @@ import { SupportedCurrency } from 'shared';
 export const CurrenciesFeatureKey = 'vpCurrencies';
 
 export interface CurrenciesState {
-  pricingCurrencies: { [symbol: string]: SupportedCurrency };
+  pricingCurrencies: SupportedCurrency[];
   loadingPricingCurrencies: boolean;
 
   paymentCurrencies: { [symbol: string]: SupportedCurrency };

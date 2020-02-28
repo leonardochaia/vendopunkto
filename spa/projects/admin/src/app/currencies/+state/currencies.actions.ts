@@ -7,7 +7,7 @@ export const loadPricingCurrencies = createAction(
 
 export const loadPricingCurrenciesSuccess = createAction(
   '[Currencies] Load Pricing Currencies Success',
-  props<{ currencies: { [symbol: string]: SupportedCurrency } }>()
+  props<{ currencies: SupportedCurrency[] }>()
 );
 
 export const loadPricingCurrenciesFailure = createAction(
