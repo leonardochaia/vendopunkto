@@ -5,7 +5,9 @@
 </ng-template>
 
 <div>
-    <img *ngIf="imageURL; else noImage"
+    <img *ngIf="imageURL && !forceInitials; else noImage"
          [src]="imageURL"
-         style="height:32px; width:32px;" />
+         (error)="onError($event)"
+         [style.height]="size"
+         [style.width]="size" />
 </div>
