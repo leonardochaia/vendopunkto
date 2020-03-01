@@ -10,7 +10,8 @@ import {
   MatIconModule,
   MatSelectModule,
   MatCardModule,
-  MatCheckboxModule
+  MatCheckboxModule,
+  MatProgressBarModule,
 } from '@angular/material';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -21,19 +22,25 @@ import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { CurrencyCardComponent } from './currency-card/currency-card.component';
 import { ConfigSelectorCardComponent } from './config-selector-card/config-selector-card.component';
+import { ShellSelectorModule } from '../shell-selector/shell-selector.module';
+import { ShellAvatarModule } from '../shell-avatar/shell-avatar.module';
+import { ConfigInvoiceEditComponent } from './config-invoice-edit/config-invoice-edit.component';
+import { TitleFromCamelPipe } from './title-from-camel.pipe';
 
 const routes: Routes = [
   {
     path: 'config',
     component: ConfigEditContainerComponent,
   },
-]
+];
 
 @NgModule({
   declarations: [
     ConfigEditContainerComponent,
     CurrencyCardComponent,
-    ConfigSelectorCardComponent
+    ConfigSelectorCardComponent,
+    ConfigInvoiceEditComponent,
+    TitleFromCamelPipe
   ],
   imports: [
     CommonModule,
@@ -49,9 +56,13 @@ const routes: Routes = [
     MatSelectModule,
     MatCardModule,
     MatCheckboxModule,
+    MatProgressBarModule,
 
     StoreModule.forFeature(fromConfig.ConfigFeatureKey, fromConfig.reducer),
     EffectsModule.forFeature([ConfigEffects]),
+
+    ShellSelectorModule,
+    ShellAvatarModule,
 
   ]
 })

@@ -1,20 +1,13 @@
-import { Component, Input, forwardRef, ViewChild, TemplateRef } from '@angular/core';
-import { Observable } from 'rxjs';
-import { NG_VALUE_ACCESSOR, ControlValueAccessor, FormControlDirective, FormControl, ControlContainer } from '@angular/forms';
+import { Component, Input, TemplateRef, OnInit, Self } from '@angular/core';
+import { ControlValueAccessor, FormControl, NgControl } from '@angular/forms';
 
 @Component({
   selector: 'adm-config-selector-card',
   templateUrl: './config-selector-card.component.html',
   styleUrls: ['./config-selector-card.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ConfigSelectorCardComponent),
-      multi: true
-    }
-  ]
 })
-export class ConfigSelectorCardComponent<T> implements ControlValueAccessor {
+export class ConfigSelectorCardComponent<T>
+  implements OnInit, ControlValueAccessor {
 
   @Input()
   public title: string;
@@ -31,43 +24,51 @@ export class ConfigSelectorCardComponent<T> implements ControlValueAccessor {
   @Input()
   public itemIdProp = 'id';
 
-  @ViewChild(FormControlDirective, { static: true })
-  formControlDirective: FormControlDirective;
+  public innerControl = new FormControl(null, this.ngControl.validator);
 
-  @Input()
-  formControl: FormControl;
+  private initialValue: T;
 
-  @Input()
-  formControlName: string;
+  private onChange: (newValue: T) => void;
 
-  /* get hold of FormControl instance no matter formControl or
-  formControlName is given. If formControlName is given,
-  then this.controlContainer.control is the parent FormGroup (or FormArray) instance. */
-  get control() {
-    return this.formControl || this.controlContainer.control.get(this.formControlName);
+  constructor(
+    @Self()
+    private readonly ngControl: NgControl,
+  ) {
+    ngControl.valueAccessor = this;
   }
 
-  constructor(private controlContainer: ControlContainer) {
+  public ngOnInit() {
+    this.initialValue = this.ngControl.value;
   }
 
-  clearInput() {
-    this.control.setValue('');
+  public reset() {
+    this.innerControl.reset();
+    this.innerControl.setValue(this.initialValue);
+  }
+
+  public startSaving() {
+    this.innerControl.markAsPristine();
+    this.ngControl.control.markAsPristine();
+    this.initialValue = this.innerControl.value;
+    this.onChange(this.innerControl.value);
   }
 
   registerOnTouched(fn: any): void {
-    this.formControlDirective.valueAccessor.registerOnTouched(fn);
   }
 
   registerOnChange(fn: any): void {
-    this.formControlDirective.valueAccessor.registerOnChange(fn);
+    this.onChange = fn;
   }
 
   writeValue(obj: any): void {
-    this.formControlDirective.valueAccessor.writeValue(obj);
+    this.innerControl.setValue(obj);
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.formControlDirective.valueAccessor.setDisabledState(isDisabled);
+    if (isDisabled) {
+      this.innerControl.disable();
+    } else {
+      this.innerControl.enable();
+    }
   }
-
 }

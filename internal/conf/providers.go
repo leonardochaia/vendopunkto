@@ -10,7 +10,7 @@ import (
 )
 
 // Providers for wire
-var Providers = wire.NewSet(LoadStartupConfig)
+var Providers = wire.NewSet(LoadStartupConfig, NewManager)
 
 // LoadStartupConfig uses viper to unmarshal the config into struct
 func LoadStartupConfig() (Startup, error) {
@@ -40,4 +40,14 @@ func NewRuntimeConfig(
 	}
 
 	return r
+}
+
+// NewManager creates a Manager instance
+func NewManager(
+	logger hclog.Logger,
+	runtime *Runtime) Manager {
+	return Manager{
+		logger:  logger,
+		runtime: runtime,
+	}
 }

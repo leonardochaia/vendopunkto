@@ -1,11 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ConfigFacade } from '../+state/config.facade';
-import { FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { Subject, combineLatest } from 'rxjs';
-import { takeUntil, map, filter } from 'rxjs/operators';
+import { FormBuilder, Validators } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil, map, distinctUntilChanged } from 'rxjs/operators';
 import { PluginsFacade } from '../../plugins/+state/plugins.facade';
 import { CurrenciesFacade } from '../../currencies/+state/currencies.facade';
-import { loadPricingCurrencies } from '../../currencies/+state/currencies.actions';
+import * as ConfigActions from './../+state/config.actions';
+import * as CurrencyActions from './../../currencies/+state/currencies.actions';
+import { UpdateConfigParams } from 'shared';
+import { ShellOperationsFacade } from '../../shell-operations/+state/shell-operations.facade';
+import { ConfigUpdateShellOperation } from '../shell-operations';
+import { createOperationInstance } from '../../shell-operations/model';
+import { TitleFromCamelPipe } from '../title-from-camel.pipe';
 
 @Component({
   selector: 'adm-config-edit-container',
@@ -15,13 +21,6 @@ import { loadPricingCurrencies } from '../../currencies/+state/currencies.action
 export class ConfigEditContainerComponent implements OnInit, OnDestroy {
 
   public readonly config$ = this.configFacade.current$;
-
-  public readonly pricingCurrencies$ = this.currenciesFacade.pricingCurrencies$;
-
-  public readonly paymentCurrencies$ = this.currenciesFacade.paymentCurrencies$;
-
-  public readonly loadingPaymentCurrencies$ = this.currenciesFacade.loadingPaymentCurrencies$;
-  public readonly loadingPricingCurrencies$ = this.currenciesFacade.loadingPricingCurrencies$;
 
   public readonly plugins$ = this.pluginsFacade.plugins$;
 
@@ -37,37 +36,33 @@ export class ConfigEditContainerComponent implements OnInit, OnDestroy {
 
   public readonly form = this.fb.group({});
 
-  public get pricingCurrenciesControl() {
-    return this.form.get('pricing_currencies') as FormGroup;
-  }
-
-  public get paymentMethodsControl() {
-    return this.form.get('payment_methods') as FormGroup;
-  }
-
-
   private readonly destroyedSubject = new Subject();
+  private readonly titlePipe = new TitleFromCamelPipe();
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly configFacade: ConfigFacade,
     private readonly currenciesFacade: CurrenciesFacade,
     private readonly pluginsFacade: PluginsFacade,
+    private readonly shellOperations: ShellOperationsFacade,
   ) {
   }
 
   ngOnInit() {
-    combineLatest(this.configFacade.current$,
-      this.pricingCurrencies$.pipe(filter(c => !!c)),
-      this.paymentCurrencies$.pipe(filter(c => !!c))
-    )
+    this.currenciesFacade.dispatch(CurrencyActions.loadSupportedPricingCurrencies());
+
+    let isFirstTime = true;
+
+    this.configFacade.current$
       .pipe(
         takeUntil(this.destroyedSubject)
       )
-      .subscribe(([config, pricingCurrencies, paymentCurrencies]) => {
+      .subscribe(config => {
         if (!config) {
           return;
         }
+
+        // build a form using the config items
         for (const key in config) {
           if (config.hasOwnProperty(key)) {
             const v = config[key];
@@ -77,40 +72,45 @@ export class ConfigEditContainerComponent implements OnInit, OnDestroy {
               this.form.addControl(key, control);
             }
 
-            control.setValue(v);
+            control.setValue(v, { emitEvent: false });
+
+            if (isFirstTime && [
+              'pricing_currencies',
+              'currency_metadata_plugin',
+              'exchange_rates_plugin',
+              'default_pricing_currency',
+            ].indexOf(key) >= 0) {
+              control.valueChanges
+                .pipe(
+                  distinctUntilChanged(),
+                  takeUntil(this.destroyedSubject)
+                )
+                .subscribe(newValue => {
+                  this.startUpdate({ [key]: newValue });
+                });
+            }
           }
         }
 
-        const pricingCurrenciesGroup = this.fb.group({});
-
-        for (const key in pricingCurrencies) {
-          if (pricingCurrencies.hasOwnProperty(key)) {
-            const currency = pricingCurrencies[key];
-            const enabled = (config.pricing_currencies as string[])
-              .indexOf(currency.symbol.toLowerCase()) >= 0;
-            const control = this.fb.control(enabled);
-            pricingCurrenciesGroup.addControl(currency.symbol, control);
-          }
+        if (isFirstTime) {
+          isFirstTime = false;
         }
-
-        this.form.setControl('pricing_currencies', pricingCurrenciesGroup);
-
-        const paymentMethodsGroup = this.fb.group({});
-        for (const key in paymentCurrencies) {
-          if (paymentCurrencies.hasOwnProperty(key)) {
-            const currency = paymentCurrencies[key];
-            const enabled = (config.payment_methods as string[])
-              .indexOf(currency.symbol.toLowerCase()) >= 0;
-            const control = this.fb.control(enabled);
-            paymentMethodsGroup.addControl(currency.symbol, control);
-          }
-        }
-        this.form.setControl('payment_methods', paymentMethodsGroup);
       });
   }
 
-  public removePricingCurrency(key: string) {
-    this.pricingCurrenciesControl.removeControl(key);
+  private startUpdate(config: UpdateConfigParams) {
+    const keys = Object.keys(config)
+      .map(k => this.titlePipe.transform(k))
+      .join(', ');
+
+    const op = createOperationInstance(ConfigUpdateShellOperation);
+    op.title = `Configuration Update: ${keys}`;
+    op.description = 'Changed ' + Object.keys(config)
+      .map(k => `${this.titlePipe.transform(k)} to "${config[k]}"`);
+
+    this.shellOperations.dispatchOperation(
+      ConfigActions.updateConfigStart({ config }),
+      op, true);
   }
 
   ngOnDestroy() {

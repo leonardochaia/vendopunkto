@@ -1,0 +1,35 @@
+<div fxLayout="column"
+     fxLayoutGap="16px"
+     style="margin:16px">
+
+    <div>
+        <h2>Invoice Configuration</h2>
+    </div>
+
+    <adm-config-selector-card [items]="pricingCurrencies$ | async"
+                              [title]="'default_pricing_currency' | titleFromCamel"
+                              description="This will be the currency selected by default when creating a new invoice."
+                              [formControl]="form.get('default_pricing_currency')"
+                              itemIdProp="symbol"
+                              [itemNameTemplate]="currencyNameTemplate">
+    </adm-config-selector-card>
+
+    <ng-template #currencyNameTemplate
+                 let-currency>
+        {{currency.symbol | uppercase}} - {{currency.name}}
+    </ng-template>
+
+
+    <div>
+        <h2>Pricing Currencies</h2>
+        <p>
+            Pricing currencies are used to define an invoice's price.
+            These are provided by your Exchange Rates plugin.
+        </p>
+    </div>
+
+    <adm-shell-selector [formControl]="form.get('pricing_currencies')"
+                        [items$]="supportedPricingCurrencies$"
+                        data-title="Pricing Currencies"></adm-shell-selector>
+
+</div>

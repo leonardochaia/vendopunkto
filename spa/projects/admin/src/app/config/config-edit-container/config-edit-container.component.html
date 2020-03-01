@@ -2,18 +2,28 @@
     Global Configuration
 </h1>
 
-<form [formGroup]="form" *ngIf="(this.form.controls['exchange_rates_plugin']) && config$ | async as config;">
+<form [formGroup]="form"
+      *ngIf="(this.form.controls['exchange_rates_plugin']) && config$ | async as config;">
 
     <mat-tab-group>
         <mat-tab label="Plugins">
-            <div fxLayout="column" fxLayoutGap="16px" style="margin:16px">
+            <div fxLayout="column"
+                 fxLayoutGap="16px"
+                 style="margin:16px">
 
-                <adm-config-selector-card [items]="exchangeRatesPlugins$ | async" title="Exchange Rates Plugin"
+
+                <div>
+                    <h2>Plugins Configuration</h2>
+                </div>
+
+                <adm-config-selector-card [items]="exchangeRatesPlugins$ | async"
+                                          data-title="Exchange Rates Plugin"
                                           description="Plugin that will be used to obtain exchange rates when creating invoices"
                                           [formControl]="form.get('exchange_rates_plugin')">
                 </adm-config-selector-card>
 
-                <adm-config-selector-card [items]="currencyMetadataPlugins$ | async" title="Currency Metadata Plugin"
+                <adm-config-selector-card [items]="currencyMetadataPlugins$ | async"
+                                          data-title="Currency Metadata Plugin"
                                           description="Plugin that will be used to obtain metadata for currencies like names, logos, descriptions and so on."
                                           [formControl]="form.get('currency_metadata_plugin')">
                 </adm-config-selector-card>
@@ -34,116 +44,48 @@
                     <p>These are the plugins provided by the plugin hosts</p>
                 </div>
 
-                <div fxLayout="column" fxLayoutGap="8px" fxLayout.gt-sm="row wrap" fxLayoutGap.gt-sm="8px grid">
-                    <div *ngFor="let plugin of plugins$ | async">
-                        <mat-card>
-                            <mat-card-title style="white-space: nowrap;">
-                                {{plugin.name}}
+                <div fxLayout="column"
+                     fxLayoutGap="8px">
+                    <mat-card *ngFor="let plugin of plugins$ | async"
+                              fxLayout="row"
+                              fxLayoutAlign="start center">
+                        <div fxFlex
+                             fxFill>
+                            <mat-card-title fxLayout="row"
+                                            fxLayoutAlign="start center"
+                                            fxLayoutGap="8px">
+                                <div>
+                                    <adm-shell-avatar [name]="plugin.name"
+                                                      [imageURL]="plugin.logoImageUrl">
+                                    </adm-shell-avatar>
+                                </div>
+                                <div fxFlex="grow"
+                                     style="white-space: nowrap;">
+                                    {{plugin.name}}
+                                </div>
                             </mat-card-title>
                             <mat-card-content>
                                 <p>
                                     {{plugin.pluginType}} plugin: <b>{{plugin.id}}</b>
                                 </p>
-
                             </mat-card-content>
+                        </div>
+                        <!-- <div>
 
-                        </mat-card>
-                    </div>
+                            <button type="button"
+                                    mat-button>
+                                SETTINGS
+                            </button>
+                        </div> -->
+                    </mat-card>
                 </div>
             </div>
         </mat-tab>
 
         <mat-tab label="Invoice">
-            <div fxLayout="column" fxLayoutGap="16px" style="margin:16px">
 
-                <div>
-                    <h2>Invoice Configuration</h2>
-                </div>
+            <adm-config-invoice-edit [form]="form"></adm-config-invoice-edit>
 
-                <adm-config-selector-card [items]="pricingCurrencies$ | async | keyvalue"
-                                          title="Default Invoice Currency"
-                                          description=" This will be the currency selected by default when creating a new invoice."
-                                          [formControl]="form.get('default_pricing_currency')" itemIdProp="key"
-                                          [itemNameTemplate]="currencyNameTemplate">
-                </adm-config-selector-card>
-
-                <ng-template #currencyNameTemplate let-entry>
-                    {{entry.key | uppercase}} - {{entry.value.name}}
-                </ng-template>
-
-            </div>
-
-        </mat-tab>
-
-        <mat-tab label="Currencies">
-            <div fxLayout="column" fxLayoutGap="16px" style="margin:16px">
-
-                <div>
-                    <h2>Pricing Currencies</h2>
-                    <p>
-                        Pricing currencies are used to define an invoice's price.
-                    </p>
-                </div>
-
-                <div fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="16px"
-                     *ngIf="pricingCurrencies$ | async as pricingCurrencies;">
-
-                    <adm-currency-card *ngFor="let entry of pricingCurrenciesControl.controls | keyvalue"
-                                       [currency]="pricingCurrencies[entry.key]"
-                                       [actionTemplate]="pricingCurrencyActionTemplate">
-                    </adm-currency-card>
-
-                    <ng-template #pricingCurrencyActionTemplate let-currency>
-                        <div>
-                            <button mat-icon-button color="danger" (click)="removePricingCurrency(currency.symbol)">
-                                <mat-icon>delete</mat-icon>
-                                DELETE
-                            </button>
-                        </div>
-                    </ng-template>
-                </div>
-
-                <div>
-                    <button mat-raised-button color="primary">
-                        ADD PRICING CURRENCY
-                    </button>
-                </div>
-
-                <div>
-                    <h2>Payment Currencies</h2>
-                    <p>
-                        These currencies can be used to perform payments.
-                        When creating an invoice, the currencies enabled here
-                        will be the default payment methods.
-                    </p>
-                </div>
-
-                <div fxLayout="column" fxLayoutGap="16px">
-
-                    <adm-currency-card *ngFor="let entry of paymentCurrencies$ | async | keyvalue"
-                                       [currency]="entry.value" [actionTemplate]="paymentCurrencyActionTemplate">
-                    </adm-currency-card>
-
-                    <ng-template #paymentCurrencyActionTemplate let-currency>
-                        <div>
-                            <mat-checkbox color="primary" [formControl]="paymentMethodsControl.get(currency.symbol)">
-                                Enabled
-                            </mat-checkbox>
-                        </div>
-                    </ng-template>
-
-                </div>
-
-                <div>
-                    <p>
-                        To add payment currencies, you need to install a wallet plugin
-                    </p>
-                </div>
-
-            </div>
         </mat-tab>
     </mat-tab-group>
 </form>
-
-<pre>{{config$ | async | json}}</pre>
-<pre>{{form.value | json}}</pre>

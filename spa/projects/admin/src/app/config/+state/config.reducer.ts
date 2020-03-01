@@ -4,7 +4,7 @@ import * as ConfigActions from './config.actions';
 export const ConfigFeatureKey = 'vpConfig';
 
 export interface ConfigState {
-  current: { [k: string]: unknown };
+  current: { [k: string]: string | string[] };
   loading: boolean;
   error: string;
 }
@@ -35,6 +35,11 @@ const NavigationReducer = createReducer(
     error: action.error
   })),
 
+  on(ConfigActions.updateConfigSuccess, (state, action) => ({
+    ...state,
+    loading: false,
+    current: { ...state.current, ...action.config }
+  })),
 );
 
 export function reducer(state: ConfigState | undefined, action: Action) {

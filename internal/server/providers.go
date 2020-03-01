@@ -76,11 +76,14 @@ func NewCurrencyHandler(manager vendopunkto.PluginManager,
 }
 
 // NewConfigHandler creates the config handler
-func NewConfigHandler(runtime *conf.Runtime,
-	globalLogger hclog.Logger) (*ConfigHandler, error) {
+func NewConfigHandler(
+	runtime *conf.Runtime,
+	globalLogger hclog.Logger,
+	manager conf.Manager) (*ConfigHandler, error) {
 	return &ConfigHandler{
 		logger:  globalLogger.Named("currency-handler"),
 		runtime: runtime,
+		manager: manager,
 	}, nil
 }
 

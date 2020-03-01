@@ -25,6 +25,16 @@ const (
 	PaymentMethodsKey         = "payment_methods"
 )
 
+var knownKeys = []string{
+	PluginHostsKey,
+	ExchangeRatesPluginKey,
+	CurrencyMetadataPluginKey,
+	WalletPollingIntervalKey,
+	PricingCurrenciesKey,
+	DefaultPricingCurrencyKey,
+	PaymentMethodsKey,
+}
+
 // Runtime is the config that is used on runtime and can be changed after
 // the application has started
 type Runtime struct {
@@ -105,4 +115,14 @@ func (r *Runtime) InitializeConfigFile(path string) (bool, error) {
 
 	err := r.ReadInConfig()
 	return false, err
+}
+
+// IsKnownKey returns true when a provided key is a known runtime conf key.
+func (r *Runtime) IsKnownKey(key string) bool {
+	for _, known := range knownKeys {
+		if key == known {
+			return true
+		}
+	}
+	return false
 }

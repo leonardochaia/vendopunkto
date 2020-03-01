@@ -51,7 +51,8 @@ func NewServer(globalLogger hclog.Logger, runtime *conf.Runtime) (*server.Server
 	if err != nil {
 		return nil, err
 	}
-	configHandler, err := server.NewConfigHandler(runtime, globalLogger)
+	manager := conf.NewManager(globalLogger, runtime)
+	configHandler, err := server.NewConfigHandler(runtime, globalLogger, manager)
 	if err != nil {
 		return nil, err
 	}

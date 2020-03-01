@@ -177,13 +177,13 @@ func (handler *CurrencyHandler) convertToCurrencyDto(
 				Name:             currency.Name,
 				Symbol:           currency.Symbol,
 				LogoImageURL:     currency.LogoImageURL,
-				SupportsPayments: err != nil,
+				SupportsPayments: err == nil,
 			})
 		} else {
 			result = append(result, dtos.CurrencyDto{
 				Name:             strings.ToUpper(symbol),
 				Symbol:           symbol,
-				SupportsPayments: err != nil,
+				SupportsPayments: err == nil,
 			})
 		}
 	}

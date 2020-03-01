@@ -18,6 +18,7 @@ import { CurrenciesModule } from './currencies/currencies.module';
 import { ShellNotificationsModule } from './shell-notifications/shell-notifications.module';
 import { ShellOperationsModule } from './shell-operations/shell-operations.module';
 import { ShellDialogModule } from './shell-dialog/shell-dialog.module';
+import { ShellSelectorModule } from './shell-selector/shell-selector.module';
 
 @NgModule({
   declarations: [
@@ -50,6 +51,7 @@ import { ShellDialogModule } from './shell-dialog/shell-dialog.module';
     ShellOperationsModule,
     ShellNotificationsModule,
     ShellDialogModule,
+    ShellSelectorModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

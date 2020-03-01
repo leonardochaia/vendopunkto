@@ -69,17 +69,11 @@ export interface GetCurrencyExchangeResult {
 }
 
 export interface GetConfigResult {
-    currency_metadata_plugin: string;
-    default_invoice_currency: string;
-    exchange_rates_plugin: string;
-    invoice_currencies: string[];
-    plugin_hosts: string[];
-    wallet_poller_interval: string;
-    [k: string]: unknown;
+    [k: string]: string | string[];
 }
 
 export interface UpdateConfigParams {
-    [k: string]: unknown;
+    [k: string]: string | string[];
 }
 
 export interface GetPluginResult {

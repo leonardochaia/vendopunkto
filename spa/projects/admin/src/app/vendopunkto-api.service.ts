@@ -7,7 +7,8 @@ import {
   GetCurrencyExchangeParams,
   GetCurrencyExchangeResult,
   GetConfigResult,
-  GetPluginResult
+  GetPluginResult,
+  UpdateConfigParams
 } from 'shared';
 
 const apiAddress = `/api/v1`;
@@ -53,5 +54,9 @@ export class VendopunktoApiService {
 
   public getPlugins() {
     return this.http.get<GetPluginResult[]>(`${apiAddress}/plugins`);
+  }
+
+  public updateConfig(params: UpdateConfigParams) {
+    return this.http.post<GetConfigResult>(`${apiAddress}/config`, params);
   }
 }

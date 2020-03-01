@@ -8,18 +8,34 @@
         </p>
 
         <mat-form-field style="width: 100%;">
-            <mat-select [placeholder]="title" [formControl]="control">
-                <mat-option *ngFor="let item of items" [value]="item[itemIdProp]">
-                    <ng-container
-                                  *ngTemplateOutlet="itemNameTemplate || defaultTemplate; context: { $implicit: item  }">
+            <mat-select [placeholder]="title"
+                        [formControl]="innerControl">
+                <mat-option *ngFor="let item of items"
+                            [value]="item[itemIdProp]">
+                    <ng-container *ngTemplateOutlet="itemNameTemplate || defaultTemplate;
+                                  context: { $implicit: item  }">
                     </ng-container>
                 </mat-option>
             </mat-select>
         </mat-form-field>
-    </mat-card-content>
 
+        <div *ngIf="innerControl.dirty">
+            <button type="button"
+                    mat-raised-button
+                    color="primary"
+                    (click)="startSaving()">
+                SAVE
+            </button>
+            <button type="button"
+                    mat-raised-button
+                    (click)="reset()">
+                DISCARD
+            </button>
+        </div>
+    </mat-card-content>
 </mat-card>
 
-<ng-template #defaultTemplate let-item>
+<ng-template #defaultTemplate
+             let-item>
     {{item['name']}}
 </ng-template>
