@@ -1,12 +1,14 @@
 # VendoPunkto
 
-VendoPunkto is a payment processor for cryptocurrencies. Its only goal is to
-generate invoices and verifying its payments, supporting multiple currencies.
+VendoPunkto is a payment processor for cryptocurrencies. Its main goal is to
+generate invoices and verify its payments while supporting multiple currencies.
 
 Applications can integrate with VendoPunkto and let it handle payments for them.
 i.e PoS or e-commerce apps can focus on their logic and delegate payments
-to VendoPunkto. When requesting payment from a customer, a VendoPunkto's invoice is displayed, which the customer can pay.
-The payment can be seen on the screen as it hits the mempool and your application can continue to do its business logic, like delivering a product/service.
+to VendoPunkto. When requesting payment from a customer, a VendoPunkto's invoice
+is displayed, which the customer can pay with any of the installed currencies.
+The payment can be seen on the screen as it hits the mempool and your application
+can continue to do its business logic, like delivering a product/service.
 
 It is a self hosted application, meaning that you're always in control of your
 funds.
@@ -16,7 +18,8 @@ Status: **DO NOT USE IN PRODUCTION**
 
 ## Free and open source
 
-VendoPunkto is free and open source software, there are no fees and you're always in control of your funds. Network fees still need to be payed out as usual.
+VendoPunkto is free and open source software, there are no fees and you're always
+in control of your funds. Network fees still need to be payed out as usual.
 
 By itself, it does not collect any user information, and will never do.
 Although, applications and plugins which integrate with it may do so.
@@ -27,12 +30,13 @@ VendoPunkto provides a plugin system where anyone can develop new plugins to
 support functionalities on the system. Every feature that requires a third party
 should be a plugin so that operators can choose who to trust.
 
-Currently, two plugin types are supported:
+Currently, three plugin types are supported:
 
 - `wallet`: used to implement currency payments
-- `exchange-rates` to obtain exchange rates from different sources
+- `exchange-rates`: to obtain exchange rates from different sources
+- `currency-metadata`: to fetch name, description, images, etc. for each currency 
 
-Official implementations will be provided for Monero and Bitcoin wallets, 
+Official implementations will be provided for Monero and Bitcoin wallets,
 and some popular exchange rates as well. Since these are also plugins, you could
 choose different implementations provided by the community or you could not load
 any official plugin at all. They're not part of VendoPunkto's binary.
@@ -98,7 +102,7 @@ For development you need a PostgreSQL database, plugin implementations for at
 at least a coin and exchange rates, Go and Make. To build the web client, npm.
 
 The startup order is important, you want to make sure that plugins are started
-before VendoPunkto, given that plugins are currently loaded at startup.
+before VendoPunkto, given that plugins are currently only loaded at startup.
 
 To start the database using docker:
 
@@ -106,21 +110,32 @@ To start the database using docker:
 docker-compose up -d vendopunktopostgres
 ```
 
-There are mock plugin implementations which can be started with.
-This will start a fake XMR,BTC and BCH wallets and fake exchange rates.
+There are mock plugin implementations for fake XMR,BTC and BCH wallets,
+fake exchange rates and fake metadata.
 
 ```bash
+# Starts development plugins servers
 make dev-plugin
 ```
 
 To build and run VendoPunkto API, in a different shell
 
 ```bash
-# do this once
-cd ./spa && npm install && npm run build && cd ../
-# and then just
+# Builds vendopunkto-api and runs it using the dev-plugins
 make && make run
 ```
+
+You'll also need to build the web UI:
+```bash
+cd spa
+npm install
+npm run build shared
+npm run build vendopunkto
+npm run build admin
+```
+
+Once you've `make run`, you should be able to access the admin portal
+at `http://localhost:9080/`
 
 ### Gecko exchange rates
 
@@ -136,134 +151,6 @@ Current support for Monero works using `monero-wallet-rpc`.
 For address generation, currently it's generating Integrated Addresses, but the
 idea is that both Integrated Addresses and SubAddresses are supported so that
 operators can choose what to use.
-
-### VendoPunkto CLI
-
-A CLI is provided as a client while the web client is under development.
-The CLI may still be useful for operators.
-
-```bash
-make build-cli
-```
-
-```bash
-$ ./vendopunkto-cli --help
-Usage:
-  vendopunkto-cli [command]
-
-Available Commands:
-  help        Help about any command
-  invoices    Manage Invoices
-
-Flags:
-  -c, --config string   Config file
-  -h, --help            help for vendopunkto-cli
-  -H, --host string     The VendoPunkto host URL i.e http://localhost:8080
-      --version         version for vendopunkto-cli
-
-Use "vendopunkto-cli [command] --help" for more information about a command.
-```
-
-To create invoices
-
-```bash
-$ ./vendopunkto-cli invoices create xmr 1
-Your invoice has been created and is awaiting payment.
-  Invoice ID: bnvvma2cvpn841ekeo8g
-  Total: 1 XMR
-  Status: Pending 0%
-You can pay using any of the following methods:
-  XMR 1 xmr-fake-bnvvma2cvpnegdf1k81g
-  BTC 0.005
-  BCH 0.01
-```
-
-View an invoice with QR code
-
-```bash
-$ ./vendopunkto-cli invoices view bnvvma2cvpn841ekeo8g --qr
-Found invoice
-  Invoice ID: bnvvma2cvpn841ekeo8g
-  Total: 1 XMR
-  Status: Pending 0%
-You can pay using any of the following methods:
-  XMR 1 xmr-fake-bnvvma2cvpnegdf1k81g
-  BTC 0.005
-  BCH 0.01
-
-Printing QR Code for XMR
-
-[redacted]
-
-XMR 1
-Address: xmr-fake-bnvvma2cvpnegdf1k81g
-```
-
-Pay using another payment method, the method's address will be generated at this time
-
-```bash
-$ ./vendopunkto-cli invoices view bnvvma2cvpn841ekeo8g --method btc
-Found invoice
-  Invoice ID: bnvvma2cvpn841ekeo8g
-  Total: 1 XMR
-  Status: Pending 0%
-You can pay using any of the following methods:
-  XMR 1 xmr-fake-bnvvma2cvpnegdf1k81g
-  BTC 0.005 btc-fake-bnvvmv2cvpnegdf1k820
-  BCH 0.01
-```
-
-Confirm a payment manually, useful for development:
-
-```bash
-$ ./vendopunkto-cli invoices confirm --tx-hash=fake-hash1 --amount=0.5 --address=xmr-fake-bnvvma2cvpnegdf1k81g
-Payment confirmed
-
-# check the invoice
-$ ./vendopunkto-cli invoices view bnvvma2cvpn841ekeo8g
-Found invoice
-  Invoice ID: bnvvma2cvpn841ekeo8g
-  Total: 1 XMR
-  Status: Pending 0%
-You can pay using any of the following methods:
-  XMR 1 xmr-fake-bnvvma2cvpnegdf1k81g
-  BCH 0.01
-  BTC 0.005 btc-fake-bnvvmv2cvpnegdf1k820
-Payments
-  0.5 XMR (fake-hash1) (Conf. #0)
-
-# add confirmations
-$ ./vendopunkto-cli invoices confirm --tx-hash=fake-hash1 --amount=0.5 --address=xmr-fake-bnvvma2cvpnegdf1k81g --confirmations=1
-Payment confirmed
-
-# check the invoice
-$ ./vendopunkto-cli invoices view bnvvma2cvpn841ekeo8g
-Found invoice
-  Invoice ID: bnvvma2cvpn841ekeo8g
-  Total: 1 XMR
-  Status: Pending 50%
-  Remaining: 0.5 XMR
-You can pay using any of the following methods:
-  XMR 0.5 xmr-fake-bnvvma2cvpnegdf1k81g
-  BCH 0.005
-  BTC 0.0025 btc-fake-bnvvmv2cvpnegdf1k820
-Payments
-  0.5 XMR (fake-hash1) (Conf. #1)
-
-# pay the remaining using BTC
-$ ./vendopunkto-cli invoices confirm --tx-hash=fake-btc-hash1 --amount=0.0025 --address=btc-fake-bnvvmv2cvpnegdf1k820 --confirmations=1
-Payment confirmed
-
-$ ./vendopunkto-cli invoices view bnvvma2cvpn841ekeo8g
-Found invoice
-  Invoice ID: bnvvma2cvpn841ekeo8g
-  Total: 1 XMR
-  Status: Completed 100%
-  Remaining: 0 XMR
-Payments
-  0.5 XMR (fake-hash1) (Conf. #1)
-  0.0025 BTC (fake-btc-hash1) (Conf. #1)
-```
 
 ## License
 
