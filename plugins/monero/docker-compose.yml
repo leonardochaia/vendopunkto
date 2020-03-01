@@ -1,0 +1,40 @@
+version: "3.4"
+
+volumes:
+  monero_wallet:
+
+services:
+  xmr-wallet:
+    image: lchaia/monerod
+    # restart: unless-stopped
+    container_name: xmr-wallet
+    entrypoint: monero-wallet-rpc
+    command:
+      - "--stagenet"
+      - "--rpc-bind-ip=0.0.0.0"
+      - "--rpc-bind-port=18082"
+      - "--disable-rpc-login"
+      - "--confirm-external-bind"
+      - "--non-interactive"
+      - "--daemon-address=vendopunkto.duckdns.org:38081:38081"
+      # - "--offline"
+      - "--wallet-file=/home/monero/wallets/wallet-01"
+      - "--password=password"
+      # - "--log-level=2"
+    ports:
+      - "18082:18082"
+    volumes:
+      - "monero_wallet:/home/monero/wallets/"
+
+  create_wallet:
+    image: lchaia/monerod
+    entrypoint: monero-wallet-cli
+    command:
+      - "--stagenet"
+      - "--offline"
+      - "--password=password"
+      - "--mnemonic-language=English"
+      - "--generate-new-wallet=/home/monero/wallets/wallet-01"
+      - "--command=welcome"
+    volumes:
+      - "monero_wallet:/home/monero/wallets/"

@@ -1,4 +1,4 @@
-version: '3'
+version: "3.4"
 
 volumes:
   db:
@@ -12,41 +12,31 @@ services:
     ports:
       - 5432:5432
     volumes:
-    - db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
 
-  xmr-wallet:
-    image: lchaia/monerod
-    # restart: unless-stopped
-    container_name: xmr-wallet
-    entrypoint: monero-wallet-rpc
-    command:
-      - "--stagenet"
-      - "--rpc-bind-ip=0.0.0.0"
-      - "--rpc-bind-port=18082"
-      - "--disable-rpc-login"
-      - "--confirm-external-bind"
-      - "--non-interactive"
-      - "--daemon-address=astonishinglabs.duckdns.org:38081"
-      # - "--offline"
-      - "--wallet-file=/home/monero/wallets/wallet-01"
-      - "--password=password"
-      # - "--log-level=2"
+  vendopunkto:
+    image: lchaia/vendopunkto:latest
+    container_name: vendopunkto
+    build:
+      context: .
+      target: vendopunkto
     ports:
-        - "18082:18082"
-    volumes:
-        - "monero_wallet:/home/monero/wallets/"
+      - 9080:9080 # administration
+      - 8080:8080 # invoice viewing
+    environment:
+      STORAGE_HOST: vendopunktopostgres
+      PLUGIN_HOSTS: "http://vendopunkto-dev-plugins:4000"
+      EXCHANGE_RATES_PLUGIN: fake-exchange-rates
+      CURRENCY_METADATA_PLUGIN: fake-currency-metadata
+      LOGGER_LEVEL: debug
 
-  create_wallet:
-    image: lchaia/monerod
-    entrypoint: monero-wallet-cli
-    command:
-      - "--stagenet"
-      # - "--daemon-address=astonishinglabs.duckdns.org:38081"
-      # - "--trusted-daemon"
-      - "--offline"
-      - "--password=password"
-      - "--mnemonic-language=English"
-      - "--generate-new-wallet=/home/monero/wallets/wallet-01"
-      - "--command=welcome"
-    volumes:
-        - "monero_wallet:/home/monero/wallets/"
+  vendopunkto-dev-plugins:
+    image: lchaia/vendopunkto-dev-plugins:latest
+    container_name: vendopunkto-dev-plugins
+    build:
+      context: .
+      target: dev-plugins
+    ports:
+      - 4000:4000 # plugin API
+    environment:
+      LOGGER_LEVEL: debug

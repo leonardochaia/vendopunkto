@@ -4,27 +4,18 @@ GOPATH ?= ${HOME}/go
 PACKAGENAME := $(shell go list -m -f '{{.Path}}')
 MIGRATIONDIR := store/postgres/migrations
 MIGRATIONS :=  $(wildcard ${MIGRATIONDIR}/*.sql)
-TOOLS := ${GOPATH}/bin/mockery \
-    ${GOPATH}/bin/wire
+TOOLS := ${GOPATH}/bin/wire
 
 .PHONY: default
 default: ${EXECUTABLE}
 
-${GOPATH}/bin/mockery:
-	go get github.com/vektra/mockery/internal/cmd/mockery
-
 ${GOPATH}/bin/wire:
-	go get github.com/google/wire
-	go get github.com/google/wire/internal/cmd/wire
+	go get github.com/google/wire/cmd/wire
 
 tools: ${TOOLS}
 
 internal/cmd/wire_gen.go: internal/cmd/wire.go
 	wire ./internal/cmd/...
-
-.PHONY: mocks
-mocks: tools
-	mockery -dir ./gorestapi -name ThingStore
 
 .PHONY: ${EXECUTABLE}
 ${EXECUTABLE}: tools internal/cmd/wire_gen.go 
@@ -60,10 +51,6 @@ run-vp-monero:
 	EXCHANGE_RATES_PLUGIN=gecko-exchange-rates \
 	LOGGER_LEVEL=debug \
 	${GOPATH}/src/${PACKAGENAME}/vendopunkto-server api
-
-
-build-cli:
-	go build -ldflags "-X ${PACKAGENAME}/internal/conf.Executable=vendopunkto-cli -X ${PACKAGENAME}/internal/conf.GitVersion=${GITVERSION}" -o ./vendopunkto-cli ./cli/main.go
 
 
 plugins/monero/internal/wire_gen.go: plugins/monero/internal/wire.go
