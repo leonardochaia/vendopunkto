@@ -1,4 +1,4 @@
-import { Component, Input, TemplateRef, OnInit, Self } from '@angular/core';
+import { Component, Input, TemplateRef, OnInit, Self, Optional } from '@angular/core';
 import { ControlValueAccessor, FormControl, NgControl } from '@angular/forms';
 
 @Component({
@@ -31,7 +31,7 @@ export class ConfigSelectorCardComponent<T>
   private onChange: (newValue: T) => void;
 
   constructor(
-    @Self()
+    @Self() @Optional()
     private readonly ngControl: NgControl,
   ) {
     ngControl.valueAccessor = this;

@@ -126,8 +126,7 @@
                 </form>
             </mat-step>
 
-            <mat-step #confirmationStep
-                      *ngIf="paymentCurrencies$ | async as paymentCurrencies;">
+            <mat-step #confirmationStep>
                 <ng-template matStepLabel>Confirmation</ng-template>
 
                 <h1>
@@ -139,29 +138,31 @@
                 </h1>
 
                 <h2>Payment methods</h2>
-                <mat-card *ngFor="let pm of paymentMethodsArray.getRawValue(); let index = index;">
+                <ng-container *ngIf="paymentCurrencies$ | async as paymentCurrencies;">
+                    <mat-card *ngFor="let pm of paymentMethodsArray.getRawValue(); let index = index;">
 
-                    <mat-card-title fxLayout="row"
-                                    fxLayoutAlign="start center"
-                                    fxLayoutGap="8px">
-                        <div>
-                            <img [src]="paymentCurrencies[pm.currency].logoImageUrl"
-                                 style="height:48px" />
-                        </div>
-                        <div>
-                            {{pm.total}} {{pm.currency | uppercase}}
-                        </div>
-                    </mat-card-title>
-                </mat-card>
-                <div fxLayout="row"
-                     fxLayoutGap="8px"
-                     fxLayoutAlign="end center">
-                    <button mat-raised-button
-                            matStepperPrevious>Back</button>
-                    <button mat-raised-button
-                            color="primary"
-                            (click)="createInvoice()">Create Invoice</button>
-                </div>
+                        <mat-card-title fxLayout="row"
+                                        fxLayoutAlign="start center"
+                                        fxLayoutGap="8px">
+                            <div>
+                                <img [src]="paymentCurrencies[pm.currency].logoImageUrl"
+                                     style="height:48px" />
+                            </div>
+                            <div>
+                                {{pm.total}} {{pm.currency | uppercase}}
+                            </div>
+                        </mat-card-title>
+                    </mat-card>
+                    <div fxLayout="row"
+                         fxLayoutGap="8px"
+                         fxLayoutAlign="end center">
+                        <button mat-raised-button
+                                matStepperPrevious>Back</button>
+                        <button mat-raised-button
+                                color="primary"
+                                (click)="createInvoice()">Create Invoice</button>
+                    </div>
+                </ng-container>
             </mat-step>
         </mat-horizontal-stepper>
     </div>

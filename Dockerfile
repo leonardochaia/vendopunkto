@@ -26,9 +26,9 @@ RUN npm install
 COPY ./spa /build/spa
 
 # build angular apps
-RUN npm run build shared --prod \
-    && npm run build vendopunkto --prod \
-    && npm run build admin --prod
+RUN npm run build shared \
+    && npm run build admin -- --prod \
+    && npm run build vendopunkto -- --prod
 
 
 # vendopunkto runtime base layer

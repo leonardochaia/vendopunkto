@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Self, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Self, Output, EventEmitter, Optional } from '@angular/core';
 import { ControlValueAccessor, NgControl } from '@angular/forms';
 import {
   ShellSelectorItem, ShellSelectorDialogComponent,
@@ -37,7 +37,7 @@ export class ShellSelectorComponent implements OnInit, ControlValueAccessor {
   protected onChanged: (items: (string | number)[]) => void;
 
   constructor(
-    @Self()
+    @Self() @Optional()
     private readonly ngControl: NgControl,
     private readonly shellDialog: ShellDialogService
   ) {
