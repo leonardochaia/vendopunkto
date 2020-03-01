@@ -19,7 +19,6 @@ services:
     container_name: vendopunkto
     build:
       context: .
-      target: vendopunkto
     ports:
       - 9080:9080 # administration
       - 8080:8080 # invoice viewing
@@ -35,6 +34,7 @@ services:
     container_name: vendopunkto-dev-plugins
     build:
       context: .
+      dockerfile: ./plugins/development/Dockerfile
       target: dev-plugins
     ports:
       - 4000:4000 # plugin API
