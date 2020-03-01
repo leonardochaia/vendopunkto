@@ -17,6 +17,8 @@ services:
   vendopunkto:
     image: lchaia/vendopunkto:latest
     container_name: vendopunkto
+    depends_on:
+      - vendopunkto-dev-plugins
     build:
       context: .
     ports:
@@ -27,7 +29,7 @@ services:
       PLUGIN_HOSTS: "http://vendopunkto-dev-plugins:4000"
       EXCHANGE_RATES_PLUGIN: fake-exchange-rates
       CURRENCY_METADATA_PLUGIN: fake-currency-metadata
-      LOGGER_LEVEL: debug
+      # LOGGER_LEVEL: debug
 
   vendopunkto-dev-plugins:
     image: lchaia/vendopunkto-dev-plugins:latest
