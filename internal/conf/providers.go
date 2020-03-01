@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/wire"
 	"github.com/hashicorp/go-hclog"
-	"github.com/leonardochaia/vendopunkto/errors"
 	"github.com/spf13/viper"
 )
 
@@ -32,9 +31,11 @@ func NewRuntimeConfig(
 
 	// If a config file is found, initialize it
 	if configPath != "" {
-		_, err := r.InitializeConfigFile(configPath)
+		err := r.InitializeConfigFile(configPath)
 		if err != nil {
-			errors.Errorf("Error ocurred while initializing runtime config at %s: %s", configPath, err.Error())
+			logger.Error("Error ocurred while initializing runtime config",
+				"path", configPath,
+				"error", err.Error())
 			os.Exit(1)
 		}
 	}

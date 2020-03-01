@@ -90,7 +90,7 @@ func (r *Runtime) GetDefaultPricingCurrency() string {
 // InitializeConfigFile will read a file from the provided path
 // if it's found, it will read the config with viper.
 // If not, it will create and initialize the file with defaults
-func (r *Runtime) InitializeConfigFile(path string) (bool, error) {
+func (r *Runtime) InitializeConfigFile(path string) error {
 	r.SetConfigFile(path)
 
 	logger := r.logger.With("path", path)
@@ -102,19 +102,21 @@ func (r *Runtime) InitializeConfigFile(path string) (bool, error) {
 		// create the file
 		emptyFile, err := os.Create(path)
 		if err != nil {
-			return false, err
+			return err
 		}
 
 		defer emptyFile.Close()
 
 		err = r.WriteConfig()
-		return true, err
+		if err != nil {
+			return err
+		}
 	}
 
 	logger.Info("Reading runtime config file")
 
 	err := r.ReadInConfig()
-	return false, err
+	return err
 }
 
 // IsKnownKey returns true when a provided key is a known runtime conf key.

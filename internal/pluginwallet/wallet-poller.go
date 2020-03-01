@@ -86,6 +86,11 @@ func (poller *WalletPoller) doPoll() error {
 
 	for currency, height := range heights {
 		wallet, err := poller.pluginMgr.GetWalletForCurrency(currency)
+		if err != nil {
+			poller.logger.Error("Error while obtaining wallet",
+				"error", err)
+			continue
+		}
 		info, err := wallet.GetWalletInfo()
 		if err != nil {
 			poller.logger.Error("Error while obtaining wallet info",
