@@ -21,7 +21,7 @@ export const loadPaymentCurrencies = createAction(
 
 export const loadPaymentCurrenciesSuccess = createAction(
   '[Currencies] Load Payment Currencies Success',
-  props<{ currencies: { [symbol: string]: SupportedCurrency } }>()
+  props<{ currencies: SupportedCurrency[] }>()
 );
 
 export const loadPaymentCurrenciesFailure = createAction(

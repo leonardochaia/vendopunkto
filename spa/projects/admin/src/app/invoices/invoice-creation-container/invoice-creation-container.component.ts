@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { InvoiceFacade } from '../+state/invoice.facade';
 import { FormBuilder, Validators } from '@angular/forms';
 import { startCreateInvoice, invoiceCreationFormChanged } from '../+state/invoice.actions';
-import { map, takeUntil, filter, debounceTime, distinctUntilChanged, tap, startWith } from 'rxjs/operators';
+import { map, takeUntil, filter, debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
 import { InvoiceCreationParams, PaymentMethodCreationParams, SupportedCurrency } from 'shared';
 import { Subject, combineLatest } from 'rxjs';
 import { CurrenciesFacade } from '../../currencies/+state/currencies.facade';
@@ -26,7 +26,11 @@ export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
   });
 
   public readonly pricingCurrencies$ = this.currenciesFacade.pricingCurrencies$;
-  public readonly paymentCurrencies$ = this.currenciesFacade.paymentCurrencies$;
+  public readonly paymentCurrencies$ = this.currenciesFacade.paymentCurrencies$
+    .pipe(
+      map(arr => arr.reduce((a, b) => (a[b.symbol] = b, a), {})),
+      map(o => o as { [symbol: string]: SupportedCurrency })
+    );
 
   public readonly loadingPricingCurrencies$ = this.currenciesFacade.loadingPricingCurrencies$;
   public readonly loadingPaymentCurrencies$ = this.currenciesFacade.loadingPaymentCurrencies$;
@@ -62,8 +66,11 @@ export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
         takeUntil(this.destroyedSubject)
       )
       .subscribe(info => {
-        this.currencyControl.setValue(info.currency);
-        this.totalControl.setValue(info.total);
+        if (!this.basicInfoForm.dirty) {
+          this.currencyControl.setValue(info.currency);
+          this.totalControl.setValue(info.total);
+        }
+
         this.paymentMethodsArray.clear();
         for (const pm of info.paymentMethods) {
           const group = this.fb.group({
@@ -121,9 +128,4 @@ export class InvoiceCreationContainerComponent implements OnInit, OnDestroy {
       invoice: params
     }));
   }
-
-  public pricingCurrencyChanged($event: MatSelectChange) {
-
-  }
-
 }

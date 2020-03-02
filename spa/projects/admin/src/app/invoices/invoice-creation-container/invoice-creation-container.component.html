@@ -35,8 +35,7 @@
                         <mat-form-field style="width: 100%;"
                                         *ngIf="pricingCurrencies$ | async as pricingCurrencies;">
                             <mat-select placeholder="Currency"
-                                        [formControl]="currencyControl"
-                                        (selectionChange)="pricingCurrencyChanged($event)">
+                                        [formControl]="currencyControl">
                                 <mat-option *ngFor="let currency of pricingCurrencies"
                                             [value]="currency.symbol">
                                     {{currency.symbol | uppercase}} - {{currency.name}}

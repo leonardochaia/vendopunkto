@@ -8,7 +8,7 @@ export interface CurrenciesState {
   pricingCurrencies: SupportedCurrency[];
   loadingPricingCurrencies: boolean;
 
-  paymentCurrencies: { [symbol: string]: SupportedCurrency };
+  paymentCurrencies: SupportedCurrency[];
   loadingPaymentCurrencies: boolean;
 
   supportedPricingCurrencies: SupportedCurrency[];

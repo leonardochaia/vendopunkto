@@ -30,7 +30,7 @@ export class CurrenciesEffects {
       concatMap(() => this.api.getPaymentCurrencies()
         .pipe(
           map(data => currenciesActions.loadPaymentCurrenciesSuccess({
-            currencies: data.reduce((a, b) => (a[b.symbol] = b, a), {})
+            currencies: data
           })),
           catchError(e => of(currenciesActions.loadPaymentCurrenciesFailure({ error: e.message })))
         ))
